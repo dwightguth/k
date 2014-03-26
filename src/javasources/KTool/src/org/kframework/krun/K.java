@@ -2,7 +2,6 @@ package org.kframework.krun;
 
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.Configuration;
-import org.kframework.kil.Definition;
 import org.kframework.krun.api.SearchType;
 import org.kframework.utils.ColorUtil;
 import org.kframework.utils.file.FileUtil;
@@ -114,7 +113,6 @@ public class K {
     public static Properties configuration_variables = new Properties();
     public static Properties cfg_parsers = new Properties();    
 
-    public static Definition definition;
     public static Configuration kompiled_cfg;
 
     public static int counter = 0;

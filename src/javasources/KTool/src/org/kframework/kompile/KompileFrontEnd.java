@@ -142,7 +142,7 @@ public class KompileFrontEnd {
             genericCompile(options, backend, options.experimental.step, context);
         }
         
-        BinaryLoader.save(new File(context.dotk, "kompile-options.bin").getAbsolutePath(), options);
+        BinaryLoader.save(new File(context.dotk, "context.bin").getAbsolutePath(), context);
 
         verbose(context);
     }

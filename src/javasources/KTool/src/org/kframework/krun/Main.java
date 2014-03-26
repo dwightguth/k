@@ -32,10 +32,8 @@ import org.fusesource.jansi.AnsiConsole;
 import org.kframework.backend.java.ksimulation.Waitor;
 import org.kframework.backend.java.symbolic.JavaSymbolicKRun;
 import org.kframework.backend.maude.krun.MaudeKRun;
-import org.kframework.backend.unparser.UnparserFilterNew;
+import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.compile.ConfigurationCleaner;
-import org.kframework.compile.FlattenModules;
-import org.kframework.compile.transformers.AddTopCellConfig;
 import org.kframework.compile.transformers.Cell2DataStructure;
 import org.kframework.compile.utils.CompilerStepDone;
 import org.kframework.compile.utils.RuleCompilerSteps;
@@ -408,7 +406,7 @@ public class Main {
                 // the KStatue, KSearchResults, and KTestGenerates a definition field.
                 if(result.getResult() instanceof KRunState){
                     
-                    UnparserFilterNew printer = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                    UnparserFilter printer = new UnparserFilter(true, K.color, K.parens, context);
                     ((KRunState)(result.getResult())).getResult().accept(printer);
                     output = printer.getResult();
                 } else if (result.getResult() instanceof SearchResults) {
@@ -417,7 +415,7 @@ public class Main {
                     for (SearchResult solution : ((SearchResults)result.getResult()).getSolutions()) {
                         Map<String, Term> substitution = solution.getSubstitution();
                         if (((SearchResults)result.getResult()).isDefaultPattern()) {
-                            UnparserFilterNew unparser = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                            UnparserFilter unparser = new UnparserFilter(true, K.color, K.parens, context);
                             substitution.get("B:Bag").accept(unparser);
                             solutionStrings.add("\n" + unparser.getResult());
                         } else {
@@ -425,7 +423,7 @@ public class Main {
                             
                             StringBuilder varStringBuilder = new StringBuilder();
                             for (String variable : substitution.keySet()) {
-                                UnparserFilterNew unparser = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                                UnparserFilter unparser = new UnparserFilter(true, K.color, K.parens, context);
                                 substitution.get(variable).accept(unparser);
                                 varStringBuilder.append("\n" + variable + " -->\n" + unparser.getResult());
                                 empty = false;
@@ -460,7 +458,7 @@ public class Main {
                         // TODO(YilongL): how to set state id?
                         sb.append("\n\nTest case " + n /*+ ", State " + testGenResult.getState().getStateId()*/ + ":");
                         
-                        UnparserFilterNew t = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                        UnparserFilter t = new UnparserFilter(true, K.color, K.parens, context);
                         Term concretePgm = KRunState.concretize(testGenResult.getGeneratedProgram(), context);
                         concretePgm.accept(t);
                         // sb.append("\nProgram:\n" + testGenResult.getGeneratedProgram()); // print abstract syntax form
@@ -469,14 +467,14 @@ public class Main {
                         Map<String, Term> substitution = testGenResult.getSubstitution();
 
                         if (((TestGenResults)result.getResult()).isDefaultPattern()) {
-                            UnparserFilterNew unparser = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                            UnparserFilter unparser = new UnparserFilter(true, K.color, K.parens, context);
                             substitution.get("B:Bag").accept(unparser);
                             sb.append("\n" + unparser.getResult());
                         } else {
                             boolean empty = true;
 
                             for (String variable : substitution.keySet()) {
-                                UnparserFilterNew unparser = new UnparserFilterNew(true, K.color, K.parens, context,K.definition);
+                                UnparserFilter unparser = new UnparserFilter(true, K.color, K.parens, context);
                                 sb.append("\n" + variable + " -->");
                                 substitution.get(variable).accept(unparser);
                                 sb.append("\n" + unparser.getResult());
@@ -884,42 +882,14 @@ public class Main {
         org.kframework.kil.Term KAST = null;
         RunProcess rp = new RunProcess();
 
-        if (!context.initialized) {
-            String path = K.compiled_def + "/defx-" + K.backend + ".bin";
-            Definition javaDef;
-            if (new File(path).exists()) {
-                javaDef = (Definition) BinaryLoader.load(K.compiled_def + "/defx-" + K.backend + ".bin");
-            } else {
-                GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
-                        KExceptionGroup.CRITICAL,
-                        "Could not find compiled definition for backend '" + K.backend + "'.\n" +
-                                "Please ensure this backend has been kompiled."));
-                throw new AssertionError("unreachable");
-            }
-
-            // This is essential for generating maude
-            javaDef = new FlattenModules(context).compile(javaDef, null);
-
-            try {
-                javaDef = (Definition) javaDef
-                        .accept(new AddTopCellConfig(context));
-            } catch (TransformerException e) {
-                e.report();
-            }
-
-            javaDef.preprocess(context);
-
-            K.definition = javaDef;
-
-            K.kompiled_cfg = (org.kframework.kil.Configuration)
+        K.kompiled_cfg = (org.kframework.kil.Configuration)
                 BinaryLoader.load(K.compiled_def + "/configuration.bin");
-        }
-
+        
         if (!cmd.hasOption("main-module")) {
-            K.main_module = K.definition.getMainModule();
+            K.main_module = context.kompileOptions.mainModule();
         }
         if (!cmd.hasOption("syntax-module")) {
-            K.syntax_module = K.definition.getMainSyntaxModule();
+            K.syntax_module = context.kompileOptions.syntaxModule();
         }
 
         if (K.pgm != null) {
@@ -1308,17 +1278,16 @@ public class Main {
                         + "\nPlease compile the definition by using `kompile'.");
             }
             
-            KompileOptions kompileOptions = BinaryLoader.load(KompileOptions.class, new File(compiledFile, "kompile-options.bin").getAbsolutePath());
+            Context context = BinaryLoader.load(Context.class, new File(compiledFile, "context.bin").getAbsolutePath());
+            KompileOptions kompileOptions = context.kompileOptions;
             //merge krun options into kompile options object
-            kompileOptions.global = globalOptions;
-            kompileOptions.experimental.parser = parserOptions;
+            context.merge(globalOptions, parserOptions);
             //merge kompile options into K static object
             //TODO(dwightguth): fix this when org.kframework.krun.K is deleted
             if (!cmd.hasOption("backend")) {
                 K.backend = kompileOptions.backend.name();
             }
             
-            Context context = new Context(kompileOptions);
             K.init(context);
 
             context.dotk = new File(
@@ -1344,54 +1313,17 @@ public class Main {
             Term KAST = null;
             RunProcess rp = new RunProcess();
 
-            if (!context.initialized) {
-                String path = K.compiled_def + "/defx-" + K.backend + ".bin";
-                Definition javaDef;
-                if (new File(path).exists()) {
-                    javaDef = (Definition) BinaryLoader.load(K.compiled_def + "/defx-" + K.backend + ".bin");
-                } else {
-                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
-                            KExceptionGroup.CRITICAL,
-                            "Could not find compiled definition for backend '" + K.backend + "'.\n" +
-                                    "Please ensure this backend has been kompiled."));
-                    throw new AssertionError("unreachable");
-                }
+                
+            K.kompiled_cfg = (org.kframework.kil.Configuration)
+                BinaryLoader.load(K.compiled_def + "/configuration.bin");
 
-                sw.printIntermediate("Reading definition from binary");
-
-                // This is essential for generating maude
-                javaDef = new FlattenModules(context).compile(javaDef, null);
-
-                sw.printIntermediate("Flattening modules");
-
-                try {
-                    javaDef = (Definition) javaDef
-                            .accept(new AddTopCellConfig(context));
-                } catch (TransformerException e) {
-                    e.report();
-                }
-
-                sw.printIntermediate("Adding top cell to configuration");
-
-                javaDef.preprocess(context);
-
-                sw.printIntermediate("Preprocessing definition");
-
-                K.definition = javaDef;
-
-                sw.printIntermediate("Importing tables");
-
-                K.kompiled_cfg = (org.kframework.kil.Configuration)
-                    BinaryLoader.load(K.compiled_def + "/configuration.bin");
-
-                sw.printIntermediate("Reading configuration from binary");
-            }
+            sw.printIntermediate("Reading configuration from binary");
 
             if (!cmd.hasOption("main-module")) {
-                K.main_module = K.definition.getMainModule();
+                K.main_module = kompileOptions.mainModule();
             }
             if (!cmd.hasOption("syntax-module")) {
-                K.syntax_module = K.definition.getMainSyntaxModule();
+                K.syntax_module = kompileOptions.syntaxModule();
             }
 
             sw.printIntermediate("Resolving main and syntax modules");

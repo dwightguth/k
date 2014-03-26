@@ -162,19 +162,29 @@ public class Context implements Serializable {
     public KompileOptions kompileOptions;
     public transient ExperimentalParserOptions experimentalParserOptions;
     
-    public Context(GlobalOptions globalOptions) {
-        this.globalOptions = globalOptions;
+    public Context() {
         initSubsorts();
     }
     
+    public Context(GlobalOptions globalOptions) {
+        this();
+        this.merge(globalOptions, null);
+    }
+    
     public Context(GlobalOptions globalOptions, ExperimentalParserOptions experimentalParserOptions) {
-        this(globalOptions);
-        this.experimentalParserOptions = experimentalParserOptions;
+        this();
+        this.merge(globalOptions, experimentalParserOptions);
     }
     
     public Context(KompileOptions kompileOptions) {
-        this(kompileOptions.global, kompileOptions.experimental.parser);
+        this();
+        this.merge(kompileOptions.global, kompileOptions.experimental.parser);
         this.kompileOptions = kompileOptions;
+    }
+    
+    public void merge(GlobalOptions globalOptions, ExperimentalParserOptions experimentalParserOptions) {
+        this.globalOptions = globalOptions;
+        this.experimentalParserOptions = experimentalParserOptions;
     }
 
     public void putLabel(Production p, String cons) {
