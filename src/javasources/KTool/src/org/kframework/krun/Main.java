@@ -246,7 +246,7 @@ public class Main {
             //Set<String> varNames = null;
             Rule patternRule = null;
             RuleCompilerSteps steps;
-            steps = new RuleCompilerSteps(K.definition, context);
+            steps = new RuleCompilerSteps(context);
             try {
                 if (cmd.hasOption("pattern") || "search".equals(K.maude_cmd)) {
                     org.kframework.parser.concrete.KParser

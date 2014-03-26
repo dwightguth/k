@@ -8,7 +8,6 @@ import org.kframework.kil.loader.ResolveVariableAttribute;
 import org.kframework.compile.utils.CompilerStepDone;
 import org.kframework.compile.utils.RuleCompilerSteps;
 import org.kframework.kil.ASTNode;
-import org.kframework.kil.Definition;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.Term;
@@ -89,7 +88,7 @@ public class ProgramLoader {
      * 
      * Save it in kompiled cache under pgm.maude.
      */
-    public static Term processPgm(String content, String filename, Definition def, String startSymbol,
+    public static Term processPgm(String content, String filename, String startSymbol,
             Context context, GlobalSettings.ParserType whatParser) throws TransformerException {
         Stopwatch.instance().printIntermediate("Importing Files");
         assert context.definedSorts.contains(startSymbol) : "The start symbol must be declared in the definition. Found: " + startSymbol;
@@ -110,7 +109,7 @@ public class ProgramLoader {
                 out = out.accept(new AddEmptyLists(context));
                 out = out.accept(new RemoveSyntacticCasts(context));
                 try {
-                    out = new RuleCompilerSteps(def, context).compile(
+                    out = new RuleCompilerSteps(context).compile(
                             new Rule((Sentence) out),
                             null);
                 } catch (CompilerStepDone e) {

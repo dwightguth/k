@@ -51,7 +51,7 @@ public class KRunApiDebugger implements KRunDebugger {
                     context);
             CollectVariablesVisitor vars = new CollectVariablesVisitor(context);
             pattern.accept(vars);
-            defaultPatternInfo = new RuleCompilerSteps(K.definition, context);
+            defaultPatternInfo = new RuleCompilerSteps(context);
             pattern = defaultPatternInfo.compile(new Rule((Sentence) pattern), null);
 
             defaultPattern = (Rule) pattern;

@@ -222,7 +222,7 @@ public class RLBackend extends BasicBackend implements Backend {
                     "Command line pattern",
                     KSorts.BAG,
                     context);
-            defaultPatternInfo = new RuleCompilerSteps(javaDef, context);
+            defaultPatternInfo = new RuleCompilerSteps(context);
             pattern = defaultPatternInfo.compile(new Rule((Sentence) pattern),
                     null);
             defaultPattern = (Rule) pattern;

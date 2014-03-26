@@ -1,7 +1,6 @@
 package org.kframework.compile.utils;
 
 import org.kframework.compile.transformers.*;
-import org.kframework.kil.Definition;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
@@ -19,7 +18,7 @@ public class RuleCompilerSteps extends CompilerSteps<Rule> {
         return vars;
     }
 
-    public RuleCompilerSteps(Definition def, Context context) {
+    public RuleCompilerSteps(Context context) {
         super(context);
         this.add(new AddKCell(context));
         this.add(new AddTopCellRules(context));
@@ -27,9 +26,6 @@ public class RuleCompilerSteps extends CompilerSteps<Rule> {
         this.add(new ResolveSyntaxPredicates(context));
         this.add(new ResolveListOfK(context));
         this.add(new FlattenTerms(context));
-        ConfigurationStructureVisitor cfgStrVisitor = new ConfigurationStructureVisitor(context);
-        def.accept(cfgStrVisitor);
-        context.setMaxConfigurationLevel(cfgStrVisitor.getMaxLevel());
         final ResolveContextAbstraction resolveContextAbstraction =
                 new ResolveContextAbstraction(context);
         this.add(resolveContextAbstraction);

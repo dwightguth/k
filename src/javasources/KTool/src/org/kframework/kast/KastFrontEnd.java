@@ -6,8 +6,6 @@ import org.apache.commons.cli.CommandLine;
 import org.kframework.backend.maude.MaudeFilter;
 import org.kframework.backend.unparser.IndentationOptions;
 import org.kframework.backend.unparser.KastFilter;
-import org.kframework.compile.FlattenModules;
-import org.kframework.compile.transformers.AddTopCellConfig;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.exceptions.TransformerException;
@@ -16,7 +14,6 @@ import org.kframework.krun.Main;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.ExperimentalParserOptions;
 import org.kframework.parser.ProgramLoader;
-import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
@@ -100,7 +97,6 @@ public class KastFrontEnd {
             pgm = FileUtil.getFileContent(mainFile.getAbsolutePath());
         }
 
-        org.kframework.kil.Definition javaDef = null;
         String directory;
         if (cmd.hasOption("directory")) {
             directory = new File(cmd.getOptionValue("directory")).getAbsolutePath();
@@ -147,21 +143,13 @@ public class KastFrontEnd {
                                 defXml.getAbsolutePath()));
                     }
                 }
-
-                javaDef = (org.kframework.kil.Definition) BinaryLoader.load(defXml.toString());
-                javaDef = new FlattenModules(context).compile(javaDef, null);
-                javaDef = (org.kframework.kil.Definition) javaDef.accept(new AddTopCellConfig(
-                        context));
-                // This is essential for generating maude
-                javaDef.preprocess(context);
             } else {
                 String msg = "Could not find a valid compiled definition. Use --directory to specify one.";
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, msg, "command line", new File(".").getAbsolutePath()));
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (TransformerException e) {
-            e.printStackTrace();
+            System.exit(1);
         }
 
         boolean prettyPrint = false;
@@ -211,7 +199,7 @@ public class KastFrontEnd {
         }
 
         try {
-            ASTNode out = ProgramLoader.processPgm(pgm, path, javaDef, sort, context, GlobalSettings.whatParser);
+            ASTNode out = ProgramLoader.processPgm(pgm, path, sort, context, GlobalSettings.whatParser);
             StringBuilder kast;
             if (prettyPrint) {
                 KastFilter kastFilter = new KastFilter(indentationOptions, nextline, context);
