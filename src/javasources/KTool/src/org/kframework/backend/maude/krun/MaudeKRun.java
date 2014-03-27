@@ -110,6 +110,7 @@ public class MaudeKRun implements KRun {
         }
         cmd.append(getCounter());
 
+        sw.printIntermediate("Preparing maude input");
         executeKRun(cmd);
         sw.printIntermediate("Execution");
         try {

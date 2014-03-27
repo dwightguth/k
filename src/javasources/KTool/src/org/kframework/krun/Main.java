@@ -138,10 +138,11 @@ public class Main {
             cfgCleaned = ((Configuration) cfgCleanedNode).getBody();
         }
 
-        sw.printIntermediate("Plug configuration variables");
 
         Term configuration = (Term) cfgCleaned.accept(new SubstitutionFilter(args, context));
         configuration = (Term) configuration .accept(new Cell2DataStructure(context));
+
+        sw.printIntermediate("Plug configuration variables");
         return configuration;
     }
 
@@ -1278,7 +1279,12 @@ public class Main {
                         + "\nPlease compile the definition by using `kompile'.");
             }
             
+            sw.printIntermediate("Locating compiled definition");
+            
             Context context = BinaryLoader.load(Context.class, new File(compiledFile, "context.bin").getAbsolutePath());
+            
+            sw.printIntermediate("Deserializing compiled definition");
+            
             KompileOptions kompileOptions = context.kompileOptions;
             //merge krun options into kompile options object
             context.merge(globalOptions, parserOptions);
@@ -1306,7 +1312,7 @@ public class Main {
              * System.out.println("K.compiled_def=" + K.compiled_def);
              */
 
-            sw.printIntermediate("Checking compiled definition");
+            sw.printIntermediate("Loading compiled definition");
 
             // in KAST variable we obtain the output from running kast process
             // on a program defined in K

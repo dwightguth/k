@@ -7,6 +7,10 @@ import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.utils.xml.XML;
 import org.w3c.dom.Element;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +25,7 @@ import java.util.List;
  *
  * @see ASTNode
  */
-public class Attributes extends ASTNode {
+public class Attributes extends ASTNode implements Externalizable {
 
     protected java.util.List<Attribute> contents;
 
@@ -163,5 +167,35 @@ public class Attributes extends ASTNode {
         Attributes result = new Attributes();
         result.contents.addAll(contents);
         return result;
+    }
+//
+    @SuppressWarnings("unchecked")
+    @Override
+    public void readExternal(ObjectInput input) throws IOException,
+            ClassNotFoundException {
+        int length = input.readInt();
+        contents = new ArrayList<Attribute>(length);
+        for (int i = 0; i < length; i++) {
+            String key = input.readUTF();
+            String val = input.readUTF();
+            contents.add(new Attribute(key, val));
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput output) throws IOException {
+        List<Attribute> attrsToSerialize = new ArrayList<Attribute>();
+        for (Attribute attr : contents) {
+            //TODO(dwightguth): clean this code up once we have a better attribute framework
+            if (attr.getKey().equals("location") || attr.getKey().equals("filename")) {
+                continue;
+            }
+            attrsToSerialize.add(attr);
+        }
+        output.writeInt(attrsToSerialize.size());
+        for (Attribute attr : attrsToSerialize) {
+            output.writeUTF(attr.getKey());
+            output.writeUTF(attr.getValue());
+        }
     }
 }

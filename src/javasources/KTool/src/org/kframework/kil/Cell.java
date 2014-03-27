@@ -1,5 +1,6 @@
 package org.kframework.kil;
 
+import java.io.Externalizable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

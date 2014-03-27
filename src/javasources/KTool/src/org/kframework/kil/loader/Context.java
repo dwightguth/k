@@ -2,8 +2,11 @@ package org.kframework.kil.loader;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
@@ -60,11 +63,11 @@ public class Context implements Serializable {
         "]",
         "{",
         "}");
-
+    
     /**
      * Represents the bijection map between conses and productions.
      */
-    public BiMap<String, Production> conses = HashBiMap.create();
+    public transient BiMap<String, Production> conses = HashBiMap.create();
     /**
      * Represents a map from all Klabels in string representation plus two
      * strings, "cons" and "prefixlabel", to sets of corresponding productions.
@@ -73,28 +76,28 @@ public class Context implements Serializable {
      * production "getKLabel" K is in the values of both "cons" and "prefix".
      * why?
      */
-    public Map<String, Set<Production>> productions = new HashMap<String, Set<Production>>();
+    public transient Map<String, Set<Production>> productions = new HashMap<String, Set<Production>>();
     /**
      * Represents a map from all labels (KLabels and prefix-labels) to sets of
      * corresponding conses in string representation.
      */
-    public Map<String, Set<String>> labels = new HashMap<String, Set<String>>();
+    public transient Map<String, Set<String>> labels = new HashMap<String, Set<String>>();
     public Map<String, Cell> cells = new HashMap<String, Cell>();
     public Map<String, String> cellKinds = new HashMap<String, String>();
     public Map<String, String> cellSorts = new HashMap<String, String>();
-    public Map<String, Production> listConses = new HashMap<String, Production>();
-    public Map<String, Set<String>> listLabels = new HashMap<String, Set<String>>();
-    public Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
+    public transient Map<String, Production> listConses = new HashMap<String, Production>();
+    public transient Map<String, Set<String>> listLabels = new HashMap<String, Set<String>>();
+    public transient Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
     public Map<String, Set<Production>> associativity = new HashMap<String, Set<Production>>();
     private Poset subsorts = new Poset();
     public java.util.Set<String> definedSorts = Sort.getBaseSorts();
     private Poset priorities = new Poset();
-    private Poset modules = new Poset();
-    private Poset fileRequirements = new Poset();
+    private transient Poset modules = new Poset();
+    private transient Poset fileRequirements = new Poset();
     public String startSymbolPgm = "K";
     public Map<String, String> configVarSorts = new HashMap<String, String>();
-    public File dotk = null;
-    public File kompiled = null;
+    public transient File dotk = null;
+    public transient File kompiled = null;
     public boolean initialized = false;
     protected java.util.List<String> komputationCells = null;
     public Map<String, CellDataStructure> cellDataStructures = new HashMap<>();
@@ -510,6 +513,30 @@ public class Context implements Serializable {
         assert !initialized;
 
         this.tokenSorts = new HashSet<String>(tokenSorts);
+    }
+
+    private Production[] serializationViewOfProductions;
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        serializationViewOfProductions = new Production[conses.values().size()];
+        conses.values().toArray(serializationViewOfProductions);
+        out.defaultWriteObject();
+    }
+     
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        conses = HashBiMap.create();
+        labels = new HashMap<>();
+        listConses = new HashMap<>();
+        listLabels = new HashMap<>();
+        for (Production p : serializationViewOfProductions) {
+            conses.put(p.getCons(), p);
+            putLabel(p, p.getCons());
+
+            if (p.isListDecl()) {
+                listConses.put(p.getSort(), p);
+                putListLabel(p);
+            }
+        }
     }
 
 }

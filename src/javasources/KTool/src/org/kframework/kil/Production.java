@@ -6,13 +6,17 @@ import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
 import org.kframework.kil.visitors.exceptions.TransformerException;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A production. Any explicit attributes on the production are stored in {@link ASTNode#attributes}.
  */
-public class Production extends ASTNode {
+public class Production extends ASTNode implements Externalizable {
 
     /*
      * Andrei S: It appears that the cons attribute is mandatory for all new production added during compilation, otherwise a null pointer exception can be thrown in one of the later compilation
@@ -211,8 +215,8 @@ public class Production extends ASTNode {
             if (!prd.getItems().get(i).equals(items.get(i)))
                 return false;
         }
-        String klabel1 = prd.getAttributes().get("klabel");
-        String klabel2 = getAttributes().get("klabel");
+        String klabel1 = prd.getKLabel();
+        String klabel2 = getKLabel();
         if ((klabel1 == null && klabel2 != null) || (klabel1 != null && klabel2 == null)) {
             return false;
         }
@@ -298,5 +302,34 @@ public class Production extends ASTNode {
 
     public void setBinderMap(Multimap<Integer, Integer> binderMap) {
         this.binderMap = binderMap;
+    }
+    
+    public Production() {}
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException,
+            ClassNotFoundException {
+        items = new ArrayList<>();
+        attributes = (Attributes) in.readObject();
+        ownerModuleName = (String)in.readObject();
+        sort = (String)in.readObject();
+        int size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            items.add((ProductionItem)in.readObject());
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        // TODO Auto-generated method stub
+        out.writeObject(attributes);
+        out.writeObject(ownerModuleName);
+        out.writeObject(sort);
+        out.writeInt(items.size());
+        for(ProductionItem item : items) {
+            ProductionItem copy = (ProductionItem)item.shallowCopy();
+            copy.attributes = null;
+            out.writeObject(copy);
+        }
     }
 }

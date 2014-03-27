@@ -29,6 +29,7 @@ public class BinaryLoader {
             e.printStackTrace();
             System.exit(1);
         } catch (IOException e) {
+            e.printStackTrace();
             GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, "Kompiled definition is out of date with latest version of the K tool. Please re-run kompile and try again."));
         }
         return null;
