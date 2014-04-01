@@ -1,6 +1,9 @@
 package org.kframework.kil;
 
 import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +13,7 @@ import java.util.Map.Entry;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.matchers.Matcher;
+import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
 import org.kframework.kil.visitors.exceptions.TransformerException;
@@ -46,7 +50,7 @@ import aterm.ATermList;
  * <p>
  * Cell attributes are in {@link #cellAttributes}, not {@link #attributes}.
  */
-public class Cell extends Term {
+public class Cell extends Term  {
     /** Possible values for the multiplicity attribute */
     public enum Multiplicity {
         ONE, MAYBE, ANY, SOME,
@@ -341,5 +345,32 @@ public class Cell extends Term {
         }
         return cells;
     }
+//
+//    @Override
+//    public void readExternal(ObjectInput in) throws IOException,
+//            ClassNotFoundException {
+//        String label = (String)in.readObject();
+//        this.label = label;
+//        this.endLabel = label;
+//        this.contents = (Term) in.readObject();
+//    }
+//
+//    @Override
+//    public void writeExternal(ObjectOutput out) throws IOException {
+//        out.writeObject(label);
+//        try {
+//            Term contents = (Term)this.contents.accept(new CopyOnWriteTransformer("StripAttributes", null) {
+//                @Override
+//                public ASTNode transform(Attributes node)
+//                        throws TransformerException {
+//                    return null;
+//                }
+//            });
+//            out.writeObject(contents);
+//        } catch (TransformerException e) {
+//            e.printStackTrace();
+//            System.exit(1);
+//        }
+//    }
     
 }

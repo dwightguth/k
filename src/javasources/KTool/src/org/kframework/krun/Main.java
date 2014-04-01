@@ -929,6 +929,16 @@ public class Main {
          /* printKRunUsageE(cmd_options); */ /* TODO: Switch to this when the user has tried to use an experimental option. */
             System.exit(1);
         }
+        
+        // set verbose
+        // do this as soon as possible so we can bootstrap the stopwatch
+        if (cmd.hasOption("verbose")) {
+            globalOptions.verbose = true;
+        }
+        
+        globalOptions.initialize();
+        
+        sw.printIntermediate("Init");
 
         if (!cmd.hasOption("debug-info")) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -942,19 +952,12 @@ public class Main {
             });
         }
 
-        // set verbose
-        if (cmd.hasOption("verbose")) {
-            globalOptions.verbose = true;
-        }
+        sw.printIntermediate("Deleting temporary krun directory");
         
-        globalOptions.initialize();
-
         // set fast-kast
         if (cmd.hasOption("fast-kast")) {
             parserOptions.fastKast = true;
         }
-
-        sw.printIntermediate("Deleting temporary krun directory");
 
         try {
             K.do_concrete_exec = true;

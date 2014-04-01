@@ -24,7 +24,10 @@ public class CopyOnWriteTransformer implements Transformer {
     public CopyOnWriteTransformer(String name, Context context) {
         this.name = name;
         this.context = context;
-        this.kompileOptions = context.kompileOptions;
+        //TODO(dwightguth): replace with dependency injection
+        if (context != null) {
+            this.kompileOptions = context.kompileOptions;
+        }
     }
 
     @Override

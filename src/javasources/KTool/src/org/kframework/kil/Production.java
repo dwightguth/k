@@ -321,7 +321,6 @@ public class Production extends ASTNode implements Externalizable {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        // TODO Auto-generated method stub
         out.writeObject(attributes);
         out.writeObject(ownerModuleName);
         out.writeObject(sort);

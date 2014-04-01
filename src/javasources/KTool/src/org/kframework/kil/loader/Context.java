@@ -82,37 +82,28 @@ public class Context implements Serializable {
      * corresponding conses in string representation.
      */
     public transient Map<String, Set<String>> labels = new HashMap<String, Set<String>>();
-    public Map<String, Cell> cells = new HashMap<String, Cell>();
-    public Map<String, String> cellKinds = new HashMap<String, String>();
-    public Map<String, String> cellSorts = new HashMap<String, String>();
+    public transient Map<String, Cell> cells = new HashMap<String, Cell>();
+    public transient Map<String, String> cellKinds = new HashMap<String, String>();
+    public transient Map<String, String> cellSorts = new HashMap<String, String>();
     public transient Map<String, Production> listConses = new HashMap<String, Production>();
     public transient Map<String, Set<String>> listLabels = new HashMap<String, Set<String>>();
     public transient Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
-    public Map<String, Set<Production>> associativity = new HashMap<String, Set<Production>>();
+    public transient Map<String, Set<Production>> associativity = new HashMap<String, Set<Production>>();
     private Poset subsorts = new Poset();
     public java.util.Set<String> definedSorts = Sort.getBaseSorts();
     private Poset priorities = new Poset();
     private transient Poset modules = new Poset();
     private transient Poset fileRequirements = new Poset();
     public String startSymbolPgm = "K";
-    public Map<String, String> configVarSorts = new HashMap<String, String>();
+    public transient Map<String, String> configVarSorts = new HashMap<String, String>();
     public transient File dotk = null;
     public transient File kompiled = null;
     public boolean initialized = false;
-    protected java.util.List<String> komputationCells = null;
+    protected transient java.util.List<String> komputationCells = null;
     public Map<String, CellDataStructure> cellDataStructures = new HashMap<>();
     public Set<String> variableTokenSorts = new HashSet<>();
 
     public int numModules, numSentences, numProductions, numCells;
-
-    public void printStatistics() {
-        Formatter f = new Formatter(System.out);
-        f.format("%n");
-        f.format("%-60s = %5d%n", "Number of Modules", numModules);
-        f.format("%-60s = %5d%n", "Number of Sentences", numSentences);
-        f.format("%-60s = %5d%n", "Number of Productions", numProductions);
-        f.format("%-60s = %5d%n", "Number of Cells", numCells);
-    }
 
     /**
      * The two structures below are populated by the InitializeConfigurationStructure step of the compilation.
@@ -131,34 +122,6 @@ public class Context implements Serializable {
      * {@link Set} of the names of the sorts with lexical productions.
      */
     private Set<String> tokenSorts;
-
-    
-    public java.util.List<String> getKomputationCells() {
-        return kompileOptions.experimental.kCells;
-    }
-
-    public ConfigurationStructureMap getConfigurationStructureMap() {
-        return configurationStructureMap;
-    }
-
-    public int getMaxConfigurationLevel() {
-        return maxConfigurationLevel;
-    }
-
-    public void setMaxConfigurationLevel(int maxConfigurationLevel) {
-        this.maxConfigurationLevel = maxConfigurationLevel;
-    }
-
-    private void initSubsorts() {
-        subsorts.addRelation(KSorts.KLIST, "K");
-        subsorts.addRelation(KSorts.KLIST, "KResult");
-        subsorts.addRelation("K", "KResult");
-        subsorts.addRelation("K", KSorts.KITEM);
-        subsorts.addRelation("Map", "MapItem");
-        subsorts.addRelation("Set", "SetItem");
-        subsorts.addRelation("List", "ListItem");
-        subsorts.addRelation("Bag", "BagItem");        
-    }
 
     // TODO(dwightguth): remove these fields and replace with injected dependencies
     public transient GlobalOptions globalOptions;
@@ -188,6 +151,42 @@ public class Context implements Serializable {
     public void merge(GlobalOptions globalOptions, ExperimentalParserOptions experimentalParserOptions) {
         this.globalOptions = globalOptions;
         this.experimentalParserOptions = experimentalParserOptions;
+    }
+    
+    private void initSubsorts() {
+        subsorts.addRelation(KSorts.KLIST, "K");
+        subsorts.addRelation(KSorts.KLIST, "KResult");
+        subsorts.addRelation("K", "KResult");
+        subsorts.addRelation("K", KSorts.KITEM);
+        subsorts.addRelation("Map", "MapItem");
+        subsorts.addRelation("Set", "SetItem");
+        subsorts.addRelation("List", "ListItem");
+        subsorts.addRelation("Bag", "BagItem");        
+    }
+    
+    public void printStatistics() {
+        Formatter f = new Formatter(System.out);
+        f.format("%n");
+        f.format("%-60s = %5d%n", "Number of Modules", numModules);
+        f.format("%-60s = %5d%n", "Number of Sentences", numSentences);
+        f.format("%-60s = %5d%n", "Number of Productions", numProductions);
+        f.format("%-60s = %5d%n", "Number of Cells", numCells);
+    }
+    
+    public java.util.List<String> getKomputationCells() {
+        return kompileOptions.experimental.kCells;
+    }
+
+    public ConfigurationStructureMap getConfigurationStructureMap() {
+        return configurationStructureMap;
+    }
+
+    public int getMaxConfigurationLevel() {
+        return maxConfigurationLevel;
+    }
+
+    public void setMaxConfigurationLevel(int maxConfigurationLevel) {
+        this.maxConfigurationLevel = maxConfigurationLevel;
     }
 
     public void putLabel(Production p, String cons) {
@@ -516,9 +515,12 @@ public class Context implements Serializable {
     }
 
     private Production[] serializationViewOfProductions;
+    private Cell[] serializationViewOfCells;
     private void writeObject(ObjectOutputStream out) throws IOException {
         serializationViewOfProductions = new Production[conses.values().size()];
         conses.values().toArray(serializationViewOfProductions);
+        serializationViewOfCells = new Cell[cells.values().size()];
+        cells.values().toArray(serializationViewOfCells);
         out.defaultWriteObject();
     }
      
@@ -528,6 +530,9 @@ public class Context implements Serializable {
         labels = new HashMap<>();
         listConses = new HashMap<>();
         listLabels = new HashMap<>();
+        cells = new HashMap<>();
+        cellKinds = new HashMap<>();
+        cellSorts = new HashMap<>();
         for (Production p : serializationViewOfProductions) {
             conses.put(p.getCons(), p);
             putLabel(p, p.getCons());
@@ -536,6 +541,9 @@ public class Context implements Serializable {
                 listConses.put(p.getSort(), p);
                 putListLabel(p);
             }
+        }
+        for (Cell c : serializationViewOfCells) {
+            addCellDecl(c);
         }
     }
 

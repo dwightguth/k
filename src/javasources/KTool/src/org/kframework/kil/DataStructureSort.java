@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class DataStructureSort implements Serializable {
 
-    public enum Label { CONSTRUCTOR, ELEMENT, UNIT }
+    public static enum Label { CONSTRUCTOR, ELEMENT, UNIT }
 
     /** {@code Set} of builtin data structure types */
     public static final java.util.Set<String> TYPES = ImmutableSet.of(
