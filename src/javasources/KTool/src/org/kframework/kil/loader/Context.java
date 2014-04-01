@@ -89,6 +89,7 @@ public class Context implements Serializable {
     public transient Map<String, Set<String>> listLabels = new HashMap<String, Set<String>>();
     public transient Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
     public transient Map<String, Set<Production>> associativity = new HashMap<String, Set<Production>>();
+    public Map<String, Production> canonicalBracketForSort = new HashMap<>();
     private Poset subsorts = new Poset();
     public java.util.Set<String> definedSorts = Sort.getBaseSorts();
     private Poset priorities = new Poset();
@@ -516,6 +517,7 @@ public class Context implements Serializable {
 
     private Production[] serializationViewOfProductions;
     private Cell[] serializationViewOfCells;
+
     private void writeObject(ObjectOutputStream out) throws IOException {
         serializationViewOfProductions = new Production[conses.values().size()];
         conses.values().toArray(serializationViewOfProductions);
