@@ -88,6 +88,10 @@ public class Production extends ASTNode {
     public boolean isConstant() {
         return isTerminal() && (sort.startsWith("#") || sort.equals(KSorts.KLABEL));
     }
+    
+    public boolean isBracket() {
+        return getArity() == 1 && getAttribute(Attribute.BRACKET.getKey()) != null;
+    }
 
     /**
      * Retrieves the {@link Terminal} object of the production if this is a constant.
@@ -104,6 +108,11 @@ public class Production extends ASTNode {
      */
     public boolean isTerminal() {
         return items.size() == 1 && items.get(0) instanceof Terminal;
+    }
+    
+    public String getBracketSort() {
+        assert isBracket();
+        return getChildSort(0);
     }
 
     public Production(Production node) {
