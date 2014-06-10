@@ -7,62 +7,6 @@
     <property name="config" value="./tests/config.xml" />
     <property name="base" value="master" />
 
-	<target name="java">
-		<ant antfile="${javasources}/KTool/buildjava.xml" dir="${javasources}/KTool" />
-	</target>
-
-	<target name="jar">
-		<ant antfile="${javasources}/KTool/buildjar.xml" dir="${javasources}/KTool" />
-	</target>
-
-	<target name="build">
-		<ant antfile="${javasources}/KTool/build.xml" dir="${javasources}/KTool" />
-		<antcall target="makeversion" />	
-	</target>
-
-    <target name="test-build" depends="build">
-        <ant antfile="${javasources}/KTool/buildjava.xml" target="test-build" dir="${javasources}/KTool" />
-    </target>
-
-	<target name="clean">
-		<delete>
-			<fileset dir="${javasources}/KTool/src/org/kframework/parser/concrete/lib">
-				<include name="*.java" />
-                                <include name="*.tbl" />
-				<exclude name="string_trim_last_one_0_0.java" />
-				<exclude name="string_unescape_sort_0_0.java" />
-				<exclude name="annolocation_0_0.java" />
-				<exclude name="annolocationremove_0_0.java" />
-				<exclude name="clear_console_0_0.java" />
-				<exclude name="mergeamb_0_0.java" />
-				<exclude name="xml_string_escape_from_string_0_0.java" />
-			</fileset>
-		</delete>
-		<delete file="${javasources}/parsers/Concrete/trans/ConcreteMain.rtree" />
-		<delete file="${javasources}/parsers/Concrete/trans/ConcreteMain.dep" />
-		<delete dir="${javasources}/parsers/Concrete/trans/ConcreteMain" />
-		<delete dir="${javasources}/parsers/Concrete/include" />
-
-		<delete dir="${javasources}/KTool/lib/resources/sdf" />
-
-		<antcall target="clean-java" />
-	</target>
-
-	<target name="clean-java">
-		<delete dir="${javasources}/KTool/bin" />
-		<delete file="${javasources}/../../lib/java/k3.jar" />
-		<delete file="${javasources}/../../lib/version.txt" />
-		<delete dir="./k/" />
-                <!-- Next task is removable once everybody updates -->
-                <delete failonerror="false"> 
-                   <fileset dir="${javasources}/KTool/src/org/kframework/backend/pdmc/pda/buchi/parser" includes="*.java" />  
-                </delete>
-		<delete>
-			<fileset dir="${javasources}/KTool/src/org/kframework/parser/basic" includes="*.java" />
-			<fileset dir="${javasources}/KTool/src/org/kframework/utils/kastparser" includes="*.java" />
-		</delete>
-	</target>
-
 	<target name="makeversion">
 		<property name="version.file" value="./lib/version.txt" />
 
@@ -176,26 +120,6 @@
 	     <arg value="."/>
 	   </java>
 	</target>
-
-    <target name="junit" depends="test-build">
-       <junit fork="true" dir="${javasources}/KTool" forkmode="once" failureproperty="junit.failed">
-         <formatter type="plain" usefile="false" />
-         <classpath>
-           <pathelement location="${javasources}/KTool/bin/" />
-           <fileset dir="${javasources}/KTool/lib">
-             <include name="*.jar" />
-           </fileset>
-           <fileset dir="lib/java/">
-             <include name="*.jar" />
-           </fileset>
-         </classpath>
-         <batchtest>
-           <fileset dir="${javasources}/KTool/test" includes="**/*.java" />
-         </batchtest>
-         <jvmarg value="-ea" />
-       </junit>
-       <fail message="JUnit tests failed!" if="junit.failed" />
-    </target>
 
     <taskdef resource="checkstyletask.properties"
              classpath="${javasources}/KTool/lib/checkstyle-all.jar"/>
