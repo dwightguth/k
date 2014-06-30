@@ -1,6 +1,6 @@
 #include "cdd.h"
 
-//#define D 5.0
+#define D 5.0
 //#define T 300.0
 #define SP_MAX 600.0
 //#define VE_MAX 1200.0
@@ -9,10 +9,10 @@
 //#define E_sqv 0x1.p-30
 //#define E_sqs 0x1.p-37
 //#define E_dot 0x1.p-34
-//#define E_hlos 0x1.p-36
+#define E_hlos 0.000000000014551915228366851806640625
 //#define E_tau 0x1.p-21
 #define E_omega 0x1.p-1
-#define E_cd2d 0x2.p-1
+#define E_cd2d 0.5
 #define SPEED(v) (-SP_MAX <= (v) <= SP_MAX)
 //#define VELOCITY(v) (-VE_MAX <= (v) <= VE_MAX)
 //#define DISTANCE(x) (-DS_MAX <= (x) <= DS_MAX)
@@ -86,7 +86,7 @@ double omega_vv(double s_x, double s_y, double v_x, double v_y){
     /* else { */
     
     tau = tau_vv(s_x, s_y, v_x, v_y);
-    return sqv(v_x, v_y)*sqv(s_x, s_y) + (2 * tau)* dot(s_x, s_y, v_x, v_y) + tau*tau - D*D*sqv(v_x,v_y);
+    return sqv(v_x, v_y)*sqv(s_x, s_y) + (2.0 * tau)* dot(s_x, s_y, v_x, v_y) + tau*tau - D*D*sqv(v_x,v_y);
   
 }
 
@@ -101,4 +101,8 @@ int cd2d(double s_x, double s_y, double v_x, double v_y){
   /*@  assert horizontal_losR(s_x,s_y,D) || omega_vvR_outDr(s_x,s_y,v_x,v_y,D,0.0,T) < 0 ; */ 
   return  (horizontal_los(s_x, s_y)) ||  (omega_vv(s_x, s_y, v_x, v_y) <= E_cd2d);
    
+}
+
+int main() {
+  return cd2d(3.0, 4.0, 1.0, 1.0) * 2 + cd2d(4.0, 4.0, 1.0, 1.0);
 }
