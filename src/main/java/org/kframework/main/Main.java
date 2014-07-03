@@ -15,30 +15,12 @@ import org.kframework.utils.general.GlobalSettings;
 public class Main {
 
     /**
-     * Sets the {@code java.library.path} system property to include the native libraries
-     * directory containing extra Jar files distributed with K for this platform.
-     */
-    private static void setJavaLibraryPath() {
-        System.setProperty("java.library.path", KPaths.getJavaLibraryPath());
-
-        /* force java to reset the path (dirty hack) */
-        try {
-            Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-            fieldSysPath.setAccessible(true);
-            fieldSysPath.set(null, null);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * @param args
      *            - the running arguments for the K3 tool. First argument must be one of the following: kompile|kast|krun.
-     * @throws IOException when loadDefinition fails
+     * @throws IOException when loadDefinition fails 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Stopwatch.instance();
-        setJavaLibraryPath();
         AnsiConsole.systemInstall();
 
         boolean succeeded = true;
@@ -83,13 +65,13 @@ public class Main {
                 GlobalSettings.kem.print();
                 System.exit(1);
             }
-
+             
             GlobalSettings.kem.print();
             System.exit(succeeded ? 0 : 1);
         }
         invalidJarArguments();
     }
-
+    
     private static void invalidJarArguments() {
         System.err.println("The first argument of K3 not recognized. Try -kompile, -kast, -krun or -kpp.");
         System.exit(1);

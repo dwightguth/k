@@ -110,17 +110,6 @@
 	</target>
 
 
-	<target name="test" depends="build,junit,checkstyle">
-          <java jar="${javasources}/../../lib/java/k3.jar" fork="true" failonerror="true">
-	     <arg value="-ktest"/>
-	     <arg value="${config}"/>
-	     <arg value="-programs"/>
-	     <arg value="."/>
-	     <arg value="-results"/>
-	     <arg value="."/>
-	   </java>
-	</target>
-
     <taskdef resource="checkstyletask.properties"
              classpath="${javasources}/KTool/lib/checkstyle-all.jar"/>
 

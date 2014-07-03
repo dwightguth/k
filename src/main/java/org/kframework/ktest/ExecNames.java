@@ -3,6 +3,8 @@ package org.kframework.ktest;
 
 import org.kframework.utils.file.KPaths;
 
+import org.kframework.utils.file.KPaths;
+
 public class ExecNames {
 
     // TODO: IMO, this class is a horrible hack that needs to be removed. K3.jar should be
@@ -20,7 +22,7 @@ public class ExecNames {
     public static String getKrun() {
         return getExecutable("krun");
     }
-
+    
     public static String getKast() {
         return getExecutable("kast");
     }
