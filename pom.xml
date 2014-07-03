@@ -241,7 +241,8 @@
               <classpathPrefix>dependency</classpathPrefix>
             </manifest>
             <manifestEntries>
-              <Implementation-Build>${buildNumber}</Implementation-Build>
+              <Implementation-Revision>${buildNumber}</Implementation-Revision>
+              <Implementation-Branch>${scmBranch}</Implementation-Branch>
               <Implementation-Date>${timestamp}</Implementation-Date>
             </manifestEntries>
           </archive>
