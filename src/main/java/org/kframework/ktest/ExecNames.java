@@ -3,6 +3,8 @@ package org.kframework.ktest;
 
 import java.io.File;
 
+import org.kframework.utils.file.KPaths;
+
 public class ExecNames {
 
     // TODO: IMO, this class is a horrible hack that needs to be removed. K3.jar should be
@@ -25,17 +27,11 @@ public class ExecNames {
         return getExecutable("kast");
     }
 
-    private static String getKHome() {
-        return new File(KTest.class.getProtectionDomain().getCodeSource()
-                .getLocation().getPath()).getParentFile().getParentFile()
-                .getParentFile().getPath();
-    }
-
     public static String getExecutable(String exe) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
-            return getKHome() + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe + ".bat";
+            return KPaths.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe + ".bat";
         }
-        return getKHome() + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe;
+        return KPaths.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe;
     }
 }
