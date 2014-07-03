@@ -6,6 +6,9 @@
 .metadata
 .cache
 .idea
+.classpath
+.project
+.settings/
 *~
 junit-reports
 samples/test/
