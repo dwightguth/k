@@ -8,7 +8,7 @@ import joptsimple.OptionSpec;
 
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.K;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.krun.ioserver.main.MainServer;
 import org.kframework.krun.tasks.MaudeTask;
 
@@ -115,8 +115,8 @@ public class KRunner {
             if (!_noServer) {
                 ioServer = startServer();
             }
-            _maudeFileName = KPaths.windowfyPath(_maudeFileName);
-            _maudeCommandFileName = KPaths.windowfyPath(_maudeCommandFileName);
+            _maudeFileName = K3JarInfo.windowfyPath(_maudeFileName);
+            _maudeCommandFileName = K3JarInfo.windowfyPath(_maudeCommandFileName);
             String commandTemplate = "load {0}" + K.lineSeparator + "mod KRUNNER is including {1} ." + K.lineSeparator + "eq #TCPPORT = {2,number,#} ." + K.lineSeparator + "endm" + K.lineSeparator + "load {3}" + K.lineSeparator;
             /*_maudeFileName = _maudeFileName.replaceAll("(\\s)", "\\\1");
             _maudeCommandFileName = _maudeCommandFileName.replaceAll("(\\s)", "\\ ");*/

@@ -17,8 +17,7 @@ import org.kframework.ktest.Test.TestSuite;
 import org.kframework.main.GlobalOptions;
 import org.kframework.utils.OptionComparator;
 import org.kframework.utils.errorsystem.KException;
-import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.xml.sax.SAXException;
 
@@ -47,7 +46,7 @@ public class KTest {
         if (argParser.cmdOpts.hasOption(Constants.HELP_OPTION))
             printHelpMsg();
         else if (argParser.cmdOpts.hasOption(Constants.VERSION_OPTION))
-            printVersion();
+            K3JarInfo.printVersionMessage();
         else {
             CmdArg cmdArgs = CmdArg.validateArgs(argParser.cmdOpts);
             GlobalOptions globalOptions = new GlobalOptions();
@@ -96,10 +95,6 @@ public class KTest {
 
         org.kframework.utils.Error.helpMsg(usage, header, footer, argParser.getOptions(),
                 new OptionComparator(argParser.getOptionList()));
-    }
-
-    private void printVersion() {
-        System.out.println(FileUtil.getFileContent(KPaths.getKBase(false) + KPaths.VERSION_FILE));
     }
 
     /**

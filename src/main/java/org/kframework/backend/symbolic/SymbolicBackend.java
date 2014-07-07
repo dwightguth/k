@@ -25,7 +25,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.main.FirstStep;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class SymbolicBackend extends BasicBackend implements Backend {
     @Override
     public Definition firstStep(Definition javaDef) {
         String fileSep = System.getProperty("file.separator");
-        String propPath = KPaths.getKBase(false) + fileSep + "lib" + fileSep + "maude" +
+        String propPath = K3JarInfo.getKBase(false) + fileSep + "lib" + fileSep + "maude" +
                 fileSep;
         Properties specialMaudeHooks = new Properties();
         Properties maudeHooks = new Properties();
@@ -75,10 +75,10 @@ public class SymbolicBackend extends BasicBackend implements Backend {
 
         new MaudeBackend(sw, context).run(javaDef);
 
-        String load = "load \"" + KPaths.getKBase(true) + KPaths.MAUDE_LIB_DIR + "/k-prelude\"\n";
+        String load = "load \"" + K3JarInfo.getKBase(true) + K3JarInfo.MAUDE_LIB_DIR + "/k-prelude\"\n";
 
         // load libraries if any
-        String maudeLib = "".equals(options.experimental.lib) ? "" : "load " + KPaths.windowfyPath(new File(options.experimental.lib).getAbsolutePath()) + "\n";
+        String maudeLib = "".equals(options.experimental.lib) ? "" : "load " + K3JarInfo.windowfyPath(new File(options.experimental.lib).getAbsolutePath()) + "\n";
         load += maudeLib;
 
         final String mainModule = javaDef.getMainModule();
