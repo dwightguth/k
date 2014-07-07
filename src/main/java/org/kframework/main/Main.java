@@ -2,14 +2,12 @@
 package org.kframework.main;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import org.fusesource.jansi.AnsiConsole;
 import org.kframework.krun.K;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
-import org.kframework.utils.file.KPaths;
 import org.kframework.utils.general.GlobalSettings;
 
 public class Main {

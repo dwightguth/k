@@ -55,7 +55,7 @@ import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.kframework.utils.options.SMTOptions;
 import org.kframework.utils.options.SortedParameterDescriptions;
@@ -475,8 +475,7 @@ public class KRunFrontEnd {
             }
 
             if (options.global.version) {
-                String msg = FileUtil.getFileContent(KPaths.getKBase(false) + KPaths.VERSION_FILE);
-                System.out.print(msg);
+                K3JarInfo.printVersionMessage();
                 return true;
             }
 

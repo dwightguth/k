@@ -11,7 +11,7 @@ import org.kframework.krun.K;
 import org.kframework.krun.K.Tool;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Utility class that handles the builtin (hooked) operations and their Java
  * implementations.
- *
+ * 
  * @author AndreiS
  */
 public class BuiltinFunction {
@@ -59,7 +59,7 @@ public class BuiltinFunction {
     public BuiltinFunction(Definition definition) {
         /* initialize {@code table} */
         String separator = System.getProperty("file.separator");
-        String path = KPaths.getKBase(false) + separator + "include" + separator + "java";
+        String path = K3JarInfo.getKBase(false) + separator + "include" + separator + "java";
         Properties properties = new Properties();
 
         String propertyFile = path + separator + hookPropertiesFileName;
@@ -114,7 +114,7 @@ public class BuiltinFunction {
 
     /**
      * Invokes the Java implementation of a builtin (hooked) operation.
-     *
+     * 
      * @param context
      *            the {@code TermContext}
      * @param label
@@ -139,7 +139,7 @@ public class BuiltinFunction {
 
     /**
      * Checks if the given K label represents a builtin (hooked) operation.
-     *
+     * 
      * @param label
      *            the given K label
      * @return true if the given K label corresponds to a builtin operation;

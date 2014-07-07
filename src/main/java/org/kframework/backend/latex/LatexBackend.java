@@ -9,7 +9,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
@@ -39,7 +39,7 @@ public class LatexBackend extends BasicBackend {
         else lf = new LatexFilter(context);
         lf.visitNode(javaDef);
 
-        String kLatexStyle = KPaths.getKBase(false) + fileSep + "include" + fileSep + "latex" + fileSep + "k.sty";
+        String kLatexStyle = K3JarInfo.getKBase(false) + fileSep + "include" + fileSep + "latex" + fileSep + "k.sty";
         latexStyleFile = new File(context.dotk.getAbsolutePath() + fileSep + "k.sty");
         try {
             FileUtils.writeStringToFile(latexStyleFile, FileUtil.getFileContent(kLatexStyle));
@@ -92,10 +92,10 @@ public class LatexBackend extends BasicBackend {
     public String getDefaultStep() {
         return "FirstStep";
     }
-
+    
     @Override
     public boolean autoinclude(){
-        //When the autoinclude stuff gets worked out, uncomment this next line.
+        //When the autoinclude stuff gets worked out, uncomment this next line.        
         return !makeDocument;
         //return true;
     }

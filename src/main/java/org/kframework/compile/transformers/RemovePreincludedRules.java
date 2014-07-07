@@ -7,10 +7,10 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Rule;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 
 /**
- *
+ * 
  * @author YilongL
  */
 public class RemovePreincludedRules extends CopyOnWriteTransformer {
@@ -21,24 +21,24 @@ public class RemovePreincludedRules extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode visit(Rule node, Void _)  {
-        if ((!node.getFilename().startsWith(KPaths.getKBase(false) + File.separator + "include")
+        if ((!node.getFilename().startsWith(K3JarInfo.getKBase(false) + File.separator + "include") 
                 && !node.getFilename().startsWith(org.kframework.kil.loader.Constants.GENERATED_FILENAME))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "builtins"
                         + File.separator + "id.k"))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "builtins"
                         + File.separator + "int.k"))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "builtins"
                         + File.separator + "mint.k"))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "io"
                         + File.separator + "io.k"))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                                 + File.separator + "include" + File.separator + "builtins"
                                 + File.separator + "float.k"))
-                || (node.getFilename().equals(KPaths.getKBase(false)
+                || (node.getFilename().equals(K3JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "modules"
                         + File.separator + "k-functional-visitor.k"))) {
             return node;

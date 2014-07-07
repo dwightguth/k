@@ -10,8 +10,7 @@ import org.kframework.ktest.Config.LocationData;
 import org.kframework.ktest.Test.TestCase;
 import org.kframework.ktest.Test.TestSuite;
 import org.kframework.utils.StringUtil;
-import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.kframework.utils.options.SortedParameterDescriptions;
 import org.xml.sax.SAXException;
@@ -93,8 +92,7 @@ public class KTest {
             }
 
             if (options.getGlobal().version) {
-                String msg = FileUtil.getFileContent(KPaths.getKBase(false) + KPaths.VERSION_FILE);
-                System.out.print(msg);
+                K3JarInfo.printVersionMessage();
                 return true;
             }
             KTest ktest = new KTest(options);

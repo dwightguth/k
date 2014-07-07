@@ -25,7 +25,6 @@ import org.kframework.backend.java.kil.Z3Term;
 import org.kframework.backend.java.util.GappaPrinter;
 import org.kframework.backend.java.util.GappaServer;
 import org.kframework.backend.java.util.Utils;
-import org.kframework.backend.java.util.Z3Wrapper;
 import org.kframework.kil.ASTNode;
 import org.kframework.utils.options.SMTSolver;
 
@@ -99,10 +98,10 @@ public class SymbolicConstraint extends JavaSymbolicObject {
          * It is null is this constraint is not false.
          */
         public Equality falsifyingEquality;
-
+        
         public SymbolicUnifier.Data unifierData;
 
-        public Data(LinkedList<Equality> equalities, Map<Variable, Term> substitution,
+        public Data(LinkedList<Equality> equalities, Map<Variable, Term> substitution, 
                 TruthValue truthValue, boolean isNormal, SymbolicUnifier.Data unifierData) {
             this.equalities = equalities;
             this.substitution = substitution;
@@ -465,7 +464,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
      * one-to-one relationship between unifiers and constraints.
      */
     private final SymbolicUnifier unifier;
-
+    
     public SymbolicConstraint(Data data, TermContext context) {
         this.data = data;
         this.context = context;
@@ -481,8 +480,8 @@ public class SymbolicConstraint extends JavaSymbolicObject {
 
     public SymbolicConstraint(TermContext context) {
         this(new Data(
-                new LinkedList<Equality>(), new HashMap<Variable, Term>(), TruthValue.TRUE, true,
-                new SymbolicUnifier.Data()),
+                new LinkedList<Equality>(), new HashMap<Variable, Term>(), TruthValue.TRUE, true, 
+                new SymbolicUnifier.Data()), 
                 context);
     }
 
@@ -623,7 +622,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
 
         Boolean result = false;
         try {
-            com.microsoft.z3.Context context = Z3Wrapper.newContext();
+            com.microsoft.z3.Context context = new com.microsoft.z3.Context();
             KILtoZ3 transformer = new KILtoZ3(Collections.<Variable>emptySet(), context);
             Solver solver = context.MkSolver();
             for (Equality equality : data.equalities) {
@@ -780,7 +779,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
             rightHandSideVariables.removeAll(left.variableSet());
 
             try {
-                com.microsoft.z3.Context context = Z3Wrapper.newContext();
+                com.microsoft.z3.Context context = new com.microsoft.z3.Context();
                 KILtoZ3 transformer = new KILtoZ3(rightHandSideVariables, context);
 
                 Solver solver = context.MkSolver();

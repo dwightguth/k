@@ -8,7 +8,7 @@ import org.kframework.kil.Rule;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 
 import java.io.File;
 import java.util.List;
@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableSet;
  * Tag all the rules which are not part of K "dist/include" files with
  * 'symbolic' attribute. All the rules tagged with symbolic will suffer the
  * symbolic execution transformation steps.
- *
+ * 
  * @author andreiarusoaie
  */
 public class TagUserRules extends CopyOnWriteTransformer {
@@ -50,7 +50,7 @@ public class TagUserRules extends CopyOnWriteTransformer {
             }
 
         if ((!node.getFilename().startsWith(
-                KPaths.getKBase(false) + File.separator + "include")
+                K3JarInfo.getKBase(false) + File.separator + "include")
                 && !node.getFilename().startsWith(
                         org.kframework.kil.loader.Constants.GENERATED_FILENAME))
                 ) {
