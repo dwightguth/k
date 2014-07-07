@@ -17,7 +17,7 @@ import org.kframework.ktest.Test.TestSuite;
 import org.kframework.main.GlobalOptions;
 import org.kframework.utils.OptionComparator;
 import org.kframework.utils.errorsystem.KException;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.xml.sax.SAXException;
 
@@ -46,7 +46,7 @@ public class KTest {
         if (argParser.cmdOpts.hasOption(Constants.HELP_OPTION))
             printHelpMsg();
         else if (argParser.cmdOpts.hasOption(Constants.VERSION_OPTION))
-            K3JarInfo.printVersionMessage();
+            JarInfo.printVersionMessage();
         else {
             CmdArg cmdArgs = CmdArg.validateArgs(argParser.cmdOpts);
             GlobalOptions globalOptions = new GlobalOptions();

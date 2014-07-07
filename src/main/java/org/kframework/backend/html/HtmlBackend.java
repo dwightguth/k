@@ -7,7 +7,7 @@ import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class HtmlBackend extends BasicBackend {
     @Override
     public void run(Definition definition) throws IOException {
         String fileSep = System.getProperty("file.separator");
-        String htmlIncludePath = K3JarInfo.getKBase(false) + fileSep + "include" + fileSep + "html" + fileSep;
+        String htmlIncludePath = JarInfo.getKBase(false) + fileSep + "include" + fileSep + "html" + fileSep;
         HTMLFilter htmlFilter = new HTMLFilter(htmlIncludePath, context);
         htmlFilter.visitNode(definition);
 

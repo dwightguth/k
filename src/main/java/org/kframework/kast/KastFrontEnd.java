@@ -20,7 +20,7 @@ import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.kframework.utils.options.SortedParameterDescriptions;
 
@@ -57,7 +57,7 @@ public class KastFrontEnd {
             }
             
             if (options.global.version) {
-                K3JarInfo.printVersionMessage();
+                JarInfo.printVersionMessage();
                 return true;
             }
 

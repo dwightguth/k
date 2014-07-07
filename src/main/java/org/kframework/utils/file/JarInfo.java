@@ -15,7 +15,7 @@ import java.net.URLDecoder;
 import java.util.Date;
 import java.util.jar.Manifest;
 
-public class K3JarInfo {
+public class JarInfo {
     public static String windowfyPath(String file) {
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
             file = file.replaceFirst("([a-zA-Z]):(.*)", "/cygdrive/$1$2");
@@ -38,7 +38,7 @@ public class K3JarInfo {
      */
     public static String getKBase(boolean windowfy) {
         // String env = System.getenv("K_BASE");
-        String path = new File(K3JarInfo.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
+        String path = new File(JarInfo.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
         if (!path.endsWith(".jar"))
             path = new File(path).getParentFile().getParentFile().getAbsolutePath() + "/" + JAR_PATH;
         try {
@@ -56,17 +56,13 @@ public class K3JarInfo {
     
     public static void printVersionMessage() {
         try {
-            URL url = K3JarInfo.class.getResource("/versionMarker");
+            URL url = JarInfo.class.getResource("/versionMarker");
             JarURLConnection conn = (JarURLConnection)url.openConnection();
             Manifest mf = conn.getManifest();
             String revision = mf.getMainAttributes().getValue("Implementation-Revision");
             String branch = mf.getMainAttributes().getValue("Implementation-Branch");
             Date date = new Date(Long.parseLong(mf.getMainAttributes().getValue("Implementation-Date")));
-            if (branch.startsWith("tags/")) {
-                System.out.println("K framework release version " + branch.substring("tags/".length()));
-            } else {
-                System.out.println("K framework nightly build");
-            }
+            System.out.println("K framework version " + JarInfo.class.getPackage().getImplementationVersion());
             System.out.println("Git revision: " + revision);
             System.out.println("Git branch: " + branch);
             System.out.println("Build date: " + date.toString());

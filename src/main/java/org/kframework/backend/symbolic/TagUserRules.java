@@ -8,7 +8,7 @@ import org.kframework.kil.Rule;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 
 import java.io.File;
 import java.util.List;
@@ -50,7 +50,7 @@ public class TagUserRules extends CopyOnWriteTransformer {
             }
 
         if ((!node.getFilename().startsWith(
-                K3JarInfo.getKBase(false) + File.separator + "include")
+                JarInfo.getKBase(false) + File.separator + "include")
                 && !node.getFilename().startsWith(
                         org.kframework.kil.loader.Constants.GENERATED_FILENAME))
                 ) {
