@@ -6,7 +6,7 @@
   <name>K Framework Tool</name>
 
   <scm>
-    <connection>scm:git:git@github.com:kframework/k.git</connection>
+    <connection>scm:git:https://github.com/kframework/k.git</connection>
   </scm>
 
   <properties>
