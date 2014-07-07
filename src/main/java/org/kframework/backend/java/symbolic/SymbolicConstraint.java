@@ -26,7 +26,6 @@ import org.kframework.backend.java.symbolic.SymbolicConstraint.TruthValue;
 import org.kframework.backend.java.util.GappaPrinter;
 import org.kframework.backend.java.util.GappaServer;
 import org.kframework.backend.java.util.Utils;
-import org.kframework.backend.java.util.Z3Wrapper;
 import org.kframework.kil.ASTNode;
 import org.kframework.utils.options.SMTSolver;
 
@@ -626,7 +625,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
 
         Boolean result = false;
         try {
-            com.microsoft.z3.Context context = Z3Wrapper.newContext();
+            com.microsoft.z3.Context context = new com.microsoft.z3.Context();
             KILtoZ3 transformer = new KILtoZ3(Collections.<Variable>emptySet(), context);
             Solver solver = context.MkSolver();
             for (Equality equality : data.equalities) {
@@ -783,7 +782,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
             rightHandSideVariables.removeAll(left.variableSet());
 
             try {
-                com.microsoft.z3.Context context = Z3Wrapper.newContext();
+                com.microsoft.z3.Context context = new com.microsoft.z3.Context();
                 KILtoZ3 transformer = new KILtoZ3(rightHandSideVariables, context);
 
                 Solver solver = context.MkSolver();

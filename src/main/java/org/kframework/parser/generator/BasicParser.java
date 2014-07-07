@@ -21,7 +21,7 @@ import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 public class BasicParser {
@@ -86,7 +86,7 @@ public class BasicParser {
         File file = new File(parentFile.getCanonicalFile().getParent() + "/" + fileName);
         if (file.exists())
             return file;
-        file = new File(KPaths.getKBase(false) + "/include/" + fileName);
+        file = new File(K3JarInfo.getKBase(false) + "/include/" + fileName);
         if (file.exists())
             return file;
 
@@ -118,7 +118,7 @@ public class BasicParser {
                 }
             }
 
-            boolean predefined = file.getCanonicalPath().startsWith(KPaths.getKBase(false) + File.separator + "include");
+            boolean predefined = file.getCanonicalPath().startsWith(K3JarInfo.getKBase(false) + File.separator + "include");
             if (!predefined)
                 context.addFileRequirement(buildCanonicalPath("autoinclude.k", file).getCanonicalPath(), file.getCanonicalPath());
 

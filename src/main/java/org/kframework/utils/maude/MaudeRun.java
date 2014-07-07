@@ -5,7 +5,7 @@ import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.*;
@@ -41,7 +41,7 @@ public class MaudeRun {
         // System.out.println("OS: |" + osname + "|" + arch + "|");
         // System.out.println(KPaths.getKBase(true));
 
-        String maudeDir = KPaths.getKBase(false) + fileSeparator + KPaths.MAUDE_DIR;
+        String maudeDir = K3JarInfo.getKBase(false) + fileSeparator + K3JarInfo.MAUDE_DIR;
         String maudeExe = "maude";
 
 

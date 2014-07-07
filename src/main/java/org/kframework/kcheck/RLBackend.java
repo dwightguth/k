@@ -88,7 +88,7 @@ import org.kframework.main.FirstStep;
 import org.kframework.parser.DefinitionLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
+import org.kframework.utils.file.K3JarInfo;
 
 public class RLBackend extends BasicBackend implements Backend {
 
@@ -124,7 +124,7 @@ public class RLBackend extends BasicBackend implements Backend {
     @Override
     public Definition firstStep(Definition javaDef) {
         String fileSep = System.getProperty("file.separator");
-        String propPath = KPaths.getKBase(false) + fileSep + "lib" + fileSep
+        String propPath = K3JarInfo.getKBase(false) + fileSep + "lib" + fileSep
                 + "maude" + fileSep;
         Properties specialMaudeHooks = new Properties();
         Properties maudeHooks = new Properties();
@@ -156,7 +156,7 @@ public class RLBackend extends BasicBackend implements Backend {
          *******************************/
         new MaudeBackend(sw, context).run(javaDef);
 
-        String load = "load \"" + KPaths.getKBase(true) + KPaths.MAUDE_LIB_DIR
+        String load = "load \"" + K3JarInfo.getKBase(true) + K3JarInfo.MAUDE_LIB_DIR
                 + "/k-prelude\"\n";
 
         // load libraries if any
