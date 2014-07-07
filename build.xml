@@ -7,40 +7,6 @@
     <property name="config" value="./tests/config.xml" />
     <property name="base" value="master" />
 
-	<target name="makeversion">
-		<property name="version.file" value="./lib/version.txt" />
-
-		<exec executable="git" outputproperty="version.out" failifexecutionfails="false">
-			<arg value="rev-parse" />
-			<arg value="--short" />
-			<arg value="HEAD^" />
-		</exec>
-		
-		<condition property="version.out" value="Failed to execute Git in command line.">
-			<isset property="version.out" />
-		</condition>
-
-		<tstamp>
-			<format property="date" pattern="EEE MMM d HH:mm:ss z yyyy" />
-		</tstamp>
-
-		<condition property="k-version" value="nightly build">
-			<equals arg1="${version}" arg2="nightly" />
-		</condition>
-		<condition property="k-version" value="version ${version}">
-			<not>
-				<equals arg1="${version}" arg2="nightly" />
-			</not>
-		</condition>
-		<echo message="${version.file}" />
-		<echo message="K-framework ${k-version}.${line.separator}" />
-		<echo message="Git Revision: ${version.out}${line.separator}" />
-		<echo message="Build date: ${date}${line.separator}" />
-		<echo message="K-framework ${k-version}.${line.separator}" file="${version.file}" />
-		<echo message="Git Revision: ${version.out}${line.separator}" file="${version.file}" append="true" />
-		<echo message="Build date: ${date}${line.separator}" file="${version.file}" append="true" />
-	</target>
-
 	<target name="release" depends="test">
 		<antcall target="pack" />
 	</target>
