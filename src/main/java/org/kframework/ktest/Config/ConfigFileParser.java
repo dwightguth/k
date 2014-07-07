@@ -9,7 +9,7 @@ import org.kframework.ktest.PgmArg;
 import org.kframework.ktest.Test.ProgramProfile;
 import org.kframework.ktest.Test.TestCase;
 import org.kframework.utils.OS;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -431,7 +431,7 @@ public class ConfigFileParser {
     }
 
     private String getSchema() {
-        return concat(K3JarInfo.getKBase(false), concat("lib", "ktest.xsd"));
+        return concat(JarInfo.getKBase(false), concat("lib", "ktest.xsd"));
     }
 
     private String concat(String s1, String s2) {

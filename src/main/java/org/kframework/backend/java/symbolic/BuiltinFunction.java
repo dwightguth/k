@@ -11,7 +11,7 @@ import org.kframework.krun.K;
 import org.kframework.krun.K.Tool;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class BuiltinFunction {
     public BuiltinFunction(Definition definition) {
         /* initialize {@code table} */
         String separator = System.getProperty("file.separator");
-        String path = K3JarInfo.getKBase(false) + separator + "include" + separator + "java";
+        String path = JarInfo.getKBase(false) + separator + "include" + separator + "java";
         Properties properties = new Properties();
 
         String propertyFile = path + separator + hookPropertiesFileName;

@@ -3,7 +3,7 @@ package org.kframework.ktest;
 
 import org.kframework.utils.file.KPaths;
 
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 
 public class ExecNames {
 
@@ -30,8 +30,8 @@ public class ExecNames {
     public static String getExecutable(String exe) {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
-            return K3JarInfo.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe + ".bat";
+            return JarInfo.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe + ".bat";
         }
-        return K3JarInfo.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe;
+        return JarInfo.getKBase(false) + FILE_SEPARATOR + "bin" + FILE_SEPARATOR + exe;
     }
 }

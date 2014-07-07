@@ -6,7 +6,7 @@ import java.io.File;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
-import org.kframework.utils.file.K3JarInfo;
+import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 public enum OS {
@@ -14,7 +14,7 @@ public enum OS {
     
     private OS(boolean isPosix, String libDir) {
         this.isPosix = isPosix;
-        this.libDir = K3JarInfo.getKBase(false) + "/lib/native/" + libDir;
+        this.libDir = JarInfo.getKBase(false) + "/lib/native/" + libDir;
     }
     
     public final boolean isPosix;

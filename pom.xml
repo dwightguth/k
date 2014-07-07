@@ -264,6 +264,7 @@
               <Implementation-Revision>${buildNumber}</Implementation-Revision>
               <Implementation-Branch>${scmBranch}</Implementation-Branch>
               <Implementation-Date>${timestamp}</Implementation-Date>
+              <Implementation-Version>${project.version}</Implementation-Version>
             </manifestEntries>
           </archive>
         </configuration>
@@ -362,6 +363,7 @@
         <version>2.5</version>
         <configuration>
           <tagNameFormat>v@{project.version}</tagNameFormat>
+          <pushChanges>false</pushChanges>
         </configuration>
       </plugin>
     </plugins>
