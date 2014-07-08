@@ -24,10 +24,8 @@ public class JarInfo {
         return file;
     }
 
-    public static String javaLibraryPath = null;
-    public static String JAR_PATH = "target/k-3.0.jar";
-    public static String MAUDE_DIR = "lib/maude/binaries";
-    public static String MAUDE_LIB_DIR = "/lib/maude/lib";
+    private static final String JAR_PATH = "target/release/k/lib/java/k-3.0.jar";
+    public static final String MAUDE_LIB_DIR = "/lib/maude/lib";
 
     /**
      * Returns the K installation directory
@@ -43,7 +41,7 @@ public class JarInfo {
             path = new File(path).getParentFile().getParentFile().getAbsolutePath() + "/" + JAR_PATH;
         try {
             String decodedPath = URLDecoder.decode(path, "UTF-8");
-            File parent = new File(decodedPath).getParentFile().getParentFile();
+            File parent = new File(decodedPath).getParentFile().getParentFile().getParentFile();
             if (windowfy)
                 return windowfyPath(parent.getAbsolutePath());
             else
