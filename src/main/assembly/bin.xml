@@ -3,6 +3,37 @@
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
   <id>bin</id>
   <baseDirectory>k</baseDirectory>
+    <dependencySets>
+      <dependencySet>
+        <outputDirectory>/bin</outputDirectory>
+        <includes>
+          <include>*:${native.exe.type}:*</include>
+        </includes>
+        <outputFileNameMapping>${artifact.artifactId}${native.extension}</outputFileNameMapping>
+        <fileMode>775</fileMode>
+      </dependencySet>
+      <dependencySet>
+        <outputDirectory>/lib/java</outputDirectory>
+        <useProjectArtifact>true</useProjectArtifact>
+        <includes>
+          <include>*:jar:*</include>
+        </includes>
+      </dependencySet>
+      <dependencySet>
+        <outputDirectory>/lib/native</outputDirectory>
+        <includes>
+          <include>*:${native.library.type}:*</include>
+        </includes>
+        <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      </dependencySet>
+      <dependencySet>
+        <outputDirectory>/lib/maude</outputDirectory>
+        <includes>
+          <include>*:zip:*</include>
+        </includes>
+        <unpack>true</unpack>
+      </dependencySet>
+    </dependencySets>
   <fileSets>
     <fileSet>
       <directory>${project.basedir}</directory>
@@ -12,7 +43,8 @@
         <include>LICENSE*</include>
         <include>README*</include>
         <include>documentation/**</include>
-        <include>lib/**</include>
+        <include>lib/ktest.xsd</include>
+        <include>lib/maude/**</include>
         <include>include/**</include>
         <include>samples/**</include>
         <include>tutorial/**</include>
@@ -24,19 +56,8 @@
       </excludes>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}</directory>
-      <outputDirectory>/lib</outputDirectory>
-      <includes>
-        <include>*.jar</include>
-        <include>dependency/**</include>
-      </includes>
-    </fileSet>
-    <fileSet>
       <directory>${project.build.scriptSourceDirectory}/bin/${native.script.type}</directory>
       <outputDirectory>/bin</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
       <filtered>true</filtered>
       <fileMode>775</fileMode>
     </fileSet>

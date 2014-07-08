@@ -14,6 +14,7 @@
     <stratego.src.dir>${basedir}/target/generated-sources/sdf</stratego.src.dir>
     <stratego.package.dir>${stratego.src.dir}/org/kframework/parser/concrete/lib</stratego.package.dir>
     <config>tests/config.xml</config>
+    <base>master</base>
   </properties>
 
   <dependencies>
@@ -113,15 +114,11 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <version>1.9.5</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.kframework.dependencies</groupId>
       <artifactId>strategoxt</artifactId>
-      <version>1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.kframework.dependencies</groupId>
-      <artifactId>strj</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
@@ -142,6 +139,26 @@
       <version>1.0</version>
       <type>${native.library.type}</type>
       <classifier>${native.arch.classifier}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>maude</artifactId>
+      <version>2.6</version>
+      <type>zip</type>
+    </dependency>
+    <dependency>
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>gappa</artifactId>
+      <version>1.0</version>
+      <type>${native.exe.type}</type>
+      <classifier>${native.os.classifier}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>sdf2table</artifactId>
+      <version>1.0</version>
+      <type>${native.exe.type}</type>
+      <classifier>${native.os.classifier}</classifier>
     </dependency>
 <!--
     <dependency>
@@ -171,9 +188,58 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.5.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <version>1.0-alpha-8</version>
+        <extensions>true</extensions>
+      </plugin>
+      <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <version>1.7</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.kframework.dependencies</groupId>
+            <artifactId>strj</artifactId>
+            <version>1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.kframework.dependencies</groupId>
+            <artifactId>implodePT</artifactId>
+            <version>1.0</version>
+            <type>${native.exe.type}</type>
+            <classifier>${native.os.classifier}</classifier>
+            <scope>compile</scope>
+          </dependency>
+        </dependencies>
         <executions>
+          <execution>
+            <id>init-changed-files</id>
+            <phase>validate</phase>
+            <configuration>
+              <target>
+                <exec executable="git" outputproperty="git.diff.out" failifexecutionfails="false">
+                  <arg value="diff" />
+                  <arg value="${base}" />
+                  <arg value="--name-only" />
+                </exec>
+                <condition property="git.diff.out" value="">
+                  <isset property="git.diff.out" />
+                </condition>
+                <filelist id="git.diff.filelist" dir="." files="${git.diff.out}" />
+                <pathconvert property="git.modified.files" pathsep="," refid="git.diff.filelist" dirsep="/">
+                  <map from="${basedir}/" to="" />
+                </pathconvert>
+              </target>
+              <exportAntProperties>true</exportAntProperties>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
           <execution>
             <id>generate-sdf</id>
             <phase>generate-sources</phase>
@@ -251,6 +317,18 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.17</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.5</version>
         <configuration>
@@ -258,7 +336,6 @@
             <manifest>
               <mainClass>org.kframework.main.Main</mainClass>
               <addClasspath>true</addClasspath>
-              <classpathPrefix>dependency</classpathPrefix>
             </manifest>
             <manifestEntries>
               <Implementation-Revision>${buildNumber}</Implementation-Revision>
@@ -281,16 +358,8 @@
             <configuration>
               <stripVersion>true</stripVersion>
               <stripClassifier>true</stripClassifier>
-              <includeTypes>so,dylib,dll</includeTypes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-java-dependencies</id>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <excludeTypes>so,dylib,dll</excludeTypes>
+              <includeTypes>${native.library.type}</includeTypes>
+              <includeScope>test</includeScope>
             </configuration>
           </execution>
         </executions>
@@ -359,6 +428,26 @@
        </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.12.1</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${project.basedir}</sourceDirectory>
+              <includes>${git.modified.files}</includes>
+              <configLocation>src/main/config/checkstyle-copyright.xml</configLocation>
+              <failsOnError>true</failsOnError>
+              <consoleOutput>true</consoleOutput>
+              <excludes>**/com/davekoelle/**</excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-release-plugin</artifactId>
         <version>2.5</version>
         <configuration>
@@ -381,6 +470,8 @@
         <native.library.prefix>lib</native.library.prefix>
         <native.os.classifier>linux</native.os.classifier>
         <native.script.type>sh</native.script.type>
+        <native.exe.type>uexe</native.exe.type>
+        <native.extension></native.extension>
       </properties>
     </profile>
     <profile>
@@ -395,6 +486,8 @@
         <native.library.prefix></native.library.prefix>
         <native.os.classifier>windows</native.os.classifier>
         <native.script.type>bat</native.script.type>
+        <native.exe.type>exe</native.exe.type>
+        <native.extension>.exe</native.extension>
       </properties>
     </profile>
     <profile>
