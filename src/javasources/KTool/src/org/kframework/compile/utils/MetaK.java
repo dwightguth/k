@@ -317,10 +317,33 @@ public class MetaK {
                || sort.equals(StringBuiltin.SORT_NAME)
                || sort.equals(FloatBuiltin.SORT_NAME)
                /* LTL builtin sorts */
-//               || sort.equals("#LtlFormula")
+               || sort.equals("#LtlFormula")
                || sort.equals("#Prop")
                || sort.equals("#ModelCheckerState")
                || sort.equals("#ModelCheckResult");
+    }
+    
+    public static String getMaudeBackendSortName(String sort) {
+        assert isBuiltinSort(sort) : sort;
+        switch (sort) {
+        case BoolBuiltin.SORT_NAME:
+            return "Bool";
+        case IntBuiltin.SORT_NAME:
+            return "Int";
+        case StringBuiltin.SORT_NAME:
+            return "String";
+        case FloatBuiltin.SORT_NAME:
+            return "Float";
+        case "#LtlFormula":
+            return "Formula";
+        case "#Prop":
+            return "Prop";
+        case "#ModelCheckerState":
+            return "State";
+        case "#ModelCheckResult":
+            return "ModelCheckResult";
+        }
+        return null;
     }
 
     public static boolean isDataSort(String sort) {

@@ -307,19 +307,19 @@ public class MaudeKRun implements KRun {
             } else if (op.equals("List2KLabel_") || op.equals("Map2KLabel_") || op.equals("Set2KLabel_")) {
                 assertXMLTerm(list.size() == 1);
                 return parseXML(list.get(0), context);
-            } else if (sort.equals("#NzInt") && op.equals("--Int_")) {
+            } else if (sort.equals("NzInt") && op.equals("-_")) {
                 assertXMLTerm(list.size() == 1);
                 return IntBuiltin.of("-" + ((IntBuiltin) parseXML(list.get(0), context)).value());
-            } else if (sort.equals("#NzNat") && op.equals("sNat_")) {
+            } else if (sort.equals("NzNat") && op.equals("s_")) {
                 assertXMLTerm(list.size() == 1 && parseXML(list.get(0), context).equals(IntBuiltin.ZERO_TOKEN));
                 return IntBuiltin.of(xml.getAttribute("number"));
-            } else if (sort.equals("#Zero") && op.equals("0")) {
+            } else if (sort.equals("Zero") && op.equals("0")) {
                 assertXMLTerm(list.size() == 0);
                 return IntBuiltin.ZERO_TOKEN;
-            } else if (sort.equals("#Bool") && (op.equals("true") || op.equals("false"))) {
+            } else if (sort.equals("Bool") && (op.equals("true") || op.equals("false"))) {
                 assertXMLTerm(list.size() == 0);
                 return BoolBuiltin.of(op);
-            } else if (sort.equals("#Char") || sort.equals("#String")) {
+            } else if (sort.equals("Char") || sort.equals("String")) {
                 assertXMLTerm(list.size() == 0);
                 assertXMLTerm(op.startsWith("\"") && op.endsWith("\""));
                 return StringBuiltin.of(StringUtil.unescape(op.substring(1, op.length() - 1)));
@@ -329,7 +329,7 @@ public class MaudeKRun implements KRun {
                 StringBuiltin sortString = (StringBuiltin) parseXML(list.get(0), context);
                 StringBuiltin valueString = (StringBuiltin) parseXML(list.get(1), context);
                 return GenericToken.of(sortString.stringValue(), valueString.stringValue());
-            } else if (sort.equals("#FiniteFloat")) {
+            } else if (sort.equals("FiniteFloat")) {
                 assertXMLTerm(list.size() == 0);
                 return FloatBuiltin.of(Double.parseDouble(op));
             } else if (emptyPattern.matcher(op).matches() && (sort.equals("Bag") || sort.equals("List") || sort.equals("Map") || sort.equals("Set") || sort.equals("K"))) {
@@ -397,6 +397,7 @@ public class MaudeKRun implements KRun {
                 }
             }
         } catch (InvalidMaudeXMLException e) {
+            System.err.println(flattenXML(xml));
             return new BackendTerm(sort, flattenXML(xml));
         }
     }
@@ -674,12 +675,12 @@ public class MaudeKRun implements KRun {
         child = XmlUtil.getChildElements(child.get(0));
         assertXML(child.size() == 1);
         elem = child.get(0);
-        if (elem.getAttribute("op").equals("true") && elem.getAttribute("sort").equals("#Bool")) {
+        if (elem.getAttribute("op").equals("true") && elem.getAttribute("sort").equals("Bool")) {
             return new KRunProofResult<DirectedGraph<KRunState, Transition>>(true, null);
         } else {
             sort = elem.getAttribute("sort");
             op = elem.getAttribute("op");
-            assertXML(op.equals("LTLcounterexample") && sort.equals("#ModelCheckResult"));
+            assertXML(op.equals("counterexample") && sort.equals("ModelCheckResult"));
             child = XmlUtil.getChildElements(elem);
             assertXML(child.size() == 2);
             List<MaudeTransition> initialPath = new ArrayList<MaudeTransition>();
@@ -725,12 +726,12 @@ public class MaudeKRun implements KRun {
         String sort = elem.getAttribute("sort");
         String op = elem.getAttribute("op");
         List<Element> child = XmlUtil.getChildElements(elem);
-        if (sort.equals("#TransitionList") && op.equals("_LTL_")) {
+        if (sort.equals("TransitionList") && op.equals("__")) {
             assertXML(child.size() >= 2);
             for (Element e : child) {
                 parseCounterexample(e, list, context);
             }
-        } else if (sort.equals("#Transition") && op.equals("LTL`{_`,_`}")) {
+        } else if (sort.equals("Transition") && op.equals("`{_`,_`}")) {
             assertXML(child.size() == 2);
             Term t = parseXML(child.get(0), context);
         
@@ -739,18 +740,18 @@ public class MaudeKRun implements KRun {
             op = child.get(1).getAttribute("op");
             //#Sort means we included the meta level and so it thinks Qids
             //aren' Qids even though they really are.
-            assertXML(child2.size() == 0 && (sort.equals("#Qid") || sort.equals("#RuleName") || sort.equals("#Sort")));
+            assertXML(child2.size() == 0 && (sort.equals("Qid") || sort.equals("RuleName") || sort.equals("Sort")));
             String label = op;
             Transition trans;
-            if (sort.equals("#RuleName") && op.equals("UnlabeledLtl")) {
+            if (sort.equals("RuleName") && op.equals("unlabeled")) {
                 trans = Transition.unlabelled(context);
-            } else if (sort.equals("#RuleName") && op.equals("deadlockLtl")) {
+            } else if (sort.equals("RuleName") && op.equals("deadlock")) {
                 trans = Transition.deadlock(context);
             } else {
                 trans = Transition.label(label, context);
             }
             list.add(new MaudeTransition(new KRunState(t, context), trans));
-        } else if (sort.equals("#TransitionList") && op.equals("LTLnil")) {
+        } else if (sort.equals("TransitionList") && op.equals("nil")) {
             assertXML(child.size() == 0);
         } else {
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, "Cannot parse result xml from maude due to production " + op + " of sort " + sort + ". Please file an error on the issue tracker which includes this error message."));

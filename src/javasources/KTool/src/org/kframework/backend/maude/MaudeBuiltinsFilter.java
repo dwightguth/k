@@ -2,9 +2,10 @@
 package org.kframework.backend.maude;
 
 import org.kframework.backend.BackendFilter;
+import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Configuration;
-import org.kframework.kil.KSorts;
+import org.kframework.kil.Definition;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sort;
@@ -12,7 +13,9 @@ import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
 import org.kframework.utils.StringUtil;
 
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -23,11 +26,26 @@ public class MaudeBuiltinsFilter extends BackendFilter {
     private boolean first;
     private final Properties maudeHooksMap;
     private final Properties specialMaudeHooks;
+    
+    private final Set<String> modules = new HashSet<>();
+    private final Set<String> specialHooksUsed = new HashSet<>();
 
     public MaudeBuiltinsFilter(Properties maudeHooksMap, Properties specialMaudeHooks, Context context) {
         super(context);
         this.maudeHooksMap = maudeHooksMap;
         this.specialMaudeHooks = specialMaudeHooks;
+    }
+    
+    @Override
+    public Void visit(Definition node, Void _) {
+        super.visit(node, _);
+        for (Object o : specialMaudeHooks.keySet()) {
+            String prop = (String) o;
+            if (!specialHooksUsed.contains(prop)) {
+                assert false : "detected an unused maude hook. Typo?";
+            }
+        }
+        return null;
     }
 
     @Override
@@ -54,10 +72,19 @@ public class MaudeBuiltinsFilter extends BackendFilter {
         if (!maudeHooksMap.containsKey(hook)) {
             return null;
         }
-
+        
+        String module = getHookModule(maudeHooksMap.getProperty(hook));
+        if (!modules.contains(module)) {
+            result.append("including ");
+            result.append(module);
+            result.append(" .\n");
+            modules.add(module);
+        }
+        
         if (specialMaudeHooks.containsKey(hook)) {
             result.append(specialMaudeHooks.getProperty(hook));
             result.append("\n");
+            specialHooksUsed.add(hook);
             return null;
         }
 
@@ -98,12 +125,10 @@ public class MaudeBuiltinsFilter extends BackendFilter {
         }
 
         Variable var;
-        if (context.getDataStructureSorts().containsKey(node.getName())
-                || node.getName().equals(KSorts.K)
-                || node.getName().equals(KSorts.KITEM)) {
-            var = Variable.getFreshVar(node.getName());
-        } else {
+        if (MetaK.isBuiltinSort("#" + node.getName())) {
             var = Variable.getFreshVar("#" + node.getName());
+        } else {
+            var = Variable.getFreshVar(node.getName());
         }
 
         MaudeFilter filter = new MaudeFilter(context);
@@ -112,6 +137,8 @@ public class MaudeBuiltinsFilter extends BackendFilter {
 
         if (context.getDataStructureSorts().containsKey(node.getName())) {
             var.setSort(context.dataStructureSortOf(node.getName()).type());
+        } else if (MetaK.isBuiltinSort(var.getSort())) {
+            var.setSort(MetaK.getMaudeBackendSortName(var.getSort()));
         }
         right += var.toString();
         return null;
@@ -119,6 +146,10 @@ public class MaudeBuiltinsFilter extends BackendFilter {
 
     private String getHookLabel(String hook) {
         return hook.split(":")[1];
+    }
+    
+    private String getHookModule(String hook) {
+        return hook.split(":")[0];
     }
 
 }

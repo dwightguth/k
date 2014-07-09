@@ -4,7 +4,6 @@ require "builtins/k-equal.k"
 module TCP-HOOKS
   imports STRING-HOOKS
   imports K-EQUAL-HOOKS
-  imports #TCP-INTERFACE
   syntax TCPAnswer ::= String | TCPError
   syntax TCPError ::= "#EOF" | "#tcpError" "(" String ")" | "#noparse" | "#ENOENT" | "#ENOTDIR" | "#EACCES" | "#ELOOP" | "#ENAMETOOLONG" | "#EBADF" | "#ESPIPE" | "#EISDIR" | "#EINVAL"
   rule isKResult(#EOF) => true [function, anywhere]

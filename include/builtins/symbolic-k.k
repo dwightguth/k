@@ -10,7 +10,6 @@ module SYMBOLIC-SYNTAX
 endmodule
 
 module SYMBOLIC-K
-  imports #SMT
   imports BUILTIN-HOOKS
   imports ID-HOOKS
   imports FREE-VARS

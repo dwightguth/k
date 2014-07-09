@@ -17,8 +17,6 @@ import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.general.GlobalSettings;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.util.*;
 import java.util.Map;
 import java.util.Set;
@@ -56,25 +54,15 @@ public class MaudeFilter extends BackendFilter {
     }
 
     @Override
-    public Void visit(Import imp, Void _) {
-        result.append("including ");
-        String name = imp.getName();
-        final String iface = "-INTERFACE";
-        if (name.startsWith("#") && name.endsWith(iface)) {
-            name = name.substring(0, name.length() - iface.length());
-        }
-        result.append(name);
-        result.append(" .");
-        return null;
-    }
-
-    @Override
     public Void visit(Module mod, Void _) {
           result.append("mod ");
           result.append(mod.getName());
           result.append(" is\n");
+          result.append("including K-TECHNIQUE .\n");
+          result.append("including FLOAT .\n");
+          result.append("including K-MODEL-CHECKER .\n");
 
-        result.append(" op fresh : #String -> KItem . \n");
+        result.append(" op fresh : String -> KItem . \n");
         for (Map.Entry<String, String> entry : context.freshFunctionNames.entrySet()) {
             result.append(" eq fresh(\"").append(entry.getKey()).append("\") = ");
             result.append(StringUtil.escapeMaude(entry.getValue()));
@@ -82,7 +70,7 @@ public class MaudeFilter extends BackendFilter {
         }
 
           // TODO(AndreiS): move declaration of #token in a .maude file
-          result.append("op #token : #String #String -> KLabel .\n");
+          result.append("op #token : String String -> KLabel .\n");
 
           for (ModuleItem mi : mod.getItems()) {
             this.visitNode(mi);
@@ -91,10 +79,10 @@ public class MaudeFilter extends BackendFilter {
 
           // TODO(AndreiS): move this in a more approprite place
           for (String sort : context.getTokenSorts()) {
-            String tokenKItem = "_`(_`)(#token(\"" + sort + "\", V:" + StringBuiltin.SORT_NAME
+            String tokenKItem = "_`(_`)(#token(\"" + sort + "\", V:String"
               + "), .KList)";
             String sortKItem = "_`(_`)(#_(\"" + sort + "\")" + ", .KList)";
-            String valueKItem = "_`(_`)(#_(V:" + StringBuiltin.SORT_NAME + ")" + ", .KList)";
+            String valueKItem = "_`(_`)(#_(V:String" + ")" + ", .KList)";
             result.append("eq _`(_`)(" + AddPredicates.syntaxPredicate(sort) + ", "
                           + tokenKItem + ") = _`(_`)(#_(true), .KList) .\n");
             result.append("eq _`(_`)(#parseToken, _`,`,_(" + sortKItem + ", " + valueKItem
@@ -437,6 +425,7 @@ public class MaudeFilter extends BackendFilter {
             variable = variable.shallowCopy();
             variable.setSort(KSorts.KITEM);
         }
+        String varSort = variable.getSort();
          if (MetaK.isBuiltinSort(variable.getSort())
                 || context.getDataStructureSorts().containsKey(variable.getSort())) {
             result.append("_`(_`)(");
@@ -445,6 +434,7 @@ public class MaudeFilter extends BackendFilter {
                   sort = sort.equals("K") ? "KList" : sort;
                 result.append(sort + "2KLabel_(");
             } else {
+                varSort = MetaK.getMaudeBackendSortName(varSort);
                 result.append("#_(");
             }
         }
@@ -458,7 +448,7 @@ public class MaudeFilter extends BackendFilter {
         if (context.getDataStructureSorts().containsKey(variable.getSort())) {
             result.append(context.dataStructureSortOf(variable.getSort()).type());
         } else {
-            result.append(variable.getSort());
+            result.append(varSort);
         }
 
         if (MetaK.isBuiltinSort(variable.getSort())
@@ -670,16 +660,9 @@ public class MaudeFilter extends BackendFilter {
         return null;
     }
 
-    private java.util.Set<String> maudeBuiltinTokenSorts =
-        ImmutableSet.of("#LtlFormula");
-
     @Override
     public Void visit(GenericToken token, Void _) {
-        if (maudeBuiltinTokenSorts.contains(token.tokenSort())) {
-            result.append("#_(" + token.value() + ")");
-        } else {
-            result.append(token);
-        }
+        result.append(token);
         return null;
     }
     

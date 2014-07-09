@@ -152,7 +152,6 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new AddK2SMTLib(context));
         steps.add(new AddPredicates(context));
         steps.add(new ResolveSyntaxPredicates(context));
-        steps.add(new ResolveBuiltins(context));
         steps.add(new ResolveListOfK(context));
         steps.add(new InitializeConfigurationStructure(context));
         steps.add(new AddKStringConversion(context));

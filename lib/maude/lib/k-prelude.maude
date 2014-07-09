@@ -1,11 +1,12 @@
-load builtins-interface.maude
-
 --- Level 0
 
+set include COUNTER off .
+
 mod K-TECHNIQUE is 
-  including #INT-INTERFACE .
-  including #BOOL-INTERFACE .
-  including #STRING-INTERFACE .
+  including INT .
+  including BOOL .
+  including STRING .
+  including FLOAT .
 
   var K : K . var Ks : KList .
   var LItem : ListItem .  var List : List .
@@ -115,15 +116,160 @@ mod K-TECHNIQUE is
   eq K2CellLabel(CellLabel2KLabel(Ks:CellLabel)(.KList)) = Ks:CellLabel .
 
 
-  op HOLE : -> K .
+  op HOLE : -> KItem .
   op #freezer : K -> KLabel [strat(0) frozen] .
 
-  op #_ : #String -> KLabel [metadata "wrapper=(builtin)"] .
+  op #_ : String -> KLabel [metadata "wrapper=(builtin)"] .
 
-  op #token : #String #String -> KLabel .
+  op #token : String String -> KLabel .
   op K2Sort : -> KLabel .
-  eq K2Sort(#token(Sort:#String, Value:#String)(.KList)) = # Sort:#String (.KList) .
+  eq K2Sort(#token(Sort:String, Value:String)(.KList)) = # Sort:String (.KList) .
+
+  op #_ :  String -> KLabel [metadata "KLabelWrapper=(#String)"] .
+  op is#String : -> KLabel .
+  op #_ :  Int -> KLabel [metadata "KLabelWrapper=(#Int)"] .
+  op is#Int : -> KLabel .
+  op #_ :  Bool -> KLabel [metadata "KLabelWrapper=(#Bool)"] .
+  op is#Bool : -> KLabel .
+  op #_ :  Float -> KLabel [metadata "KLabelWrapper=(#Float)"] .
+  op is#Float : -> KLabel .
+  
+  eq _`(_`)(is#String, _`(_`)(#_(#String:String), .KList) ) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#Int, _`(_`)(#_(#Int:Int), .KList) ) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#Bool, _`(_`)(#_(#Bool:Bool), .KList) ) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#Float, _`(_`)(#_(#Float:Float), .KList) ) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+
 
 endm
 
-load builtins.maude
+mod K-PARSER is
+  including K-TECHNIQUE .
+  including STRING .
+  including INT .
+  including QID .
+  including META-LEVEL .
+
+  op string2k : String -> K .
+  op string2bag : String -> Bag .
+  op string2term : String -> Term .
+
+  op metaTokenize : String String -> QidList .
+
+  op breaksToken : Char -> Bool .
+  op isWhitespace : Char -> Bool .
+
+  op mainModule : -> Qid .
+
+  eq string2term(S:String) = getTerm(metaParse(upModule(mainModule, false), metaTokenize("", S:String), anyType)) .
+  eq string2k(S:String) = downTerm(string2term(S:String), .K) .
+  eq string2bag(S:String) = downTerm(string2term(S:String), .Bag) .
+
+  ceq metaTokenize(Prefix:String, S:String) = if Prefix:String == "" then nil else qid(Prefix:String) fi qid(substr(S:String, 0, 1)) metaTokenize("", substr(S:String, 1, length(S:String))) if breaksToken(substr(S:String, 0, 1)) and-then substr(Prefix:String, 0, 1) =/= "\"" .
+  ceq metaTokenize(Prefix:String, S:String) = if Prefix:String == "" then nil else qid(Prefix:String) fi metaTokenize("", substr(S:String, 1, length(S:String))) if isWhitespace(substr(S:String, 0, 1)) and-then substr(Prefix:String, 0, 1) =/= "\"" .
+  ceq metaTokenize(Prefix:String, S:String) = metaTokenize(Prefix:String + substr(S:String, 0, 2), substr(S:String, 2, length(S:String))) if substr(S:String, 0, 1) == "\\" and-then substr(Prefix:String, 0, 1) == "\"" .
+  ceq metaTokenize(Prefix:String, S:String) = qid(Prefix:String + "\"") metaTokenize("", substr(S:String, 1, length(S:String))) if substr(S:String, 0, 1) == "\"" and-then substr(Prefix:String, 0, 1) == "\"" .
+  ceq metaTokenize(Prefix:String, S:String) = metaTokenize(Prefix:String + substr(S:String, 0, 2), substr(S:String, 2, length(S:String))) if substr(S:String, 0, 1) == "`" .
+  eq metaTokenize(Prefix:String, "") = if Prefix:String == "" then nil else qid(Prefix:String) fi [label metaTokenize-finish] .
+  eq metaTokenize(Prefix:String, S:String) = metaTokenize(Prefix:String + substr(S:String, 0, 1), substr(S:String, 1, length(S:String))) [owise] .
+
+
+  eq breaksToken("{") = true .
+  eq breaksToken("}") = true .
+  eq breaksToken("[") = true .
+  eq breaksToken("]") = true .
+  eq breaksToken("(") = true .
+  eq breaksToken(")") = true .
+  eq breaksToken(",") = true .
+  eq breaksToken(C:Char) = false [owise] .
+
+  eq isWhitespace(" ") = true .
+  eq isWhitespace("\n") = true .
+  eq isWhitespace("\t") = true .
+  eq isWhitespace(C:Char) = false [owise] .
+endm
+
+mod K-PRINTER is
+  including K-PARSER .
+
+  op k2string : K -> String .
+  op bag2string : Bag -> String .
+  op term2string : Term -> String .
+
+  eq k2string(K:K) = term2string(upTerm(K:K)) .
+  eq bag2string(B:Bag) = term2string(upTerm(B:Bag)) .
+
+  eq term2string(T:Term) = metaDetokenize(metaPrettyPrint(upModule(mainModule, false), T:Term, none)) .
+
+  op metaDetokenize : QidList -> String .
+  op convertToken : String -> String .
+
+  eq metaDetokenize(Q:Qid L:QidList) = convertToken(string(Q:Qid)) + " " + metaDetokenize(L:QidList) .
+  eq metaDetokenize(nil) = "" .
+
+  eq convertToken("`{") = "{" .
+  eq convertToken("`}") = "}" .
+  eq convertToken("`[") = "[" .
+  eq convertToken("`]") = "]" .
+  eq convertToken("`(") = "(" .
+  eq convertToken("`)") = ")" .
+  eq convertToken("`,") = "," .
+  eq convertToken(S:String) = S:String [owise] .
+
+endm
+
+mod K-COUNTER is
+  protecting QID .
+  protecting CONVERSION .
+
+  op f : Qid -> Qid [special (id-hook QuotedIdentifierOpSymbol (mos)
+                              op-hook quotedIdentifierSymbol (<Qids> : ~> Qid))] .
+
+  var I : Int . var N : Nat .
+  op distinctCounter : Int -> Int .
+  eq distinctCounter(I) = rat(string(f('a)), 10) .
+  op counter : -> Int .
+  eq counter = distinctCounter(0) .
+  op setCounter : Int -> Int .
+  op setCounter : Int Int -> Int .
+  eq setCounter(s(N)) = setCounter(N, distinctCounter(N)) .
+  eq setCounter(s(N), I) = setCounter(N, distinctCounter(N)) .
+  eq setCounter(0, I) = I .  
+endm
+
+load model-checker
+
+mod K-MODEL-CHECKER is
+  including MODEL-CHECKER * (op _|->_ : Formula Formula -> Formula to leads-to) .
+  including K-TECHNIQUE .
+
+  op isProp : -> KLabel .
+
+  subsort K < Prop .
+
+  op #_ :  Formula -> KLabel [metadata "KLabelWrapper=(#LtlFormula)"] .
+  op is#LtlFormula : -> KLabel .
+  op #_ :  State -> KLabel [metadata "KLabelWrapper=(#ModelCheckerState)"] .
+  op is#ModelCheckerState : -> KLabel .
+  op #_ :  ModelCheckResult -> KLabel [metadata "KLabelWrapper=(#ModelCheckResult)"] .
+  op is#ModelCheckResult : -> KLabel .
+  op #_ :  Prop -> KLabel [metadata "KLabelWrapper=(#Prop)"] .
+  op is#Prop : -> KLabel .
+ 
+  eq _`(_`)(is#LtlFormula, #LtlFormula:Formula) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#ModelCheckerState, #ModelCheckerState:State) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#ModelCheckResult, #ModelCheckResult:ModelCheckResult) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+  
+  eq _`(_`)(is#Prop, #Prop:Prop) = _`(_`)(#_(true), .KList) [metadata "predicate=()"] .
+ 
+  ceq A:KLabel(B:KList,,P:K,,C:KList) = A:KLabel(B:KList,,# P:K(.KList),,C:KList) if isProp(P:K) = # true(.KList) .
+
+endm
+
+load socket
+load TCPSupport

@@ -3,7 +3,6 @@ require "int.k"
 require "float.k"
 
 module STRING-SYNTAX-HOOKS
-  imports #STRING-INTERFACE
 
   // Double Quoted Strings are of the form:
   // DoubleQuote StringChar* DoubleQuote
@@ -24,15 +23,15 @@ module STRING-HOOKS
   imports FLOAT-HOOKS
 
 
-  syntax String ::= String "+String" String	[function, left, latex({#1}+_{\scriptstyle\it String}{#2}), hook(#STRING:_+String_)]
+  syntax String ::= String "+String" String	[function, left, latex({#1}+_{\scriptstyle\it String}{#2}), hook(#STRING:concat)]
 
-  syntax Bool ::= String "==String" String [function, left, hook(#STRING:_==String_)]
+  syntax Bool ::= String "==String" String [function, left, hook(#STRING:eq)]
 
-  syntax Int ::= "lengthString" "(" String ")" [function, klabel(lengthString), hook(#STRING:lengthString)]
-  syntax String ::= "chrChar" "(" Int ")"   [function, klabel(chrChar), hook(#STRING:chrChar)]
-  syntax Int ::= "ordChar" "(" String ")"  [function, klabel(ordChar), hook(#STRING:ordChar)]
+  syntax Int ::= "lengthString" "(" String ")" [function, klabel(lengthString), hook(#STRING:length)]
+  syntax String ::= "chrChar" "(" Int ")"   [function, klabel(chrChar), hook(#STRING:chr)]
+  syntax Int ::= "ordChar" "(" String ")"  [function, klabel(ordChar), hook(#STRING:ord)]
 
-  syntax String ::= "substrString" "(" String "," Int "," Int ")" [function, klabel(substrString), hook(#STRING:substrString)]
+  syntax String ::= "substrString" "(" String "," Int "," Int ")" [function, klabel(substrString), hook(#STRING:substr)]
   syntax Int ::= "findString" "(" String "," String "," Int ")" [function, klabel(findString), hook(#STRING:findString)]
   syntax Int ::= "rfindString" "(" String "," String "," Int ")" [function, klabel(rfindString), hook(#STRING:rfindString)]
   syntax Int ::= "findChar" "(" String "," String "," Int ")" [function, klabel(findChar), hook(#STRING:findChar)]
@@ -58,16 +57,16 @@ module STRING-HOOKS
   syntax String ::= "ltrim" "(" String ")" [function]
   syntax String ::= "rtrim" "(" String ")" [function]
 
-  syntax Bool ::= String "=/=String" String      [function, left, hook(#STRING:_=/=String_)]
+  syntax Bool ::= String "=/=String" String      [function, left, hook(#STRING:ne)]
   rule S1:String =/=String S2:String => notBool(S1 ==String S2)
 
-  syntax Bool ::= String "<String" String [function, hook(#STRING:_<String_)]
-                | String "<=String" String [function, hook(#STRING:_<=String_)]
-                | String ">String" String [function, hook(#STRING:_>String_)]
-                | String ">=String" String [function, hook(#STRING:_>=String_)]
+  syntax Bool ::= String "<String" String [function, hook(#STRING:lt)]
+                | String "<=String" String [function, hook(#STRING:le)]
+                | String ">String" String [function, hook(#STRING:gt)]
+                | String ">=String" String [function, hook(#STRING:ge)]
 
-  syntax String ::= categoryChar(String) [function, hook(#STRING:categoryChar)]
-                  | directionalityChar(String) [function, hook(#STRING:directionalityChar)]
+  syntax String ::= categoryChar(String) [function, hook(#STRING:category)]
+                  | directionalityChar(String) [function, hook(#STRING:directionality)]
 
   rule S1:String <=String S2:String => notBool(S2 <String S1)
   rule S1:String >String S2:String => S2 <String S1

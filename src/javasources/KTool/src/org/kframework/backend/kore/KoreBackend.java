@@ -28,7 +28,6 @@ import org.kframework.compile.transformers.RemoveSyntacticCasts;
 import org.kframework.compile.transformers.ResolveAnonymousVariables;
 import org.kframework.compile.transformers.ResolveBinder;
 import org.kframework.compile.transformers.ResolveBlockingInput;
-import org.kframework.compile.transformers.ResolveBuiltins;
 import org.kframework.compile.transformers.ResolveFreshVarMOS;
 import org.kframework.compile.transformers.ResolveFunctions;
 import org.kframework.compile.transformers.ResolveListOfK;
@@ -133,7 +132,6 @@ public class KoreBackend extends BasicBackend {
         steps.add(new AddK2SMTLib(context));
         steps.add(new AddPredicates(context));
         steps.add(new ResolveSyntaxPredicates(context));
-        steps.add(new ResolveBuiltins(context));
         steps.add(new ResolveListOfK(context));
         steps.add(new FlattenSyntax(context));
         //steps.add(new LastStep(this, context));

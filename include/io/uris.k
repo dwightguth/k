@@ -3,8 +3,6 @@ require "builtins/builtins.k"
 
 module URIS 
   imports BUILTIN-HOOKS
-  imports #K-PARSER-INTERFACE
-  imports #K-PRINTER-INTERFACE
  
 // B, N, and P are really supposed to be Nat
   syntax KItem ::= "#open" "(" String ")" [function]
