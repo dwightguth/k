@@ -11,11 +11,29 @@
     <connection>scm:git:https://github.com/kframework/k.git</connection>
   </scm>
 
+  <repositories>
+    <repository>
+      <id>runtime-verification</id>
+      <name>Runtime Verification Repository</name>
+      <url>http://office.runtimeverification.com:8888/repository/internal</url>
+      <snapshots><enabled>false</enabled></snapshots>
+      <releases><enabled>true</enabled></releases>
+    </repository>
+    <repository>
+      <id>runtime-verification.snapshots</id>
+      <name>Runtime Verification Snapshot Repository</name>
+      <url>http://office.runtimeverification.com:8888/repository/snapshots</url>
+      <snapshots><enabled>true</enabled></snapshots>
+      <releases><enabled>false</enabled></releases>
+    </repository>
+  </repositories>
+
   <properties>
     <sdf.resource.dir>${basedir}/src/main/sdf/syntax</sdf.resource.dir>
     <stratego.src.dir>${basedir}/target/generated-sources/sdf</stratego.src.dir>
     <stratego.package.dir>${stratego.src.dir}/org/kframework/parser/concrete/lib</stratego.package.dir>
     <config>tests/config.xml</config>
+    <ktestDir>${project.basedir}</ktestDir>
     <base>unified-builtins2</base>
   </properties>
 
@@ -63,12 +81,12 @@
     <dependency>
       <groupId>org.kframework.mpfr_java</groupId>
       <artifactId>mpfr_java</artifactId>
-      <version>1.0</version>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.kframework.mpfr_java</groupId>
       <artifactId>mpfr_java</artifactId>
-      <version>1.0</version>
+      <version>1.0-SNAPSHOT</version>
       <classifier>${native.os.classifier}${native.arch.classifier}</classifier>
     </dependency>
     <dependency>
@@ -261,11 +279,25 @@
             <phase>integration-test</phase>
             <configuration>
               <target>
-                <exec dir="${project.basedir}" executable="${project.build.directory}/release/k/bin/ktest">
+                <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest">
                   <arg value="${config}" />
                   <arg value="-v" />
                   <arg value="-report" />
                 </exec>
+              </target>
+              <skip>${skipKTest}</skip>
+              <failOnError>false</failOnError>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>cleanup-ktest</id>
+            <phase>post-integration-test</phase>
+            <configuration>
+              <target>
+                <move file="${ktestDir}/junit-reports" tofile="target/ktest-reports" failonerror="false" />
               </target>
             </configuration>
             <goals>
@@ -324,6 +356,17 @@
               <goal>integration-test</goal>
               <goal>verify</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>verify-ktest</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <skipITs>${skipKTest}</skipITs>
+              <reportsDirectory>${project.build.directory}/ktest-reports</reportsDirectory>
+              <summaryFile>${project.build.directory}/ktest-reports/summary.xml</summaryFile>
+            </configuration>
           </execution>
         </executions>
       </plugin>
