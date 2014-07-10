@@ -11,7 +11,7 @@ import java.io.*;
 
 public class MaudeRun {
     
-    private static String MAUDE_DIR = "lib/dependency/maude";
+    private static String MAUDE_DIR = "lib/maude";
 
     /**
      * This function computes the path to a K-included version of maude. It assumes that /dist/lib/maude directory contains all maude executables. It searches for the os type and the architecture and it returns the right maude executable.

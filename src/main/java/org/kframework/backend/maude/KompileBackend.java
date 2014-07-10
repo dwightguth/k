@@ -21,13 +21,12 @@ public class KompileBackend extends BasicBackend {
 
     @Override
     public Definition firstStep(Definition javaDef) {
-        String fileSep = System.getProperty("file.separator");
-        String propPath = JarInfo.getKBase(false) + fileSep + "lib" + fileSep + "maude" + fileSep;
+        String propPath = "/hooks/";
         Properties specialMaudeHooks = new Properties();
         Properties maudeHooks = new Properties();
         try {
-            FileUtil.loadProperties(maudeHooks, propPath + "MaudeHooksMap.properties");
-            FileUtil.loadProperties(specialMaudeHooks, propPath + "SpecialMaudeHooks.properties");
+            FileUtil.loadProperties(maudeHooks, getClass(), "MaudeHooksMap.properties");
+            FileUtil.loadProperties(specialMaudeHooks, getClass(), "SpecialMaudeHooks.properties");
         } catch (IOException e) {
             e.printStackTrace();
         }

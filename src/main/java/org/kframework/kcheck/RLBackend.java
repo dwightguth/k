@@ -9,6 +9,7 @@ import java.util.Properties;
 import org.kframework.backend.Backend;
 import org.kframework.backend.BasicBackend;
 import org.kframework.backend.java.kil.Sort;
+import org.kframework.backend.maude.KompileBackend;
 import org.kframework.backend.maude.MaudeBackend;
 import org.kframework.backend.maude.MaudeBuiltinsFilter;
 import org.kframework.backend.maude.krun.MaudeKRun;
@@ -123,14 +124,12 @@ public class RLBackend extends BasicBackend implements Backend {
 
     @Override
     public Definition firstStep(Definition javaDef) {
-        String fileSep = System.getProperty("file.separator");
-        String propPath = JarInfo.getKBase(false) + fileSep + "lib" + fileSep
-                + "maude" + fileSep;
+        String propPath = "/hooks/";
         Properties specialMaudeHooks = new Properties();
         Properties maudeHooks = new Properties();
         try {
-            FileUtil.loadProperties(maudeHooks, propPath + "MaudeHooksMap.properties");
-            FileUtil.loadProperties(specialMaudeHooks, propPath + "SpecialMaudeHooks.properties");
+            FileUtil.loadProperties(maudeHooks, KompileBackend.class, "MaudeHooksMap.properties");
+            FileUtil.loadProperties(specialMaudeHooks, KompileBackend.class, "SpecialMaudeHooks.properties");
         } catch (IOException e) {
             e.printStackTrace();
         }
