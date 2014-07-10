@@ -43,8 +43,9 @@
 	<target name="concrete.signature.helper" unless="concrete.signature.available">
 		<!-- pack the definition into a single .def file -->
 		<mkdir dir="include" />
-                <copy file="${basedir}/bin/sdf2table.uexe" tofile="${basedir}/bin/sdf2table" />
-                <copy file="${basedir}/bin/implodePT.uexe" tofile="${basedir}/bin/implodePT" />
+                <chmod perm="a+x">
+                  <fileset dir="bin/" includes="*" />
+                </chmod>
                 <echo message="${org.kframework.dependencies:strategoxt:jar}" />
 		<java classname="run" fork="true" failonerror="true" classpath="${compile_classpath}">
 			<arg value="org.strategoxt.tools.main-pack-sdf" />

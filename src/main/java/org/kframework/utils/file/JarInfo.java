@@ -54,7 +54,7 @@ public class JarInfo {
     
     public static void printVersionMessage() {
         try {
-            URL url = JarInfo.class.getResource("/versionMarker");
+            URL url = JarInfo.class.getResource("versionMarker");
             JarURLConnection conn = (JarURLConnection)url.openConnection();
             Manifest mf = conn.getManifest();
             String revision = mf.getMainAttributes().getValue("Implementation-Revision");

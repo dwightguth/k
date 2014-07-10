@@ -13,7 +13,6 @@ import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.IOException;
@@ -60,19 +59,16 @@ public class BuiltinFunction {
 
     public BuiltinFunction(Definition definition) {
         /* initialize {@code table} */
-        String separator = System.getProperty("file.separator");
-        String path = JarInfo.getKBase(false) + separator + "include" + separator + "java";
         Properties properties = new Properties();
 
-        String propertyFile = path + separator + hookPropertiesFileName;
         try {
-            FileUtil.loadProperties(properties, propertyFile);
+            FileUtil.loadProperties(properties, getClass(), hookPropertiesFileName);
         } catch (IOException e) {
             if (definition.context().globalOptions.debug) {
                 e.printStackTrace();
             }
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
-                    KExceptionGroup.INTERNAL, "Could not read from " + propertyFile));
+                    KExceptionGroup.INTERNAL, "Could not read from resource " + hookPropertiesFileName));
         }
 
         for (String label : definition.context().labels.keySet()) {

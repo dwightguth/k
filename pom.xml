@@ -51,9 +51,9 @@
       <version>2.0.1</version>
     </dependency>
     <dependency>
-      <groupId>com.beust</groupId>
+      <groupId>org.kframework.dependencies</groupId>
       <artifactId>jcommander</artifactId>
-      <version>1.35</version>
+      <version>1.35-custom</version>
     </dependency>
     <dependency>
       <groupId>net.sf.jung</groupId>
@@ -208,7 +208,7 @@
             <artifactId>strj</artifactId>
             <version>1.0</version>
           </dependency>
-       </dependencies>
+        </dependencies>
         <executions>
           <execution>
             <id>init-changed-files</id>
@@ -343,27 +343,33 @@
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.8</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.kframework.dependencies</groupId>
-            <artifactId>implodePT</artifactId>
-            <version>1.0</version>
-            <type>${native.exe.type}</type>
-            <classifier>${native.os.classifier}</classifier>
-          </dependency>
-        </dependencies>
         <executions>
           <execution>
             <id>copy-build-dependencies</id>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>copy</goal>
             </goals>
             <phase>initialize</phase>
             <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.kframework.dependencies</groupId>
+                  <artifactId>sdf2table</artifactId>
+                  <version>1.0</version>
+                  <type>${native.exe.type}</type>
+                  <classifier>${native.os.classifier}</classifier>
+                  <destFileName>sdf2table${native.extension}</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.kframework.dependencies</groupId>
+                  <artifactId>implodePT</artifactId>
+                  <version>1.0</version>
+                  <type>${native.exe.type}</type>
+                  <classifier>${native.os.classifier}</classifier>
+                  <destFileName>implodePT${native.extension}</destFileName>
+                </artifactItem>
+              </artifactItems>
               <outputDirectory>target/sdf/bin</outputDirectory>
-              <stripVersion>true</stripVersion>
-              <stripClassifier>true</stripClassifier>
-              <includeArtifactIds>sdf2table,implodePT</includeArtifactIds>
             </configuration>
           </execution>
           <execution>

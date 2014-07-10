@@ -664,13 +664,13 @@ public class HTMLFilter extends BackendFilter {
     
     private void loadProperties() {
         try {
-            FileUtil.loadProperties(Latex2HTMLzero, includePath + "Latex2HTMLzero.properties");
+            FileUtil.loadProperties(Latex2HTMLzero, getClass(), "Latex2HTMLzero.properties");
         } catch (IOException e) {
-            System.out.println("error loading " + includePath + "Latex2HTMLzero.properties");
+            System.out.println("error loading resource /html/Latex2HTMLzero.properties");
         }
         
         try {
-            FileUtil.loadProperties(Latex2HTMLone, includePath + "Latex2HTMLone.properties");
+            FileUtil.loadProperties(Latex2HTMLone, getClass(), "Latex2HTMLone.properties");
         } catch (IOException e) {
             System.out.println("error loading Latex2HTMLone.properties");
         }
