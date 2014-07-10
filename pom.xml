@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (c) 2014 K Team. All Rights Reserved. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.kframework.k</groupId>
@@ -14,7 +16,7 @@
     <stratego.src.dir>${basedir}/target/generated-sources/sdf</stratego.src.dir>
     <stratego.package.dir>${stratego.src.dir}/org/kframework/parser/concrete/lib</stratego.package.dir>
     <config>tests/config.xml</config>
-    <base>master</base>
+    <base>unified-builtins2</base>
   </properties>
 
   <dependencies>
@@ -206,15 +208,7 @@
             <artifactId>strj</artifactId>
             <version>1.0</version>
           </dependency>
-          <dependency>
-            <groupId>org.kframework.dependencies</groupId>
-            <artifactId>implodePT</artifactId>
-            <version>1.0</version>
-            <type>${native.exe.type}</type>
-            <classifier>${native.os.classifier}</classifier>
-            <scope>compile</scope>
-          </dependency>
-        </dependencies>
+       </dependencies>
         <executions>
           <execution>
             <id>init-changed-files</id>
@@ -349,7 +343,29 @@
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.8</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.kframework.dependencies</groupId>
+            <artifactId>implodePT</artifactId>
+            <version>1.0</version>
+            <type>${native.exe.type}</type>
+            <classifier>${native.os.classifier}</classifier>
+          </dependency>
+        </dependencies>
         <executions>
+          <execution>
+            <id>copy-build-dependencies</id>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <phase>initialize</phase>
+            <configuration>
+              <outputDirectory>target/sdf/bin</outputDirectory>
+              <stripVersion>true</stripVersion>
+              <stripClassifier>true</stripClassifier>
+              <includeArtifactIds>sdf2table,implodePT</includeArtifactIds>
+            </configuration>
+          </execution>
           <execution>
             <id>copy-native-dependencies</id>
             <goals>
@@ -432,7 +448,8 @@
         <version>2.12.1</version>
         <executions>
           <execution>
-            <phase>initialize</phase>
+            <id>checkstyle-copyright</id>
+            <phase>test</phase>
             <goals>
               <goal>check</goal>
             </goals>
@@ -442,7 +459,36 @@
               <configLocation>src/main/config/checkstyle-copyright.xml</configLocation>
               <failsOnError>true</failsOnError>
               <consoleOutput>true</consoleOutput>
-              <excludes>**/com/davekoelle/**</excludes>
+              <excludes>**/com/davekoelle/**,src/main/sdf/syntax/Integration.sdf</excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>checkstyle</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${project.basedir}</sourceDirectory>
+              <includes>**/*.k</includes>
+              <configLocation>src/main/config/checkstyle-k.xml</configLocation>
+              <failsOnError>true</failsOnError>
+              <consoleOutput>true</consoleOutput>
+            </configuration>
+          </execution>
+          <execution>
+            <id>checkstyle</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>src</sourceDirectory>
+              <includes>**/*.java</includes>
+              <configLocation>src/main/config/checkstyle-java.xml</configLocation>
+              <suppressionsLocation>src/main/config/checkstyle-suppress.xml</suppressionsLocation>
+              <failsOnError>true</failsOnError>
+              <consoleOutput>true</consoleOutput>
             </configuration>
           </execution>
         </executions>

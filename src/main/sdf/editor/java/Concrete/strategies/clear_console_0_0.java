@@ -19,26 +19,26 @@ import org.eclipse.ui.console.*;
  */
 public class clear_console_0_0 extends Strategy {
 
-	public static clear_console_0_0 instance = new clear_console_0_0();
+    public static clear_console_0_0 instance = new clear_console_0_0();
 
-	public final static String conName = "Spoofax Console";
+    public final static String conName = "Spoofax Console";
 
-	@Override
-	public IStrategoTerm invoke(Context context, IStrategoTerm current) {
-		IOConsole cons = getSpoofaxConsole();
-		if (cons != null)
-			cons.clearConsole();
-		return current;
-	}
+    @Override
+    public IStrategoTerm invoke(Context context, IStrategoTerm current) {
+        IOConsole cons = getSpoofaxConsole();
+        if (cons != null)
+            cons.clearConsole();
+        return current;
+    }
 
-	private IOConsole getSpoofaxConsole() {
-		ConsolePlugin plugin = ConsolePlugin.getDefault();
-		IConsoleManager conMan = plugin.getConsoleManager();
-		IConsole[] existing = conMan.getConsoles();
-		for (IConsole cons : existing) {
-			if (cons.getName().equals(conName))
-				return (IOConsole) cons;
-		}
-		return null;
-	}
+    private IOConsole getSpoofaxConsole() {
+        ConsolePlugin plugin = ConsolePlugin.getDefault();
+        IConsoleManager conMan = plugin.getConsoleManager();
+        IConsole[] existing = conMan.getConsoles();
+        for (IConsole cons : existing) {
+            if (cons.getName().equals(conName))
+                return (IOConsole) cons;
+        }
+        return null;
+    }
 }
