@@ -185,6 +185,12 @@
       <type>${native.exe.type}</type>
       <classifier>${native.os.classifier}</classifier>
     </dependency>
+    <dependency>
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>strj</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
 <!--
     <dependency>
       <groupId></groupId>
@@ -226,11 +232,6 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <version>1.7</version>
         <dependencies>
-          <dependency>
-            <groupId>org.kframework.dependencies</groupId>
-            <artifactId>strj</artifactId>
-            <version>1.0</version>
-          </dependency>
        </dependencies>
         <executions>
           <execution>
@@ -605,7 +606,7 @@
       <id>x86</id>
       <activation>
         <os>
-          <arch>x86</arch>
+          <arch>i386</arch>
         </os>
       </activation>
       <properties>
