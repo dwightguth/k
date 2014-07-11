@@ -3,29 +3,12 @@
 <project basedir="." default="all.signature" name="K3 build signature files">
 
 	<!-- set the native directory depending on the os -->
-	<condition property="osNativesDir" value="linux">
-		<and>
+	<condition property="build.strategoxt.sdf" value="${basedir}/bin/">
 			<os family="unix" />
-			<not>
-				<os family="mac" />
-			</not>
-		</and>
 	</condition>
-	<condition property="osNativesDir" value="macosx">
-		<os family="mac" />
-	</condition>
-	<condition property="osNativesDir" value="cygwin">
+	<condition property="build.strategoxt.sdf" value="${basedir}\bin\">
 		<os family="windows" />
 	</condition>
-
-	<!-- compile and call the k.utils.AntPropertyHelper class to get some properties from artifacts.xml
-	representing version numbers from spoofax library -->
-
-	<!-- weird stuff to make it work:
-	- create the path for the AntPropertyHelper
-	- compile the AntPropertyHelper
-	-->
-	<property name="build.strategoxt.sdf" location="${basedir}/bin/" />
 
 	<!-- call both targets -->
 	<target name="all.signature" depends="concrete.signature" />
@@ -64,7 +47,7 @@
 			<arg value="include/Concrete.rtg" />
 			<arg value="--ignore-missing-cons" />
 			<arg value="-Xnativepath" />
-			<arg value="${build.strategoxt.sdf}/" />
+			<arg value="${build.strategoxt.sdf}" />
 			<arg value="-m" />
 			<arg value="Concrete" />
 		</java>
@@ -81,7 +64,7 @@
 		</java>
 		<!-- create the .tbl file of the definition -->
 		<echo message="Build TBL" />
-		<exec executable="${build.strategoxt.sdf}/sdf2table">
+		<exec executable="${build.strategoxt.sdf}sdf2table">
 			<arg value="-i" />
 			<arg value="include/Concrete.def" />
 			<arg value="-o" />
