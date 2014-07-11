@@ -191,6 +191,19 @@
       <version>1.0</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>strj</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency> 
+      <groupId>org.kframework.dependencies</groupId>
+      <artifactId>implodePT</artifactId>
+      <version>1.0</version>
+      <type>${native.exe.type}</type>
+      <classifier>${native.os.classifier}</classifier>
+    </dependency>
 <!--
     <dependency>
       <groupId></groupId>
