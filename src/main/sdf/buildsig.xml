@@ -64,7 +64,7 @@
 			<arg value="include/Concrete.rtg" />
 			<arg value="--ignore-missing-cons" />
 			<arg value="-Xnativepath" />
-			<arg value="${build.strategoxt.sdf}" />
+			<arg value="${build.strategoxt.sdf}/" />
 			<arg value="-m" />
 			<arg value="Concrete" />
 		</java>
@@ -81,7 +81,7 @@
 		</java>
 		<!-- create the .tbl file of the definition -->
 		<echo message="Build TBL" />
-		<exec executable="${build.strategoxt.sdf}sdf2table">
+		<exec executable="${build.strategoxt.sdf}/sdf2table">
 			<arg value="-i" />
 			<arg value="include/Concrete.def" />
 			<arg value="-o" />
