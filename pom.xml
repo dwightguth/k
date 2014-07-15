@@ -353,7 +353,7 @@
           <environmentVariables>
             <LD_LIBRARY_PATH>${env.LD_LIBRARY_PATH}${path.separator}${project.build.directory}/dependency</LD_LIBRARY_PATH>
             <PATH>${env.PATH}${path.separator}${project.build.directory}/dependency</PATH>
-          </environmentVariables>?
+          </environmentVariables>
         </configuration>
       </plugin>
       <plugin>
@@ -604,7 +604,6 @@
           <artifactId>cygwin1</artifactId>
           <version>1.0</version>
           <type>dll</type>
-	  <scope>provided</scope>
         </dependency>
       </dependencies>
       <build>
