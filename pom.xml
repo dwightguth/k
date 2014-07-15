@@ -287,7 +287,7 @@
             <phase>integration-test</phase>
             <configuration>
               <target>
-                <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest">
+                <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest${native.script.extension}">
                   <arg value="${config}" />
                   <arg value="-v" />
                   <arg value="-report" />
@@ -415,7 +415,7 @@
                   <version>1.0</version>
                   <type>${native.exe.type}</type>
                   <classifier>${native.os.classifier}</classifier>
-                  <destFileName>sdf2table${native.extension}</destFileName>
+                  <destFileName>sdf2table${native.exe.extension}</destFileName>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.kframework.dependencies</groupId>
@@ -423,7 +423,7 @@
                   <version>1.0</version>
                   <type>${native.exe.type}</type>
                   <classifier>${native.os.classifier}</classifier>
-                  <destFileName>implodePT${native.extension}</destFileName>
+                  <destFileName>implodePT${native.exe.extension}</destFileName>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>target/sdf/bin</outputDirectory>
@@ -580,7 +580,8 @@
         <native.os.classifier>linux</native.os.classifier>
         <native.script.type>sh</native.script.type>
         <native.exe.type>uexe</native.exe.type>
-        <native.extension></native.extension>
+        <native.exe.extension></native.exe.extension>
+        <native.script.extension></native.script.extension>
       </properties>
     </profile>
     <profile>
@@ -596,7 +597,8 @@
         <native.os.classifier>windows</native.os.classifier>
         <native.script.type>bat</native.script.type>
         <native.exe.type>exe</native.exe.type>
-        <native.extension>.exe</native.extension>
+        <native.exe.extension>.exe</native.exe.extension>
+        <native.script.extension>.bat</native.script.extension>
       </properties>
       <dependencies>
         <dependency>
