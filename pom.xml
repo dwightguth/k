@@ -438,7 +438,7 @@
               <stripVersion>true</stripVersion>
               <stripClassifier>true</stripClassifier>
               <includeTypes>${native.library.type}</includeTypes>
-              <includeScope>test</includeScope>
+              <includeScope>runtime</includeScope>
             </configuration>
           </execution>
         </executions>
@@ -604,6 +604,7 @@
           <artifactId>cygwin1</artifactId>
           <version>1.0</version>
           <type>dll</type>
+	  <scope>provided</scope>
         </dependency>
       </dependencies>
       <build>
