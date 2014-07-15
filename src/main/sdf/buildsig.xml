@@ -3,12 +3,7 @@
 <project basedir="." default="all.signature" name="K3 build signature files">
 
 	<!-- set the native directory depending on the os -->
-	<condition property="build.strategoxt.sdf" value="${basedir}/bin/">
-			<os family="unix" />
-	</condition>
-	<condition property="build.strategoxt.sdf" value="${basedir}\bin\">
-		<os family="windows" />
-	</condition>
+	<property name="build.strategoxt.sdf" value="${basedir}/bin/" />
 
 	<!-- call both targets -->
 	<target name="all.signature" depends="concrete.signature" />
