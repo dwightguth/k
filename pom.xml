@@ -641,6 +641,17 @@
       <id>x86</id>
       <activation>
         <os>
+          <arch>x86</arch>
+        </os>
+      </activation>
+      <properties>
+        <native.arch.classifier>32</native.arch.classifier>
+      </properties>
+    </profile>
+    <profile>
+      <id>i386</id>
+      <activation>
+        <os>
           <arch>i386</arch>
         </os>
       </activation>
