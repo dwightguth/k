@@ -11,7 +11,7 @@
         <includes>
           <include>*:${native.exe.type}:*</include>
         </includes>
-        <outputFileNameMapping>${artifact.artifactId}${native.extension}</outputFileNameMapping>
+        <outputFileNameMapping>${artifact.artifactId}${native.exe.extension}</outputFileNameMapping>
         <fileMode>775</fileMode>
       </dependencySet>
       <dependencySet>
