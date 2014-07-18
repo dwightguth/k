@@ -15,9 +15,9 @@ public class Main {
     /**
      * @param args
      *            - the running arguments for the K3 tool. First argument must be one of the following: kompile|kast|krun.
-     * @throws IOException when loadDefinition fails 
+     * @throws IOException when loadDefinition fails
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Stopwatch.instance();
         AnsiConsole.systemInstall();
 
@@ -63,13 +63,13 @@ public class Main {
                 GlobalSettings.kem.print();
                 System.exit(1);
             }
-             
+
             GlobalSettings.kem.print();
             System.exit(succeeded ? 0 : 1);
         }
         invalidJarArguments();
     }
-    
+
     private static void invalidJarArguments() {
         System.err.println("The first argument of K3 not recognized. Try -kompile, -kast, -krun or -kpp.");
         System.exit(1);

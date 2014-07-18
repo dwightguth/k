@@ -29,7 +29,7 @@ public class JarInfo {
 
     /**
      * Returns the K installation directory
-     * 
+     *
      * @param windowfy
      *            - if true, then the path will be transformed into /cygdirve/c/... when on windows (just for maude)
      * @return The path to the K installation
@@ -51,7 +51,7 @@ public class JarInfo {
         }
         return null;
     }
-    
+
     public static void printVersionMessage() {
         try {
             URL url = JarInfo.class.getResource("versionMarker");
@@ -65,7 +65,7 @@ public class JarInfo {
             System.out.println("Git branch: " + branch);
             System.out.println("Build date: " + date.toString());
         } catch (IOException e) {
-            GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL, 
+            GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL,
                     "Could not load version info. Check your build system?"));
         }
     }

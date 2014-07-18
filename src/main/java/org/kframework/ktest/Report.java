@@ -64,7 +64,7 @@ public class Report {
 
         return testElem;
     }
-    
+
     public boolean failed() {
         return failed;
     }

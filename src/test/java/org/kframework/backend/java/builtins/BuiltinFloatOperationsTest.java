@@ -11,7 +11,7 @@ public class BuiltinFloatOperationsTest {
 
     @Mock
     TermContext context;
-    
+
     @Test
     public void testLoadLibrary() {
         FloatToken result = BuiltinFloatOperations.add(FloatToken.of("1.0"), FloatToken.of("2.0"), context);

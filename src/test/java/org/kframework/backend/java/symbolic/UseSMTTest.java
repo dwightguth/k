@@ -22,13 +22,13 @@ public class UseSMTTest {
 
     @Mock
     TermContext tc;
-    
+
     @Mock
     Context context;
-    
+
     @Mock
     Definition definition;
-    
+
     @Before
     public void setUp() {
         when(tc.definition()).thenReturn(definition);
@@ -36,7 +36,7 @@ public class UseSMTTest {
         context.smtOptions = new SMTOptions();
         context.smtOptions.smt = SMTSolver.Z3;
     }
-    
+
     @Test
     public void testGetModel() {
         BuiltinMap.Builder builder = new BuiltinMap.Builder();

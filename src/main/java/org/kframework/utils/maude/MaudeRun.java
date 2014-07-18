@@ -10,7 +10,7 @@ import org.kframework.utils.general.GlobalSettings;
 import java.io.*;
 
 public class MaudeRun {
-    
+
     private static String MAUDE_DIR = "lib/maude";
 
     /**

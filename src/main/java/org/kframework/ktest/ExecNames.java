@@ -22,7 +22,7 @@ public class ExecNames {
     public static String getKrun() {
         return getExecutable("krun");
     }
-    
+
     public static String getKast() {
         return getExecutable("kast");
     }

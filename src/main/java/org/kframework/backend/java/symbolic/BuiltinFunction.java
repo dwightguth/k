@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Utility class that handles the builtin (hooked) operations and their Java
  * implementations.
- * 
+ *
  * @author AndreiS
  */
 public class BuiltinFunction {
@@ -110,7 +110,7 @@ public class BuiltinFunction {
 
     /**
      * Invokes the Java implementation of a builtin (hooked) operation.
-     * 
+     *
      * @param context
      *            the {@code TermContext}
      * @param label
@@ -135,7 +135,7 @@ public class BuiltinFunction {
 
     /**
      * Checks if the given K label represents a builtin (hooked) operation.
-     * 
+     *
      * @param label
      *            the given K label
      * @return true if the given K label corresponds to a builtin operation;

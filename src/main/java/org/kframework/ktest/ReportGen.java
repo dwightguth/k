@@ -64,12 +64,12 @@ public class ReportGen {
                             + FilenameUtils.getBaseName(e.getKey()) + ".xml");
             writeXmlFile(targetFile, elem);
         }
-        
+
         Element elem = genSummary(doc, reports);
         File targetFile = new File(junitFolder.getAbsolutePath(),
                 "summary.xml");
         writeXmlFile(targetFile, elem);
-        
+
     }
 
     private void writeXmlFile(File targetFile, Element elem)
@@ -103,7 +103,7 @@ public class ReportGen {
 
         return testSuiteElem;
     }
-    
+
     private Element genSummary(Document doc, Map<String, List<Report>> reports) {
         Element summary = doc.createElement("failsafe-summary");
         String result;
@@ -112,7 +112,7 @@ public class ReportGen {
         } else if (failures > 0) {
             result = "255"; //FAILURE
         } else {
-            result = "0"; //SUCCESS 
+            result = "0"; //SUCCESS
         }
         summary.setAttribute("result", result);
         summary.setAttribute("timeout", "false");
@@ -130,7 +130,7 @@ public class ReportGen {
         summary.appendChild(failures);
         summary.appendChild(skipped);
         summary.appendChild(failureMessage);
-        
+
         return summary;
     }
 

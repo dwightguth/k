@@ -10,7 +10,7 @@ import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.utils.file.JarInfo;
 
 /**
- * 
+ *
  * @author YilongL
  */
 public class RemovePreincludedRules extends CopyOnWriteTransformer {
@@ -21,7 +21,7 @@ public class RemovePreincludedRules extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode visit(Rule node, Void _)  {
-        if ((!node.getFilename().startsWith(JarInfo.getKBase(false) + File.separator + "include") 
+        if ((!node.getFilename().startsWith(JarInfo.getKBase(false) + File.separator + "include")
                 && !node.getFilename().startsWith(org.kframework.kil.loader.Constants.GENERATED_FILENAME))
                 || (node.getFilename().equals(JarInfo.getKBase(false)
                         + File.separator + "include" + File.separator + "builtins"
