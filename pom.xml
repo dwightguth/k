@@ -527,7 +527,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>checkstyle</id>
+            <id>checkstyle-k</id>
             <phase>test</phase>
             <goals>
               <goal>check</goal>
@@ -541,7 +541,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>checkstyle</id>
+            <id>checkstyle-java</id>
             <phase>test</phase>
             <goals>
               <goal>check</goal>
