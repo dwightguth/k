@@ -6,7 +6,6 @@ import org.kframework.krun.K;
 import org.kframework.utils.file.JarInfo;
 import org.kframework.krun.ioserver.main.MainServer;
 import org.kframework.krun.tasks.MaudeTask;
-import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;

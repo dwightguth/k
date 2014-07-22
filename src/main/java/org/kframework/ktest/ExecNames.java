@@ -1,8 +1,6 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.ktest;
 
-import org.kframework.utils.file.KPaths;
-
 import org.kframework.utils.file.JarInfo;
 
 public class ExecNames {
