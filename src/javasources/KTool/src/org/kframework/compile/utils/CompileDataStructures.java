@@ -37,14 +37,30 @@ import java.util.List;
  */
 public class CompileDataStructures extends CopyOnWriteTransformer {
 
+    private final boolean noRHS;
+
     private enum Status { LHS, RHS, CONDITION }
 
     private Status status;
     private String location;
     private String filename;
 
-    public CompileDataStructures(Context context) {
+    /**
+     * @param context The context of the rules being compiled
+     * @param noRHS  Whether this is supposed to run on rules with no right-hand-side
+     *               arising when compiling search patterns for KRun.
+     */
+    public CompileDataStructures(Context context, boolean noRHS) {
         super("Compile collections to internal K representation", context);
+        this.noRHS = noRHS;
+    }
+
+    /**
+     * Simplified constructor for the common case
+     * @param context The context of the rules being compiled
+     */
+    public CompileDataStructures(Context context) {
+         this(context, false);
     }
 
     @Override
@@ -52,37 +68,52 @@ public class CompileDataStructures extends CopyOnWriteTransformer {
 
         location = node.getLocation();
         filename = node.getFilename();
+        boolean change = false;
 
-        assert node.getBody() instanceof Rewrite :
-                "expected rewrite at the top of rule\n" + node + "\n"
-                + "CompileDataStructures pass should be applied after ResolveRewrite pass";
+        Term body = node.getBody();
+        if (! noRHS) { // Regular rule
+            assert body instanceof Rewrite :
+                    "expected rewrite at the top of rule\n" + node + "\n"
+                            + "CompileDataStructures pass should be applied after ResolveRewrite pass";
 
-        Rewrite rewrite = (Rewrite) node.getBody();
-        status = Status.LHS;
-        Term lhs = (Term) this.visitNode(rewrite.getLeft());
-        status = Status.RHS;
-        Term rhs = (Term) this.visitNode(rewrite.getRight());
+            Rewrite rewrite = (Rewrite) body;
+            status = Status.LHS;
+            Term lhs = (Term) this.visitNode(rewrite.getLeft());
+            status = Status.RHS;
+            Term rhs = (Term) this.visitNode(rewrite.getRight());
+            if (lhs != rewrite.getLeft() || rhs != rewrite.getRight()) {
+                change = true;
+                rewrite = rewrite.shallowCopy();
+                rewrite.setLeft(lhs, context);
+                rewrite.setRight(rhs, context);
+                body = rewrite;
+            }
+        } else { // Krun "rule"
+            status = Status.LHS;
+            body = (Term) this.visitNode(body);
+            if (body != node.getBody()) {
+                change = true;
+            }
+        }
         Term requires;
         if (node.getRequires() != null) {
             status = Status.CONDITION;
             requires = (Term) this.visitNode(node.getRequires());
+            if (requires != node.getRequires()) {
+                change = true;
+            }
         } else {
             requires = null;
         }
 
         //TODO: handle ensures, too.
 
-        if (lhs == rewrite.getLeft()
-            && rhs == rewrite.getRight()
-            && requires == node.getRequires()) {
+        if (!change) {
             return node;
         }
 
         node = node.shallowCopy();
-        rewrite = rewrite.shallowCopy();
-        node.setBody(rewrite);
-        rewrite.setLeft(lhs, context);
-        rewrite.setRight(rhs, context);
+        node.setBody(body);
         node.setRequires(requires);
         return node;
     }
@@ -95,27 +126,28 @@ public class CompileDataStructures extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode visit(KApp node, Void _)  {
+        node = (KApp) super.visit(node, _);
         if (!(node.getLabel() instanceof KLabelConstant)) {
             /* only consider KLabel constants */
-            return super.visit(node, _);
+            return node;
         }
         KLabelConstant kLabelConstant = (KLabelConstant) node.getLabel();
 
         if (!(node.getChild() instanceof KList)) {
             /* only consider KList constants */
-            return super.visit(node, _);
+            return node;
         }
         KList kList = (KList) node.getChild();
 
         List<Production> productions = context.productionsOf(kLabelConstant.getLabel());
         if (productions.isEmpty()) {
-            return super.visit(node, _);
+            return node;
         }
         Production production = productions.iterator().next();
 
         DataStructureSort sort = context.dataStructureSortOf(production.getSort());
         if (sort == null) {
-            return super.visit(node, _);
+            return node;
         }
 
         Term[] arguments = new Term[kList.getContents().size()];
@@ -170,7 +202,7 @@ public class CompileDataStructures extends CopyOnWriteTransformer {
                         getName(),
                         filename,
                         location));
-                return super.visit(node, _);
+                return node;
             }
         } else if (sort.type().equals(KSorts.MAP)) {
             /* TODO(AndreiS): replace this with a more generic mechanism */
@@ -183,10 +215,10 @@ public class CompileDataStructures extends CopyOnWriteTransformer {
                                 kList.getContents().get(1),
                                 kList.getContents().get(2)));
             }
-            return super.visit(node, _);
+            return node;
         } else {
             /* custom function */
-            return super.visit(node, _);
+            return node;
         }
     }
 

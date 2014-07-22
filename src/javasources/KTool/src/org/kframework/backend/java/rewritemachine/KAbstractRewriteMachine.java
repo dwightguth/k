@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.kframework.backend.java.kil.Cell;
 import org.kframework.backend.java.kil.CellCollection;
 import org.kframework.backend.java.kil.Rule;
@@ -234,7 +234,17 @@ public class KAbstractRewriteMachine {
     }
 
     private Collection<Cell> getSubCellsByLabel(Cell<?> cell, String label) {
-        return ((CellCollection) cell.getContent()).cellMap().get(label);
+        Object content = cell.getContent();
+        if (content instanceof CellCollection) {
+            return ((CellCollection) content).cellMap().get(label);
+        } else if (content instanceof Cell) {
+            return cell.getLabel().equals(label) ?
+                    Collections.singletonList((Cell) content) :
+                    Collections.<Cell>emptyList();
+        } else {
+            assert false : "Wrong instruction!";
+            return null;
+        }
     }
 
     /**
