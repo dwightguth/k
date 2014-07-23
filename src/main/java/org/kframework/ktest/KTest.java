@@ -10,7 +10,6 @@ import org.kframework.ktest.Config.LocationData;
 import org.kframework.ktest.Test.TestCase;
 import org.kframework.ktest.Test.TestSuite;
 import org.kframework.utils.StringUtil;
-import org.kframework.utils.file.K3JarInfo;
 import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.general.GlobalSettings;
 import org.kframework.utils.options.SortedParameterDescriptions;
