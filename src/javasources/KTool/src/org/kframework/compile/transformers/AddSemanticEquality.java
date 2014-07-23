@@ -96,7 +96,7 @@ public class AddSemanticEquality extends CopyOnWriteTransformer {
             String sort = item.getKey();
             KLabelConstant sortEq = KLabelConstant.of(item.getValue(), context);
             if (MetaK.isComputationSort(sort)) {
-                retNode.addSubsort(EQUALITY_SORT, sort, context);
+                context.subsorts().addRelation(EQUALITY_SORT, sort);
 
                 KList kList = new KList();
                 kList.add(Variable.getFreshVar(sort));
@@ -137,7 +137,7 @@ public class AddSemanticEquality extends CopyOnWriteTransformer {
         }
 
         /* defer =K to ==K for lexical tokens */
-        for (String sort : context.getTokenSorts()) {
+        for (String sort : context.tokenSorts().keySet()) {
             KList kList = new KList();
             kList.add(Variable.getFreshVar(sort));
             kList.add(Variable.getFreshVar(sort));

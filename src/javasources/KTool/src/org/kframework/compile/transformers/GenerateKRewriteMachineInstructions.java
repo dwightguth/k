@@ -142,7 +142,7 @@ public class GenerateKRewriteMachineInstructions extends CopyOnWriteTransformer 
                 return cell;
             }
 
-            if (context.getConfigurationStructureMap().get(cellLabel).isStarOrPlus()) {
+            if (context.configurationStructureMap().get(cellLabel).isStarOrPlus()) {
                 schedule.add(Instruction.CHOICE);
             }
 

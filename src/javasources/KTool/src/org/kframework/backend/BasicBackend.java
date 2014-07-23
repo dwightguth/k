@@ -32,7 +32,7 @@ public abstract class BasicBackend implements Backend {
     public BasicBackend(Stopwatch sw, Context context) {
         this.sw = sw;
         this.context = context;
-        this.options = context.kompileOptions;
+        this.options = context.kompileOptions();
     }
 
     @Override
@@ -75,7 +75,6 @@ public abstract class BasicBackend implements Backend {
         steps.add(new AddSymbolicK(context));
         steps.add(new AddSemanticEquality(context));
         // steps.add(new ResolveFresh());
-        steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
         steps.add(new AddTopCellConfig(context));
         if (options.experimental.addTopCell) {

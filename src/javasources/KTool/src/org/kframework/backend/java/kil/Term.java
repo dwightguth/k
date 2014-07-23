@@ -45,7 +45,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
      * Java Rewrite Engine internal representation ({@link org.kframework.backend.java.kil.Term}).
      */
     public static Term of(org.kframework.kil.Term kilTerm, Definition definition) {
-        if (definition.context().javaExecutionOptions.indexingStats){
+        if (definition.context().javaExecutionOptions().indexingStats){
             IndexingStatistics.kilTransformationStopWatch.start();
         }
 
@@ -53,7 +53,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
                 = new KILtoBackendJavaKILTransformer(definition.context());
         Term term = transformer.transformTerm(kilTerm, definition);
 
-        if (definition.context().javaExecutionOptions.indexingStats){
+        if (definition.context().javaExecutionOptions().indexingStats){
             IndexingStatistics.kilTransformationStopWatch.stop();
         }
         return term;
@@ -88,7 +88,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
             @Override
             public void visit(Cell cell) {
                 String cellLabel = cell.getLabel();
-                String streamCellAttr = definition.context().getConfigurationStructureMap().get(cellLabel).cell.getCellAttribute("stream");
+                String streamCellAttr = definition.context().configurationStructureMap().get(cellLabel).cell.getCellAttribute("stream");
                 if (cellLabel.equals("k")) {
                     kCellIndexingPairs.add(IndexingPair.getKCellIndexingPair(cell, definition));
                 } else if (Constants.STDIN.equals(streamCellAttr)) {

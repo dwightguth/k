@@ -9,7 +9,6 @@ import org.kframework.backend.java.kil.Sort;
 import org.kframework.kil.loader.Context;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 /**
  * Subsort relation.
@@ -32,7 +31,7 @@ public class Subsorts implements Serializable {
     public Subsorts(Context context) {
         this.context = context;
 
-        Set<String> names = context.getAllSorts();
+        Set<String> names = context.sorts().keySet();
         ImmutableSet.Builder<Sort> setBuilder = ImmutableSet.builder();
         int maxOrd = -1;
         for (String name : names) {

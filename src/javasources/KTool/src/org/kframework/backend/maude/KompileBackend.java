@@ -38,7 +38,7 @@ public class KompileBackend extends BasicBackend {
             .append("mod ").append(mainModule).append("-BUILTINS is\n").append(" including ")
             .append(mainModule).append("-BASE .\n")
             .append(builtinsFilter.getResult()).append("endm\n");
-        FileUtil.save(context.kompiled.getAbsolutePath() + "/builtins.maude", builtins);
+        FileUtil.save(context.kompiled().getAbsolutePath() + "/builtins.maude", builtins);
         sw.printIntermediate("Generating equations for hooks");
         javaDef = (Definition) new DeleteFunctionRules(maudeHooks.stringPropertyNames(), context)
             .visitNode(javaDef);
@@ -64,7 +64,7 @@ public class KompileBackend extends BasicBackend {
             .append("  including ").append(mainModule).append("-BASE .\n")
             .append("  including ").append(mainModule).append("-BUILTINS .\n")
             .append("eq mainModule = '").append(mainModule).append(" .\nendm\n");
-        FileUtil.save(context.kompiled.getAbsolutePath() + "/" + "main.maude", main);
+        FileUtil.save(context.kompiled().getAbsolutePath() + "/" + "main.maude", main);
     }
 
     @Override

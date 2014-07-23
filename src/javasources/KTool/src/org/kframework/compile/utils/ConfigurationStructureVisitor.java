@@ -22,7 +22,7 @@ public class ConfigurationStructureVisitor extends BasicVisitor {
 
     public ConfigurationStructureVisitor(Context context) {
         super(context);
-        this.config = context.getConfigurationStructureMap();
+        this.config = context.configurationStructureMap();
         this.config.clear();
     }
 

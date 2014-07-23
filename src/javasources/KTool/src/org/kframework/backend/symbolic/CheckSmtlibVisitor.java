@@ -8,8 +8,8 @@ import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.BasicVisitor;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Check if a term can be translated into SMTLIB by verifying if the
@@ -39,7 +39,7 @@ public class CheckSmtlibVisitor extends BasicVisitor {
                 return null;
             }
 
-            Set<Production> prods = context.productions.get(((KLabelConstant) klabel).getLabel());
+            Collection<Production> prods = context.klabels().get(((KLabelConstant) klabel).getLabel());
             if (prods == null) {
                 smtValid = false;
             } else {

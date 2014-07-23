@@ -95,22 +95,22 @@ public class KCheckFrontEnd {
 
             Context context = null;//new Context();
 
-            if (context.dotk == null) {
+            if (context.dotk() == null) {
                 //try {
                 //    context.dotk = new File(GlobalSettings.mainFile.getCanonicalFile().getParent() + File.separator + ".k");
                 //} catch (IOException e) {
                 //    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, "Canonical file cannot be obtained for main file.", GlobalSettings.mainFile.getAbsolutePath(),
                 //            "File system."));
                 //}
-                context.dotk.mkdirs();
+                context.dotk().mkdirs();
             }
 
             Backend backend = new RLBackend(Stopwatch.instance(), context);
             //output = FilenameUtils.removeExtension(GlobalSettings.mainFile.getName()) + "-kompiled";
-            context.dotk.mkdirs();
+            context.dotk().mkdirs();
 
             genericCompile(lang, backend, null, context);
-            BinaryLoader.save(context.dotk.getAbsolutePath() + "/compile-options.bin", cmd, context);
+            BinaryLoader.saveOrDie(context.dotk().getAbsolutePath() + "/compile-options.bin", cmd);
 
             verbose(cmd, context);
         }
@@ -121,7 +121,7 @@ public class KCheckFrontEnd {
     public static void verbose(CommandLine cmd, Context context) {
         Stopwatch.instance().printTotal("Total");
         //if (GlobalSettings.verbose) {
-            context.printStatistics();
+            //context.printStatistics();
         //}
     }
 
@@ -147,8 +147,8 @@ public class KCheckFrontEnd {
             javaDef = (Definition) e.getResult();
         }
 
-        BinaryLoader.save(
-                context.dotk.getAbsolutePath() + "/configuration.bin", MetaK.getConfiguration(javaDef, context), context);
+        BinaryLoader.saveOrDie(
+                context.dotk().getAbsolutePath() + "/configuration.bin", MetaK.getConfiguration(javaDef, context));
         backend.run(javaDef);
     }
 }

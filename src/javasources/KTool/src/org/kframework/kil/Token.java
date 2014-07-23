@@ -2,7 +2,6 @@
 package org.kframework.kil;
 
 import org.kframework.kil.loader.*;
-import org.kframework.kil.loader.Context;
 import org.kframework.utils.StringUtil;
 import org.w3c.dom.Element;
 
@@ -102,8 +101,8 @@ public abstract class Token extends KLabel {
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + tokenSort().hashCode();
-        hash = hash * org.kframework.kil.loader.Context.HASH_PRIME + value().hashCode();
+        hash = hash * Constants.HASH_PRIME + tokenSort().hashCode();
+        hash = hash * Constants.HASH_PRIME + value().hashCode();
         return hash;
     }
 

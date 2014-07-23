@@ -385,11 +385,11 @@ public class KRunFrontEnd {
                         int state2 = options.showTransition.state2();
                         System.out.println(debugger.printEdge(state1, state2));
                     } else if (command(jc) instanceof KRunDebuggerOptions.CommandSave) {
-                        BinaryLoader.save(options.save.file.getAbsolutePath(), debugger.getGraph(), context);
+                        BinaryLoader.saveOrDie(options.save.file.getAbsolutePath(), debugger.getGraph());
                         System.out.println("File successfully saved.");
                     } else if (command(jc) instanceof KRunDebuggerOptions.CommandLoad) {
                         DirectedGraph<KRunState, Transition> savedGraph =
-                                BinaryLoader.load(DirectedGraph.class, options.load.file.getAbsolutePath(), context);
+                                BinaryLoader.loadOrDie(DirectedGraph.class, options.load.file.getAbsolutePath());
                         debugger = krun.debug(savedGraph);
                         debugger.setCurrentState(1);
                         System.out.println("File successfully loaded.");

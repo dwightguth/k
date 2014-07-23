@@ -12,7 +12,6 @@ import org.kframework.kil.Term;
 import org.kframework.kil.TermCons;
 import org.kframework.kil.Token;
 import org.kframework.kil.UserList;
-import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.utils.errorsystem.KException;
@@ -64,7 +63,7 @@ public class AddEmptyLists extends CopyOnWriteTransformer {
                     continue;
 
                 String srt = ((Sort) pi).getName();
-                if (context.isListSort(srt)) {
+                if (context.listSorts().containsKey(srt)) {
                     Term t = (Term) tc.getContents().get(i);
                     // if the term should be a list, append the empty element
                     if (isAddEmptyList(srt, t.getSort())) {
@@ -98,15 +97,15 @@ public class AddEmptyLists extends CopyOnWriteTransformer {
     }
 
     public boolean isAddEmptyList(String expectedSort, String termSort) {
-        if (!context.isListSort(expectedSort))
+        if (!context.listSorts().containsKey(expectedSort))
             return false;
-        if (context.isSubsortedEq(expectedSort, termSort) && context.isListSort(termSort))
+        if (context.isSubsortedEq(expectedSort, termSort) && context.listSorts().containsKey(termSort))
             return false;
         return true;
     }
 
     private Term addEmpty(Term node, String sort) {
-        TermCons tc = new TermCons(sort, getListCons(sort), context);
+        TermCons tc = new TermCons(sort, getListProduction(sort));
         List<Term> genContents = new ArrayList<Term>();
         genContents.add(node);
         genContents.add(new ListTerminator(sort, null));
@@ -115,8 +114,8 @@ public class AddEmptyLists extends CopyOnWriteTransformer {
         return tc;
     }
 
-    private String getListCons(String psort) {
-        Production p = context.listConses.get(psort);
-        return p.getAttribute(Constants.CONS_cons_ATTR);
+    private Production getListProduction(String psort) {
+        Production p = context.listSorts().get(psort);
+        return p;
     }
 }

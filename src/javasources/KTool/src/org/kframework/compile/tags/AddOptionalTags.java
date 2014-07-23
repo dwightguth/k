@@ -13,7 +13,7 @@ public class AddOptionalTags extends CopyOnWriteTransformer {
 
     public AddOptionalTags(Context context) {
         super("AddOptionalTags", context);
-        this.options = context.kompileOptions;
+        this.options = context.kompileOptions();
     }
 
     @Override

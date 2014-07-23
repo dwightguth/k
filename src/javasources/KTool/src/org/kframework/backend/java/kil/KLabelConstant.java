@@ -59,7 +59,7 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     private KLabelConstant(String label, Definition definition) {
         this.label = label;
         productions = definition != null ?
-                ImmutableList.<Production>copyOf(definition.context().productionsOf(label)) :
+                ImmutableList.<Production>copyOf(definition.context().klabels().get(label)) :
                 ImmutableList.<Production>of();
 
         // TODO(YilongL): urgent; how to detect KLabel clash?
@@ -102,8 +102,9 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     }
 
     private KItem buildListTerminator(Definition definition) {
-        String separator = definition.context().listLabelSeparator.get(label);
-        if (separator != null) {
+        Production p = definition.context().listKLabels().get(label);
+        if (p.isListDecl()) {
+            String separator = p.getListDecl().getSeparator();
             return new KItem(this, KList.EMPTY, Sort.of(CompleteSortLatice
                     .getUserListName(CompleteSortLatice.BOTTOM_SORT_NAME,
                             separator)), true);

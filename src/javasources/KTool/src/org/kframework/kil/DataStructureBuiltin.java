@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 
 import java.util.ArrayList;
@@ -285,8 +286,8 @@ public abstract class DataStructureBuiltin extends Term implements Interfaces.Co
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + sort.hashCode();
-        hash = hash * Context.HASH_PRIME + baseTerms.hashCode();
+        hash = hash * Constants.HASH_PRIME + sort.hashCode();
+        hash = hash * Constants.HASH_PRIME + baseTerms.hashCode();
         return hash;
     }
 

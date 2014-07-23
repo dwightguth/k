@@ -44,8 +44,6 @@ public class ResolveBuiltins extends CopyOnWriteTransformer {
             p.putAttribute("KLabelWrapper", sort);
             p.putAttribute("cons", "KLabel1" + sort + "Wrapper");
             p.putAttribute("prefixlabel", "#_");
-            context.conses.put("KLabel1" + sort + "Wrapper", p);
-            context.putLabel(p, "KLabel1" + sort+ "Wrapper");
             block.getProductions().add(p);
             pItems = new ArrayList<ProductionItem>();
             p = new Production(new Sort(KSorts.KLABEL), pItems );

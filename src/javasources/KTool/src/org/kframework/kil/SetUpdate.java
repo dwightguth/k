@@ -1,7 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
-import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.Visitor;
 
 import java.util.Collections;
@@ -42,8 +42,8 @@ public class SetUpdate extends Term implements Interfaces.Collection<Term, Enum<
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + set.hashCode();
-        hash = hash * Context.HASH_PRIME + removeEntries.hashCode();
+        hash = hash * Constants.HASH_PRIME + set.hashCode();
+        hash = hash * Constants.HASH_PRIME + removeEntries.hashCode();
         return hash;
     }
 

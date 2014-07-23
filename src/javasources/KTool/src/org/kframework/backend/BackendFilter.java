@@ -17,7 +17,7 @@ public class BackendFilter extends NonCachingVisitor {
 
     public BackendFilter(Context context) {
         super(context);
-        this.options = context.kompileOptions;
+        this.options = context.kompileOptions();
         result = new java.lang.StringBuilder();
     }
 

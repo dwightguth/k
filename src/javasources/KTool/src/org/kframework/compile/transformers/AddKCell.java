@@ -25,10 +25,10 @@ public class AddKCell extends CopyOnWriteTransformer {
     public AddKCell(Context context) {
         super("Add K cell", context);
         this.komputationCells = new ArrayList<String>();
-        if (context.getKomputationCells() == null) {
+        if (context.komputationCellNames() == null) {
             this.komputationCells.add("k");
         } else {
-            this.komputationCells = context.getKomputationCells();
+            this.komputationCells = context.komputationCellNames();
         }
         assert !this.komputationCells.isEmpty();
     }

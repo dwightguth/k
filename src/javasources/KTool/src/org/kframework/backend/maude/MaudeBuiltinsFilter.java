@@ -76,8 +76,8 @@ public class MaudeBuiltinsFilter extends BackendFilter {
         left += ")";
         result.append(left);
         result.append(" = _`(_`)(");
-        if (context.getDataStructureSorts().containsKey(node.getSort())) {
-            result.append(context.dataStructureSortOf(node.getSort()).type() + "2KLabel_(");
+        if (context.dataStructureSorts().containsKey(node.getSort())) {
+            result.append(context.dataStructureSorts().get(node.getSort()).type() + "2KLabel_(");
         } else {
             result.append("#_(");
         }
@@ -98,7 +98,7 @@ public class MaudeBuiltinsFilter extends BackendFilter {
         }
 
         Variable var;
-        if (context.getDataStructureSorts().containsKey(node.getName())
+        if (context.dataStructureSorts().containsKey(node.getName())
                 || node.getName().equals(KSorts.K)
                 || node.getName().equals(KSorts.KITEM)) {
             var = Variable.getFreshVar(node.getName());
@@ -110,8 +110,8 @@ public class MaudeBuiltinsFilter extends BackendFilter {
         filter.visit(var, null);
         left += filter.getResult();
 
-        if (context.getDataStructureSorts().containsKey(node.getName())) {
-            var.setSort(context.dataStructureSortOf(node.getName()).type());
+        if (context.dataStructureSorts().containsKey(node.getName())) {
+            var.setSort(context.dataStructureSorts().get(node.getName()).type());
         }
         right += var.toString();
         return null;

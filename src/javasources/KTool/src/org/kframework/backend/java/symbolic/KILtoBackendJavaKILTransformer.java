@@ -516,7 +516,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
             return new Variable(node.getName(), Sort.KLIST);
         }
 
-        DataStructureSort dataStructureSort = context.dataStructureSortOf(node.getSort());
+        DataStructureSort dataStructureSort = context.dataStructureSorts().get(node.getSort());
         if (dataStructureSort != null) {
             Sort sort = null;
             if (dataStructureSort.type().equals(org.kframework.kil.KSorts.LIST)) {

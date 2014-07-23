@@ -69,7 +69,7 @@ public class TermVisitor extends LocalVisitor implements Serializable {
     public TermVisitor(Context context) {
         pStrings = new LinkedHashSet<>();
         this.context = context;
-        this.indexingStats = context.javaExecutionOptions.indexingStats;
+        this.indexingStats = context.javaExecutionOptions().indexingStats;
     }
 
     public TermVisitor(Context context, boolean hasNOKCellRules) {
@@ -181,7 +181,7 @@ public class TermVisitor extends LocalVisitor implements Serializable {
         }
 
         if (inner) {
-            List<Production> productions1 = context.productionsOf(currentLabel);
+            java.util.Collection<Production> productions1 = context.klabels().get(currentLabel);
             //the production of .K is empty
             if (productions1.isEmpty()) {
                 return;
@@ -189,7 +189,7 @@ public class TermVisitor extends LocalVisitor implements Serializable {
 
             if (context.isSubsorted(K_RESULT, token.sort().name())) {
                 if (pString != null) {
-                    ArrayList<Production> productions = (ArrayList<Production>) productions1;
+                    ArrayList<Production> productions = new ArrayList<>(productions1);
                     if (productions.size() == 1) {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR +
                                 token.sort());
@@ -276,7 +276,7 @@ public class TermVisitor extends LocalVisitor implements Serializable {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR
                             + EMPTY_LIST_LABEL);
                 } else {
-                    if (context.isListSort(kItem.sort().name())) {
+                    if (context.listSorts().containsKey(kItem.sort().name())) {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR
                                 + USER_LIST_REPLACEMENT);
                         // TODO(Owolabileg): Bad hack to be removed - trying this out for fun where
@@ -299,9 +299,8 @@ public class TermVisitor extends LocalVisitor implements Serializable {
                                             + K_RESULT);
                                 }
                             } else {
-                                ArrayList<Production> productions =
-                                        (ArrayList<Production>) context.productionsOf(currentLabel);
-                                Production p = productions.get(0);
+                                java.util.Collection<Production> productions = context.klabels().get(currentLabel);
+                                Production p = productions.iterator().next();
                                 String test = pString + SEPARATOR + (currentPosition) + SEPARATOR;
                                 if (p.getChildSort(currentPosition - 1).equals(K_STRING)) {
                                     //TODO(OwolabiL): This needs to be investigated further and
@@ -315,9 +314,8 @@ public class TermVisitor extends LocalVisitor implements Serializable {
                             //TODO(OwolabiL): This needs to be investigated further and handled
                             // properly. Plus there's duplicated code here to be possibly removed.
                             String test = pString + SEPARATOR + currentPosition + SEPARATOR;
-                            ArrayList<Production> productions =
-                                    (ArrayList<Production>) context.productionsOf(currentLabel);
-                            Production p = productions.get(0);
+                            java.util.Collection<Production> productions = context.klabels().get(currentLabel);
+                            Production p = productions.iterator().next();
                             if (p.getChildSort(currentPosition - 1).equals(K_STRING)) {
                                 pStrings.add(test + kItem.kLabel() + SEPARATOR + (currentPosition) +
                                         SEPARATOR + kItem.sort());

@@ -54,9 +54,9 @@ public class ExecutionContext {
 
         this.sw = sw;
 
-        KompileOptions kompileOptions = BinaryLoader.load(KompileOptions.class,
+        KompileOptions kompileOptions = BinaryLoader.loadOrDie(KompileOptions.class,
                 new File(ccOptions.definitionLoading.definition(),
-                        "kompile-options.bin").getAbsolutePath(), krunOptions.global.debug);
+                        "kompile-options.bin").getAbsolutePath());
         //merge krun options into kompile options object
         kompileOptions.global = krunOptions.global;
 
@@ -78,7 +78,7 @@ public class ExecutionContext {
 
         sw.printIntermediate("Preprocessing definition");
 
-        Configuration cfg = BinaryLoader.load(Configuration.class, new File(context.kompiled, "configuration.bin").getAbsolutePath(), context);
+        Configuration cfg = BinaryLoader.loadOrDie(Configuration.class, new File(context.kompiled, "configuration.bin").getAbsolutePath());
 
         sw.printIntermediate("Reading configuration from binary");
 
@@ -100,7 +100,7 @@ public class ExecutionContext {
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL,
                     "Could not find the compiled definition.", null, serializedDefinition.getAbsolutePath()));
         }
-        Definition javaDef = BinaryLoader.load(Definition.class, serializedDefinition.getAbsolutePath(), context);
+        Definition javaDef = BinaryLoader.loadOrDie(Definition.class, serializedDefinition.getAbsolutePath());
 
         sw.printIntermediate("Reading definition from binary");
 

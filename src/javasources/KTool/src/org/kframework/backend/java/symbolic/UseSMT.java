@@ -28,7 +28,7 @@ import org.kframework.utils.options.SMTSolver;
 public class UseSMT implements Serializable {
 
     public static BuiltinMap checkSat(Term term, TermContext termContext) {
-        if (termContext.definition().context().smtOptions.smt != SMTSolver.Z3) {
+        if (termContext.definition().context().smtOptions().smt != SMTSolver.Z3) {
             return null;
         }
 

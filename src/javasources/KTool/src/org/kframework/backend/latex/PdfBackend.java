@@ -45,7 +45,7 @@ public class PdfBackend extends BasicBackend {
             if (process.exitValue() != 0) {
                 GlobalSettings.kem.register(
                         new KException(ExceptionType.WARNING, KExceptionGroup.COMPILER, "pdflatex returned a non-zero exit code.  The pdf might be generated, but with bugs. please inspect the latex logs."));
-                copyFile(new File(context.dotk, FilenameUtils.removeExtension(latexFile.getName()) + ".log"), new File(FilenameUtils.removeExtension(latexFile.getName()) + ".log"));
+                copyFile(new File(context.dotk(), FilenameUtils.removeExtension(latexFile.getName()) + ".log"), new File(FilenameUtils.removeExtension(latexFile.getName()) + ".log"));
             }
             sw.printIntermediate("Latex2PDF");
 

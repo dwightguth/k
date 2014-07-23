@@ -84,7 +84,7 @@ public final class KastOptions {
             if (System.getenv("KRUN_SORT") != null) {
                 sort = System.getenv("KRUN_SORT");
             } else {
-                sort = context.startSymbolPgm;
+                sort = context.startSymbolPgm();
             }
         }
         return sort;

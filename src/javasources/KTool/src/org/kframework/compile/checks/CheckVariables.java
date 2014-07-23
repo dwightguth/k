@@ -41,7 +41,7 @@ public class CheckVariables extends BasicVisitor {
 
     public CheckVariables(Context context) {
         super(context);
-        options = context.kompileOptions;
+        options = context.kompileOptions();
     }
 
     HashMap<Variable, Integer> left = new HashMap<Variable, Integer>();
@@ -63,13 +63,13 @@ public class CheckVariables extends BasicVisitor {
     public Void visit(Variable node, Void _) {
         boolean freshConstant = node.isFreshConstant();
         if (node.isFreshVariable() || freshConstant) {
-            if (freshConstant && !context.freshFunctionNames.containsKey(node.getSort())) {
+            if (freshConstant && !context.freshFunctionNames().containsKey(node.getSort())) {
                 GlobalSettings.kem.register(new KException(
                         KException.ExceptionType.ERROR,
                         KException.KExceptionGroup.COMPILER,
                         "Unsupported sort of fresh variable: " + node.getSort()
                                 + "\nOnly sorts "
-                                + context.freshFunctionNames.keySet()
+                                + context.freshFunctionNames().keySet()
                                 + " admit fresh variables.", getName(), node
                                 .getFilename(), node.getLocation()));
             }

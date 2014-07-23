@@ -1,12 +1,20 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.compile.transformers;
 
-import org.kframework.kil.*;
+import org.kframework.kil.ASTNode;
+import org.kframework.kil.Attribute;
+import org.kframework.kil.KApp;
+import org.kframework.kil.KLabelConstant;
+import org.kframework.kil.Production;
+import org.kframework.kil.Rewrite;
+import org.kframework.kil.Rule;
+import org.kframework.kil.Term;
+import org.kframework.kil.TermCons;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 
+import java.util.Collection;
 import java.util.Set;
-import java.util.List;
 
 /**
  * Initially created by: Traian Florin Serbanuta
@@ -32,16 +40,16 @@ public class DeleteFunctionRules extends CopyOnWriteTransformer {
         }
         Production prod = null;
         if (body instanceof TermCons) {
-            prod = context.conses.get(((TermCons) body).getCons());
+            prod = ((TermCons) body).getProduction();
         } else if (body instanceof KApp) {
             Term l = ((KApp) body).getLabel();
             if (!(l instanceof KLabelConstant)) return node;
             String label = ((KLabelConstant) l).getLabel();
-            List<Production> prods = context.productionsOf(label);
+            Collection<Production> prods = context.klabels().get(label);
             if (prods.size() != 1) {
                 return node;
             } // Hooked functions should not be overloaded
-            prod = prods.get(0);
+            prod = prods.iterator().next();
         }
         if (prod == null || !prod.containsAttribute(Attribute.HOOK_KEY)) {
             return node;

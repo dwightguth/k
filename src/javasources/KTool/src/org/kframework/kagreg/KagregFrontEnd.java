@@ -13,7 +13,7 @@ import org.kframework.kil.ConfigurationNotFound;
 import org.kframework.kil.ConfigurationNotUnique;
 import org.kframework.kil.Definition;
 import org.kframework.kil.Import;
-import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.MutableContext;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.DefinitionLoader;
 import org.kframework.parser.concrete.KParser;
@@ -70,7 +70,7 @@ public class KagregFrontEnd {
         String firstLang = FileUtil.getMainModule(firstDefinitionFile.getName());
         String secondLang = FileUtil.getMainModule(secondDefinitionFile.getName());
 
-        Context context1 = new Context(globalOptions);
+        MutableContext context1 = new MutableContext(globalOptions);
         context1.dotk = new File(firstDefinitionFile.getAbsoluteFile().getParent() + File.separator + ".k");
         context1.dotk.mkdirs();
         Definition firstDef = DefinitionLoader.loadDefinition(firstDefinitionFile, firstLang, true,
@@ -88,7 +88,7 @@ public class KagregFrontEnd {
 //        GlobalSettings.NOSMT = true;
 
         KParser.reset();
-        Context context2 = new Context(globalOptions);
+        MutableContext context2 = new MutableContext(globalOptions);
         assert context2 != null;
         context2.dotk = new File(secondDefinitionFile.getAbsoluteFile().getParent() + File.separator + ".k");
         context2.dotk.mkdirs();

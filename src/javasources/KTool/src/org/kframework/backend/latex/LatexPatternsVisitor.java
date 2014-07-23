@@ -2,6 +2,7 @@
 package org.kframework.backend.latex;
 
 import org.kframework.kil.*;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.BasicVisitor;
 import org.kframework.utils.StringUtil;
 
@@ -63,7 +64,7 @@ public class LatexPatternsVisitor extends BasicVisitor {
         String terminal = pi.getTerminal();
         if (terminal.isEmpty())
             return null;
-        if (context.isSpecialTerminal(terminal)) {
+        if (Constants.isSpecialTerminal(terminal)) {
             pattern += StringUtil.latexify(terminal);
         } else {
                         if (!prevNonTerm) pattern += "{}";

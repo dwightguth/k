@@ -49,7 +49,7 @@ public class AddSymbolicK extends CopyOnWriteTransformer {
         String ctor = symbolicConstructor(sort);
         Term symTerm;
         if (!allowKSymbolic(sort)) {
-            symTerm = new TermCons(sort, ctor, context);
+            symTerm = new TermCons(sort, getSymbolicProduction(sort));
             ((TermCons) symTerm).getContents().add(term);
         } else {
             symTerm = KApp.of(KLabelConstant.of(ctor, context), term);

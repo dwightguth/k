@@ -81,7 +81,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
                 String cellLabel = iter.next();
 
                 Set<String> intersect = Sets.intersection(
-                                context.getConfigurationStructureMap().get(cellLabel).ancestorIds,
+                                context.configurationStructureMap().get(cellLabel).ancestorIds,
                                 cellMapLabels);
                 /* lift the cell of interest to the level of cell map */
                 if (!intersect.isEmpty()) {
@@ -118,7 +118,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
         // TODO(AndreiS): should only be applied once
         makeCellDataStructures();
 
-        CellDataStructure cellDataStructure = context.cellDataStructures.get(cell.getLabel());
+        CellDataStructure cellDataStructure = context.cellDataStructures().get(cell.getLabel());
         if (cellDataStructure == null) {
             return super.visit(cell, _);
         } else if (cellDataStructure instanceof CellMap) {
@@ -154,7 +154,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
     }
 
     private ListBuiltin getListBuiltin(Bag cellContent, CellList cellList) {
-        DataStructureSort listSort = context.dataStructureSortOf(
+        DataStructureSort listSort = context.dataStructureSorts().get(
                 DataStructureSort.DEFAULT_LIST_SORT);
 
         List<Term> cellItems = cellContent.getContents();
@@ -168,7 +168,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
             }
             Cell elementCell = (Cell) term;
             assert elementCell.getLabel().equals(cellList.elementCellLabel());
-            if (context.kompileOptions.backend.java()) {
+            if (context.kompileOptions().backend.java()) {
                 elementsLeft.add(elementCell);
             } else {
                 elementsLeft.add(KApp.of(new KInjectedLabel(elementCell)));
@@ -184,7 +184,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
             }
             Cell elementCell = (Cell) term;
             assert elementCell.getLabel().equals(cellList.elementCellLabel());
-            if (context.kompileOptions.backend.java()) {
+            if (context.kompileOptions().backend.java()) {
                 elementsRight.add(elementCell);
             } else {
                 elementsRight.add(KApp.of(new KInjectedLabel(elementCell)));
@@ -207,7 +207,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
     }
 
     private MapBuiltin getMapBuiltin(Bag cellContent, CellMap cellMap) {
-        DataStructureSort mapSort = context.dataStructureSortOf(
+        DataStructureSort mapSort = context.dataStructureSorts().get(
                 DataStructureSort.DEFAULT_MAP_SORT);
 
         Map<Term, Term> entries = new HashMap<>();
@@ -237,7 +237,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
 
                 assert key != null : "there should be exactly one key cell";
                 entries.put(key, value);
-                if (context.kompileOptions.backend.java()) {
+                if (context.kompileOptions().backend.java()) {
                     entries.put(key, value);
                 } else {
                     entries.put(key, KApp.of(new KInjectedLabel(value)));
@@ -253,7 +253,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
     }
 
     private void makeCellDataStructures() {
-        for (ConfigurationStructure cell : context.getConfigurationStructureMap().values()) {
+        for (ConfigurationStructure cell : context.configurationStructureMap().values()) {
             makeCellDataStructure(cell);
         }
     }
@@ -271,7 +271,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
 
             String elementCellLabel = elementConfigurationStructure.id;
 
-            context.cellDataStructures.put(
+            context.cellDataStructures().put(
                     listCellLabel,
                     new CellList(listCellLabel, elementCellLabel));
         } else if (configurationStructure.cell.containsCellAttribute(MAP_CELL_ATTRIBUTE_NAME)) {
@@ -303,7 +303,7 @@ public class Cell2DataStructure extends CopyOnWriteTransformer {
 
             String keyCellLabel = keyConfigurationStructure.id;
 
-            context.cellDataStructures.put(
+            context.cellDataStructures().put(
                     mapCellLabel,
                     new CellMap(mapCellLabel, entryCellLabel, keyCellLabel));
         }

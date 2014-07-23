@@ -65,8 +65,8 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
     public AbstractVisitor(org.kframework.kil.loader.Context context) {
         this.context = context;
         if (context != null) {
-            this.kompileOptions = context.kompileOptions;
-            this.globalOptions = context.globalOptions;
+            this.kompileOptions = context.kompileOptions();
+            this.globalOptions = context.globalOptions();
         }
         this.name = this.getClass().toString();
     }

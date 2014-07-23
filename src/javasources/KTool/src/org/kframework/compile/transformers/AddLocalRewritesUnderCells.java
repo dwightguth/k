@@ -169,7 +169,7 @@ public class AddLocalRewritesUnderCells extends CopyOnWriteTransformer {
                 if (!hasACMatching.booleanValue()) {
                     for (Term term : cell.getCellTerms()) {
                         if (term instanceof Cell) {
-                            if (context.getConfigurationStructureMap().get((Cell) term).isStarOrPlus()) {
+                            if (context.configurationStructureMap().get((Cell) term).isStarOrPlus()) {
                                 hasACMatching.setValue(true);
                                 break;
                             }

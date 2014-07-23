@@ -16,11 +16,7 @@ import org.kframework.backend.java.builtins.FreshOperations;
 import org.kframework.backend.java.builtins.TermEquality;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.util.Profiler;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.K;
-import org.strategoxt.stratego_sglr.sorts_1_0;
-
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
@@ -631,7 +627,7 @@ public class PatternMatcher extends AbstractMatcher {
         CellCollection otherCellCollection = (CellCollection) pattern;
 
         if (cellCollection.hasFrame()) {
-            assert !termContext.definition().context().javaExecutionOptions.concreteExecution() :
+            assert !termContext.definition().context().javaExecutionOptions().concreteExecution() :
                 "the subject term should be ground in concrete execution";
             if (!otherCellCollection.hasFrame()) {
                 fail(cellCollection, otherCellCollection);
@@ -684,7 +680,7 @@ public class PatternMatcher extends AbstractMatcher {
 
             for (Iterator<String> iter = unifiableCellLabels.iterator(); iter.hasNext(); ) {
                 String cellLabel = iter.next();
-                if (!context.getConfigurationStructureMap().get(cellLabel).isStarOrPlus()) {
+                if (!context.configurationStructureMap().get(cellLabel).isStarOrPlus()) {
                     assert cellCollection.get(cellLabel).size() == 1
                             && otherCellCollection.get(cellLabel).size() == 1;
                     match(cellCollection.get(cellLabel).iterator().next(),

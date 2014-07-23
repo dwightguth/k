@@ -21,25 +21,25 @@ public class HTMLPatternsVisitor extends BasicVisitor {
         LATEX, HTML, DEFAULT
     };
 
-    private Map<String,String> patterns = new HashMap<String,String>();
-    private Map<String,HTMLPatternType> type = new HashMap<String,HTMLPatternType>();
+    private Map<Production,String> patterns = new HashMap<>();
+    private Map<Production,HTMLPatternType> type = new HashMap<Production,HTMLPatternType>();
 
     String pattern = "";
     int nonTerm;
     boolean prevNonTerm;
 
-    public void setPatterns(Map<String,String> patterns) {
+    public void setPatterns(Map<Production,String> patterns) {
         this.patterns = patterns;
     }
 
 
-    public Map<String,String> getPatterns() {
+    public Map<Production,String> getPatterns() {
         return patterns;
     }
 
-    public HTMLPatternType getPatternType(String cons){
-        if(type.containsKey(cons))
-            return type.get(cons);
+    public HTMLPatternType getPatternType(Production p){
+        if(type.containsKey(p))
+            return type.get(p);
         else
             return null;
     }
@@ -54,20 +54,20 @@ public class HTMLPatternsVisitor extends BasicVisitor {
 
                 pattern = p.getAttribute("latex");
                 pattern = pattern.replace("\\\\", "\\");
-                patterns.put(p.getAttribute("cons"), pattern);
-                type.put(p.getAttribute("cons"), HTMLPatternType.LATEX);
+                patterns.put(p, pattern);
+                type.put(p, HTMLPatternType.LATEX);
 
             }
             if (p.containsAttribute("html")) {
 
                 pattern = p.getAttribute("html");
                 pattern = pattern.substring(1, pattern.length()-1).replace("\\\\", "\\");
-                patterns.put(p.getAttribute("cons"), pattern);
-                type.put(p.getAttribute("cons"), HTMLPatternType.HTML);
+                patterns.put(p, pattern);
+                type.put(p, HTMLPatternType.HTML);
 
             }
         } else {
-            type.put(p.getAttribute("cons"), HTMLPatternType.DEFAULT);
+            type.put(p, HTMLPatternType.DEFAULT);
             //super.visit(p);
         }
         return _;

@@ -51,7 +51,7 @@ public class TokenSortCollector extends BasicVisitor {
 
     private TokenSortCollector(Context context) {
         super(context);
-        this.kompileOptions = context.kompileOptions;
+        this.kompileOptions = context.kompileOptions();
     }
 
     @Override

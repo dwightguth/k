@@ -203,7 +203,7 @@ public class CellCollection extends Collection {
     private static int numOfTypesOfStarredSubcells(Multimap<String, Cell> cells, Context context) {
         int count = 0;
         for (String cellLabel : cells.keySet()) {
-            if (context.getConfigurationStructureMap().get(cellLabel).isStarOrPlus()) {
+            if (context.configurationStructureMap().get(cellLabel).isStarOrPlus()) {
                 count++;
             } else {
                 assert cells.get(cellLabel).size() == 1:

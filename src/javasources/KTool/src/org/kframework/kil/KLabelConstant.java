@@ -2,6 +2,7 @@
 
 package org.kframework.kil;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +99,7 @@ public class KLabelConstant extends KLabel {
     /* un-escaped label */
     private final String label;
     /* unmodifiable view of the production list */
-    private final List<Production> productions;
+    private final Collection<Production> productions;
 
     public KLabelConstant(String label) {
         this.label = label;
@@ -107,7 +108,7 @@ public class KLabelConstant extends KLabel {
 
     private KLabelConstant(String label, Context context) {
         this.label = label;
-        productions = Collections.unmodifiableList(context.productionsOf(label));
+        productions = Collections.unmodifiableCollection(context.klabels().get(label));
     }
 
     /**
@@ -117,7 +118,7 @@ public class KLabelConstant extends KLabel {
     public KLabelConstant(Element element, Context context) {
         super(element);
         label = StringUtil.unescapeMaude(element.getAttribute(Constants.VALUE_value_ATTR));
-        productions = Collections.unmodifiableList(context.productionsOf(label));
+        productions = Collections.unmodifiableCollection(context.klabels().get(label));
     }
 
     @SuppressWarnings("unchecked")
@@ -130,7 +131,7 @@ public class KLabelConstant extends KLabel {
     /**
      * @return unmodifiable list of productions generating this KLabel
      */
-    public List<Production> productions() {
+    public Collection<Production> productions() {
         return productions;
     }
 
@@ -174,7 +175,7 @@ public class KLabelConstant extends KLabel {
         if (isPredicate()) {
             return true;
         } else {
-            List<Production> productions = context.productionsOf(getLabel());
+            Collection<Production> productions = context.klabels().get(getLabel());
             Production functionProduction = null;
             for (Production production : productions) {
                 if (production.containsAttribute(Attribute.FUNCTION_KEY)

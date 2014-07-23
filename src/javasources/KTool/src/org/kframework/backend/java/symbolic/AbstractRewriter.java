@@ -25,7 +25,7 @@ public abstract class AbstractRewriter {
     protected AbstractRewriter(Definition definition, TermContext termContext) {
         ruleIndex = definition.getIndex();
         this.termContext = termContext;
-        this.strategy = new TransitionCompositeStrategy(definition.context().kompileOptions.transition);
+        this.strategy = new TransitionCompositeStrategy(definition.context().kompileOptions().transition);
     }
 
     public Term rewrite(Term subject, int bound) {

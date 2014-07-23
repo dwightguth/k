@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.kframework.backend.unparser.UnparserFilterNew;
 import org.kframework.backend.unparser.UnparserLexicalComparator;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
 
@@ -49,8 +50,8 @@ public class MapBuiltin extends DataStructureBuiltin {
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + super.hashCode();
-        hash = hash * Context.HASH_PRIME + elements.hashCode();
+        hash = hash * Constants.HASH_PRIME + super.hashCode();
+        hash = hash * Constants.HASH_PRIME + elements.hashCode();
         return hash;
     }
 

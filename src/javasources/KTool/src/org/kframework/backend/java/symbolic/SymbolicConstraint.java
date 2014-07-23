@@ -320,7 +320,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
                 return true;
             }
 
-            if (!termContext().definition().context().javaExecutionOptions.generateTests) {
+            if (!termContext().definition().context().javaExecutionOptions().generateTests) {
                 if (leftHandSide.isExactSort() && rightHandSide.isExactSort()) {
                     return !leftHandSide.sort().equals(rightHandSide.sort());
                 } else if (leftHandSide.isExactSort()) {
@@ -612,7 +612,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
     }
 
     public boolean checkUnsat() {
-        if (termContext().definition().context().smtOptions.smt != SMTSolver.Z3) {
+        if (termContext().definition().context().smtOptions().smt != SMTSolver.Z3) {
             return false;
         }
 
@@ -748,7 +748,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
     private static boolean impliesSMT(SymbolicConstraint left, SymbolicConstraint right) {
         boolean result = false;
         assert left.termContext().definition().context() == right.termContext().definition().context();
-        if (left.termContext().definition().context().smtOptions.smt == SMTSolver.GAPPA) {
+        if (left.termContext().definition().context().smtOptions().smt == SMTSolver.GAPPA) {
 
             GappaPrinter.GappaPrintResult premises = GappaPrinter.toGappa(left);
             String gterm1 = premises.result;
@@ -775,7 +775,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
                 result = true;
 
 //            System.out.println(constraint);
-        } else if (left.termContext().definition().context().smtOptions.smt == SMTSolver.Z3) {
+        } else if (left.termContext().definition().context().smtOptions().smt == SMTSolver.Z3) {
             Set<Variable> rightHandSideVariables = new HashSet<Variable>(right.variableSet());
             rightHandSideVariables.removeAll(left.variableSet());
 

@@ -2,13 +2,15 @@
 package org.kframework.backend.symbolic;
 
 import org.kframework.compile.transformers.AddPredicates;
-import org.kframework.kil.*;
+import org.kframework.kil.KApp;
+import org.kframework.kil.KLabelConstant;
+import org.kframework.kil.KList;
+import org.kframework.kil.Production;
+import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.BasicVisitor;
 
 import java.util.*;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,7 +38,7 @@ public class CheckSmtLibByAddingPredicates extends BasicVisitor{
                 return null;
             }
 
-            Set<Production> prods = context.productions.get(((KLabelConstant) klabel).getLabel());
+            Collection<Production> prods = context.klabels().get(((KLabelConstant) klabel).getLabel());
             if (prods == null) {
                 smtValid = false;
             } else {

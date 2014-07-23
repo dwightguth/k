@@ -17,13 +17,12 @@ import org.kframework.backend.maude.KompileBackend;
 import org.kframework.backend.symbolic.SymbolicBackend;
 import org.kframework.backend.unparser.UnflattenBackend;
 import org.kframework.backend.unparser.UnparserBackend;
+import org.kframework.compile.CompiledDefinition;
 import org.kframework.compile.utils.CompilerStepDone;
 import org.kframework.compile.utils.CompilerSteps;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.CountNodesVisitor;
-import org.kframework.krun.K;
 import org.kframework.parser.DefinitionLoader;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
@@ -158,7 +157,7 @@ public class KompileFrontEnd {
             genericCompile(options, backend, options.experimental.step, context);
         }
 
-        BinaryLoader.save(new File(context.kompiled, "kompile-options.bin").getAbsolutePath(), options, context);
+        BinaryLoader.saveOrDie(new File(context.kompiled, "def.bin").getAbsolutePath(), new CompiledDefinition(context));
 
         verbose(context);
     }
@@ -190,9 +189,6 @@ public class KompileFrontEnd {
         } catch (CompilerStepDone e) {
             javaDef = (Definition) e.getResult();
         }
-
-        BinaryLoader.save(context.kompiled.getAbsolutePath() + "/configuration.bin",
-                MetaK.getConfiguration(javaDef, context), context);
 
         backend.run(javaDef);
 

@@ -78,7 +78,7 @@ public class AddStreamCells extends CopyOnWriteTransformer {
     }
 
     private void addRules(Rule rule, String stream) {
-        DataStructureSort sort = context.dataStructureSortOf(rule.getBody().getSort());
+        DataStructureSort sort = context.dataStructureSorts().get(rule.getBody().getSort());
         if (!(rule.getBody().getSort().equals("List") || rule.getBody().getSort().equals("ListItem") || context.dataStructureListSortOf(rule.getBody().getSort()) != null)) {
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                     KExceptionGroup.INTERNAL,
@@ -86,8 +86,8 @@ public class AddStreamCells extends CopyOnWriteTransformer {
                         getName(), rule.getFilename(), rule.getLocation()));
         }
         Set<Cell> cells = new HashSet<Cell>();
-        for (String cellName : context.cells.keySet()) {
-            Cell cell = context.cells.get(cellName);
+        for (String cellName : context.configurationStructureMap().keySet()) {
+            Cell cell = context.configurationStructureMap().get(cellName).cell;
             if (stream.equals(cell.getCellAttributes().get("stream"))) {
                 cells.add(cell);
             }

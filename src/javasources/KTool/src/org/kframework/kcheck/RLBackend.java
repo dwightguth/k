@@ -43,7 +43,6 @@ import org.kframework.compile.transformers.ContextsToHeating;
 import org.kframework.compile.transformers.DesugarStreams;
 import org.kframework.compile.transformers.FlattenSyntax;
 import org.kframework.compile.transformers.FreezeUserFreezers;
-import org.kframework.compile.transformers.FreshCondToFreshVar;
 import org.kframework.compile.transformers.RemoveBrackets;
 import org.kframework.compile.transformers.RemoveSyntacticCasts;
 import org.kframework.compile.transformers.ResolveAnonymousVariables;
@@ -142,7 +141,7 @@ public class RLBackend extends BasicBackend implements Backend {
             .append(mainModule).append("-BUILTINS is\n")
             .append(" including ").append(mainModule).append("-BASE .\n")
             .append(builtinsFilter.getResult()).append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/builtins.maude",
+        FileUtil.save(context.dotk().getAbsolutePath() + "/builtins.maude",
             builtins);
         sw.printIntermediate("Generating equations for hooks");
         return super.firstStep(javaDef);
@@ -174,8 +173,8 @@ public class RLBackend extends BasicBackend implements Backend {
             .append("mod ").append(mainModule).append(" is \n")
             .append("  including ").append(mainModule).append("-BASE .\n")
             .append("  including ").append(mainModule).append("-BUILTINS .\n").append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/" + "main.maude", main);
-        context.kompiled = context.dotk;
+        FileUtil.save(context.dotk().getAbsolutePath() + "/" + "main.maude", main);
+        //context.kompiled = context.dotk;
         /****************
          * end *
          ****************/
@@ -342,7 +341,6 @@ public class RLBackend extends BasicBackend implements Backend {
         steps.add(new AddImplicationRules(context, reachabilityRules));
 
         steps.add(new AddSemanticEquality(context));
-        steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
         steps.add(new AddTopCellConfig(context));
         AddConditionToConfig.PC = false;

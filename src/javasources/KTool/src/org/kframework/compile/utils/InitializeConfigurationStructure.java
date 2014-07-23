@@ -3,6 +3,7 @@ package org.kframework.compile.utils;
 
 import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.MutableContext;
 import org.kframework.kil.visitors.AbstractTransformer;
 
 /**

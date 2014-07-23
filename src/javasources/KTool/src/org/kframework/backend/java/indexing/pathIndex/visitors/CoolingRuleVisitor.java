@@ -5,8 +5,6 @@ import org.kframework.backend.java.kil.*;
 import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
 
-import java.util.ArrayList;
-
 /**
  * Visitor for traversing cooling Rules
  * Author: OwolabiL
@@ -122,9 +120,8 @@ public class CoolingRuleVisitor extends RuleVisitor {
             if (frozenTerm instanceof Hole) {
                 pStrings.add(pString + (i + 1) + ".HOLE");
             } else {
-                ArrayList<Production> productions =
-                        (ArrayList<Production>) context.productionsOf(currentLabel);
-                Production p = productions.get(0);
+                java.util.Collection<Production> productions = context.klabels().get(currentLabel);
+                Production p = productions.iterator().next();
                 if (productions.size() == 1) {
                     pStrings.add(pString + (i + 1) + SEPARATOR + p.getChildSort(0));
                 } else {

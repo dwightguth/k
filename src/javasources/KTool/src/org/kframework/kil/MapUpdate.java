@@ -1,7 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
-import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.Visitor;
 
 import java.util.Collections;
@@ -51,9 +51,9 @@ public class MapUpdate extends Term {
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + map.hashCode();
-        hash = hash * Context.HASH_PRIME + removeEntries.hashCode();
-        hash = hash * Context.HASH_PRIME + updateEntries.hashCode();
+        hash = hash * Constants.HASH_PRIME + map.hashCode();
+        hash = hash * Constants.HASH_PRIME + removeEntries.hashCode();
+        hash = hash * Constants.HASH_PRIME + updateEntries.hashCode();
         return hash;
     }
 

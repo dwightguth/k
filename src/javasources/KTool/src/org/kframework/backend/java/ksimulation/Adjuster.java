@@ -58,7 +58,7 @@ public class Adjuster {
             return false;
         }
 
-        if(impl.getDefinition().context().smtOptions.smt == SMTSolver.NONE){
+        if(impl.getDefinition().context().smtOptions().smt == SMTSolver.NONE){
 
             return implside.term().equals(specside.term());
         }

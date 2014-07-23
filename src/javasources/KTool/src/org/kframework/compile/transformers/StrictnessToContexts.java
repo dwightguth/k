@@ -3,7 +3,24 @@ package org.kframework.compile.transformers;
 
 import org.kframework.compile.utils.MetaK;
 import org.kframework.compile.utils.SyntaxByTag;
-import org.kframework.kil.*;
+import org.kframework.kil.ASTNode;
+import org.kframework.kil.Attribute;
+import org.kframework.kil.Attributes;
+import org.kframework.kil.Hole;
+import org.kframework.kil.KApp;
+import org.kframework.kil.KLabelConstant;
+import org.kframework.kil.KList;
+import org.kframework.kil.KSorts;
+import org.kframework.kil.Module;
+import org.kframework.kil.ModuleItem;
+import org.kframework.kil.Production;
+import org.kframework.kil.ProductionItem;
+import org.kframework.kil.Rewrite;
+import org.kframework.kil.Sort;
+import org.kframework.kil.Term;
+import org.kframework.kil.TermCons;
+import org.kframework.kil.Terminal;
+import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.parser.basic.Basic;
@@ -14,8 +31,6 @@ import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.util.*;
-import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -267,7 +282,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 ctx.getAttributes().setAll(prod.getAttributes());
                 String strictContext = newStrictAttr.getAttribute(CONTEXT);
                 if (strictContext != null) {
-                    Set<Production> productions = getStrictContextProductions(strictContext, prod);
+                    Collection<Production> productions = getStrictContextProductions(strictContext, prod);
                     assert productions.size()==1 : "Expecting only one production for context " +
                             strictContext + " but found " + productions.size() + ": " + productions;
                     Production strictContextProd = productions.iterator().next();
@@ -313,8 +328,8 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
         return hole;
     }
 
-    private Set<Production> getStrictContextProductions(String strictType, Production prod) {
-        Set<Production> productions = context.productions.get(strictType);
+    private Collection<Production> getStrictContextProductions(String strictType, Production prod) {
+        Collection<Production> productions = context.klabels().get(strictType);
         if (productions == null) {
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,

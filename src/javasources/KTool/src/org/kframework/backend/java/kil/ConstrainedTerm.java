@@ -22,7 +22,6 @@ import org.kframework.backend.java.util.GroupProductionsBySort;
 import org.kframework.backend.java.util.Subsorts;
 import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.ASTNode;
-import org.kframework.kil.loader.Context;
 import org.kframework.krun.K;
 
 
@@ -257,7 +256,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
             solutions.add(candidate);
         }
 
-        if (context.definition().context().javaExecutionOptions.generateTests
+        if (context.definition().context().javaExecutionOptions().generateTests
                 && !solutions.isEmpty()) {
             // TODO(AndreiS): deal with KLabel variables
             boolean changed;

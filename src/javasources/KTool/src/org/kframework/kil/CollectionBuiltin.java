@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
 
@@ -38,8 +39,8 @@ public abstract class CollectionBuiltin extends DataStructureBuiltin {
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + super.hashCode();
-        hash = hash * Context.HASH_PRIME + elements.hashCode();
+        hash = hash * Constants.HASH_PRIME + super.hashCode();
+        hash = hash * Constants.HASH_PRIME + elements.hashCode();
         return hash;
     }
 

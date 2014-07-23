@@ -90,7 +90,7 @@ public class CheckSyntaxDecl extends BasicVisitor {
                 sorts++;
                 Sort s = (Sort) pi;
                 if (!(s.getName().endsWith("CellSort") || s.getName().endsWith("CellFragment")))
-                    if (!context.definedSorts.contains(s.getName())) {
+                    if (!context.sorts().containsKey(s.getName())) {
                         String msg = "Undefined sort " + s.getName();
                         GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.COMPILER, msg, getName(), s.getFilename(), s.getLocation()));
                     }
@@ -102,7 +102,7 @@ public class CheckSyntaxDecl extends BasicVisitor {
             if (pi instanceof UserList) {
                 sorts++;
                 UserList s = (UserList) pi;
-                if (!s.getSort().startsWith("#") && !context.definedSorts.contains(s.getSort())) {
+                if (!s.getSort().startsWith("#") && !context.sorts().containsKey(s.getSort())) {
                     String msg = "Undefined sort " + s.getSort();
                     GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.COMPILER, msg, getName(), s.getFilename(), s.getLocation()));
                 }

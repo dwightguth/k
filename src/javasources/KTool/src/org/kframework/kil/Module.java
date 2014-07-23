@@ -111,7 +111,7 @@ public class Module extends DefinitionItem implements Interfaces.MutableList<Mod
 
     public void addSubsort(String sort, String subsort, Context context) {
         this.addProduction(sort, new Sort(subsort));
-        context.addSubsort(sort, subsort);
+        context.subsorts().addRelation(sort, subsort);
     }
 
     public void addConstant(String ctSort, String ctName) {

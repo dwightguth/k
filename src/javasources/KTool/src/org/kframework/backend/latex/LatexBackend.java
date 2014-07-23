@@ -40,7 +40,7 @@ public class LatexBackend extends BasicBackend {
         lf.visitNode(javaDef);
 
         String kLatexStyle = KPaths.getKBase(false) + fileSep + "include" + fileSep + "latex" + fileSep + "k.sty";
-        latexStyleFile = new File(context.dotk.getAbsolutePath() + fileSep + "k.sty");
+        latexStyleFile = new File(context.dotk().getAbsolutePath() + fileSep + "k.sty");
         try {
             FileUtils.writeStringToFile(latexStyleFile, FileUtil.getFileContent(kLatexStyle));
         } catch (IOException e) {
@@ -56,8 +56,8 @@ public class LatexBackend extends BasicBackend {
 
         File canonicalFile = options.mainDefinitionFile();
         String latexFilePath;
-        if(makeDocument) latexFilePath= context.dotk.getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + "-doc.tex";
-        else latexFilePath = context.dotk.getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + ".tex";
+        if(makeDocument) latexFilePath= context.dotk().getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + "-doc.tex";
+        else latexFilePath = context.dotk().getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + ".tex";
         latexFile = new File(latexFilePath);
         try {
             FileUtils.writeStringToFile(latexFile, latexified);

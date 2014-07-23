@@ -22,7 +22,6 @@ import org.kframework.compile.transformers.ContextsToHeating;
 import org.kframework.compile.transformers.DesugarStreams;
 import org.kframework.compile.transformers.FlattenSyntax;
 import org.kframework.compile.transformers.FreezeUserFreezers;
-import org.kframework.compile.transformers.FreshCondToFreshVar;
 import org.kframework.compile.transformers.RemoveBrackets;
 import org.kframework.compile.transformers.RemoveSyntacticCasts;
 import org.kframework.compile.transformers.ResolveAnonymousVariables;
@@ -128,7 +127,6 @@ public class KoreBackend extends BasicBackend {
         steps.add(new AddSymbolicK(context));
         steps.add(new AddSemanticEquality(context));
         // steps.add(new ResolveFresh());
-        steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
         steps.add(new AddTopCellConfig(context));
         if (options.experimental.addTopCell) {
@@ -290,7 +288,7 @@ class KoreFilter extends BasicVisitor {
             }
         }
         String colorCode = "";
-        Cell declaredCell = context.cells.get(cell.getLabel());
+        Cell declaredCell = context.configurationStructureMap().get(cell.getLabel()).cell;
         if (declaredCell != null) {
             String declaredColor = declaredCell.getCellAttributes().get("color");
             if (declaredColor != null) {

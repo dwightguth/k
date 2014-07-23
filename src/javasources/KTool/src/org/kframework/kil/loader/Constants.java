@@ -3,12 +3,17 @@ package org.kframework.kil.loader;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * @author andrei.arusoaie
  *
  */
 public class Constants {
+
+    public static final int HASH_PRIME = 37;
 
     // Tags constants
     public static final String RULE = "rule";
@@ -92,4 +97,35 @@ public class Constants {
 
     static final String AUTO_INCLUDED_MODULE = "AUTO-INCLUDED-MODULE";
     public static String AUTO_INCLUDED_SYNTAX_MODULE = "AUTO-INCLUDED-MODULE-SYNTAX";
+
+    public static final Set<String> generatedTags = ImmutableSet.of(
+            "cons",
+            "kgeneratedlabel",
+            "prefixlabel");
+
+    public static final Set<String> parsingTags = ImmutableSet.of(
+        "left",
+        "right",
+        "non-assoc");
+
+    public static final Set<String> specialTerminals = ImmutableSet.of(
+        "(",
+        ")",
+        ",",
+        "[",
+        "]",
+        "{",
+        "}");
+
+    public static boolean isTagGenerated(String key) {
+        return generatedTags.contains(key);
+    }
+
+    public static boolean isSpecialTerminal(String terminal) {
+        return specialTerminals.contains(terminal);
+    }
+
+    public static boolean isParsingTag(String key) {
+        return parsingTags.contains(key);
+    }
 }

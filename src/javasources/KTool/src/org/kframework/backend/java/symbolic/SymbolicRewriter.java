@@ -68,13 +68,13 @@ public class SymbolicRewriter {
      */
     public SymbolicRewriter(Definition definition) {
         this.definition = definition;
-        this.indexingStats = definition.context().javaExecutionOptions.indexingStats;
+        this.indexingStats = definition.context().javaExecutionOptions().indexingStats;
         ruleIndex = definition.getIndex();
 
-        this.strategy = new TransitionCompositeStrategy(definition.context().kompileOptions.transition);
+        this.strategy = new TransitionCompositeStrategy(definition.context().kompileOptions().transition);
 
         /* initialize the K AST checker for test generation */
-        if (definition.context().javaExecutionOptions.generateTests) {
+        if (definition.context().javaExecutionOptions().generateTests) {
             phase1PluggableKastChecker = new PluggableKastStructureChecker();
             phase1PluggableKastChecker.register(new CheckingNestedStructureDepth());
             phase1PluggableKastChecker.register(new CheckingLeftAssocConstructs(definition));
@@ -768,7 +768,7 @@ public class SymbolicRewriter {
      * by its preceding rules for test generation.
      */
     private void eliminateShadowedRewriteSteps() {
-        assert definition.context().javaExecutionOptions.generateTests;
+        assert definition.context().javaExecutionOptions().generateTests;
 
         Set<String> shadowedLabels = new HashSet<String>();
 

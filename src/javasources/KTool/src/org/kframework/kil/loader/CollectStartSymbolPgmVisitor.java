@@ -27,8 +27,8 @@ public class CollectStartSymbolPgmVisitor extends BasicVisitor {
                 be able to send symbolic inputs to their programs ($IN) and set the initial
                 path condition ($PC).
              */
-            context.configVarSorts.put(AddConditionToConfig.PC_VAR.substring(1), "Bool");
-            context.configVarSorts.put(ResolveInputStreamCell.IN.substring(1), org.kframework.kil.KSorts.LIST);
+            context.configVarSorts().put(AddConditionToConfig.PC_VAR.substring(1), "Bool");
+            context.configVarSorts().put(ResolveInputStreamCell.IN.substring(1), org.kframework.kil.KSorts.LIST);
         }
     }
 
@@ -50,10 +50,10 @@ public class CollectStartSymbolPgmVisitor extends BasicVisitor {
     @Override
     public Void visit(Variable node, Void _) {
         if (node.getName().equals("$PGM")) {
-            context.startSymbolPgm = node.getSort();
+            context.setStartSymbolPgm(node.getSort());
         }
         assert node.getName().startsWith("$") : "Configuration variables must start with $ symbol.";
-        context.configVarSorts.put(node.getName().substring(1), node.getSort());
+        context.configVarSorts().put(node.getName().substring(1), node.getSort());
         return null;
     }
 }

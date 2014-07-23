@@ -1,7 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
-import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.Visitor;
 
 /**
@@ -35,9 +35,9 @@ public class MapLookup extends BuiltinLookup {
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + base().hashCode();
-        hash = hash * Context.HASH_PRIME + key().hashCode();
-        hash = hash * Context.HASH_PRIME + value.hashCode();
+        hash = hash * Constants.HASH_PRIME + base().hashCode();
+        hash = hash * Constants.HASH_PRIME + key().hashCode();
+        hash = hash * Constants.HASH_PRIME + value.hashCode();
         return hash;
     }
 

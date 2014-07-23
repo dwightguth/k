@@ -294,7 +294,7 @@ public final class KItem extends Term {
                     throw (RuntimeException)t;
                 }
                 if (t instanceof RuntimeException) {
-                    if (context.definition().context().globalOptions.verbose) {
+                    if (context.definition().context().globalOptions().verbose) {
                         System.err.println("Ignored exception thrown by hook " + kLabelConstant + " : ");
                         e.printStackTrace();
                     }
@@ -328,7 +328,7 @@ public final class KItem extends Term {
                 }
 
                 Map<Variable, Term> solution = solutions.iterator().next();
-                if (K.tool() == K.Tool.KOMPILE || definition.context().javaExecutionOptions.concreteExecution()) {
+                if (K.tool() == K.Tool.KOMPILE || definition.context().javaExecutionOptions().concreteExecution()) {
                     assert solutions.size() <= 1 :
                          "[non-deterministic function definition]: more than one way to apply the rule\n"
                             + rule + "\nagainst the function\n" + this;
@@ -366,7 +366,7 @@ public final class KItem extends Term {
                         owiseResults.add(rightHandSide);
                     }
                 } else {
-                    if (definition.context().javaExecutionOptions.concreteExecution()) {
+                    if (definition.context().javaExecutionOptions().concreteExecution()) {
                         assert result == null || result.equals(rightHandSide):
                                 "[non-deterministic function definition]: more than one rule can apply to the function\n" + this;
                     }
@@ -377,7 +377,7 @@ public final class KItem extends Term {
                  * If the function definitions do not need to be deterministic, try them in order
                  * and apply the first one that matches.
                  */
-                if (!context.definition().context().javaExecutionOptions.deterministicFunctions
+                if (!context.definition().context().javaExecutionOptions().deterministicFunctions
                         && result != null) {
                     return result;
                 }

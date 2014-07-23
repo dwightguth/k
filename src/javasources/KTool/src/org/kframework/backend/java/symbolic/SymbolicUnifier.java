@@ -37,7 +37,6 @@ import org.kframework.backend.java.kil.Variable;
 import org.kframework.kil.loader.Context;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 
 
@@ -387,7 +386,7 @@ public class SymbolicUnifier extends AbstractUnifier {
 
             for (Iterator<String> iter = unifiableCellLabels.iterator(); iter.hasNext(); ) {
                 String cellLabel = iter.next();
-                if (!context.getConfigurationStructureMap().get(cellLabel).isStarOrPlus()) {
+                if (!context.configurationStructureMap().get(cellLabel).isStarOrPlus()) {
                     assert cellCollection.get(cellLabel).size() == 1
                             && otherCellCollection.get(cellLabel).size() == 1;
                     unify(cellCollection.get(cellLabel).iterator().next(),

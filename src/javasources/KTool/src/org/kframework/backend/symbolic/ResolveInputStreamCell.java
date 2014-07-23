@@ -39,7 +39,7 @@ public class ResolveInputStreamCell extends CopyOnWriteTransformer {
             node.setContents(in);
             notSet = true;
 
-            context.configVarSorts.put(in.getName(), in.getSort());
+            context.configVarSorts().put(in.getName(), in.getSort());
         }
 
 

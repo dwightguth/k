@@ -136,16 +136,16 @@ public class HTMLFilter extends BackendFilter {
             result.append("<tr> <td> </td> <td class = \"textCentered\"> |  </td> <td>");
         }
 
-        if (!(p.getItems().get(0) instanceof UserList) && p.containsAttribute(Constants.CONS_cons_ATTR)
-                && patternsVisitor.getPatterns().containsKey(p.getAttribute(Constants.CONS_cons_ATTR))
-                && patternsVisitor.getPatternType(p.getAttribute(Constants.CONS_cons_ATTR)) != HTMLPatternType.DEFAULT) {
+        if (!(p.getItems().get(0) instanceof UserList)
+                && patternsVisitor.getPatterns().containsKey(p)
+                && patternsVisitor.getPatternType(p) != HTMLPatternType.DEFAULT) {
         /* This condition pretty much is : "Does this production have a Latex or HTML attribute?"
          * If yes, use the attribute to print it.
          * The information about the attribute is in HTMLPatternVisitor.
          * If no, just process it normally, that is super.visit(p) and process each element normally.*/
 
-            String pattern = patternsVisitor.getPatterns().get(p.getAttribute(Constants.CONS_cons_ATTR));
-            boolean isLatex = patternsVisitor.getPatternType(p.getAttribute(Constants.CONS_cons_ATTR)) == HTMLPatternType.LATEX;
+            String pattern = patternsVisitor.getPatterns().get(p);
+            boolean isLatex = patternsVisitor.getPatternType(p) == HTMLPatternType.LATEX;
             int n = 1;
             HTMLFilter termFilter = new HTMLFilter(includePath, context);
             for (ProductionItem pi : p.getItems()) {
@@ -363,19 +363,19 @@ public class HTMLFilter extends BackendFilter {
 
     @Override
     public Void visit(TermCons trm, Void _) {
-        HTMLPatternType type = patternsVisitor.getPatternType(trm.getCons());
+        HTMLPatternType type = patternsVisitor.getPatternType(trm.getProduction());
         if(type == null)
         {
-            Production pr = context.conses.get(trm.getCons());
+            Production pr = trm.getProduction();
             patternsVisitor.visitNode(pr);
-            type = patternsVisitor.getPatternType(trm.getCons());
+            type = patternsVisitor.getPatternType(trm.getProduction());
         }
         /* This condition pretty much is : "Does this term have a Latex or HTML attribute?" */
         if(type != HTMLPatternType.DEFAULT) {
 
         /* If yes, use the attribute to print it.
          * The information about the attribute is in HTMLPatternVisitor. */
-            String pattern = patternsVisitor.getPatterns().get(trm.getCons());
+            String pattern = patternsVisitor.getPatterns().get(trm.getProduction());
             int n = 1;
             HTMLFilter termFilter = new HTMLFilter(includePath, context);
             for (Term t : trm.getContents()) {
@@ -499,9 +499,9 @@ public class HTMLFilter extends BackendFilter {
     public Void visit(Attribute entry, Void _) {
         if (Constants.GENERATED_LOCATION.equals(entry.getLocation()))
             return null;
-        if (context.isTagGenerated(entry.getKey()))
+        if (Constants.isTagGenerated(entry.getKey()))
             return null;
-        if (context.isParsingTag(entry.getKey()))
+        if (Constants.isParsingTag(entry.getKey()))
             return null;
 
         // The latex and/or html attributes are processed in the HTMLPatternVisitor, not here.

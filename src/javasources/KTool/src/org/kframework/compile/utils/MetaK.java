@@ -292,7 +292,7 @@ public class MetaK {
                            StringBuiltin.kAppOf(prod.getSort()),
                            Variable.getFreshVar("String"));
         }
-        TermCons t = new TermCons(prod.getSort(), prod.getCons(), context);
+        TermCons t = new TermCons(prod.getSort(), prod);
         if (prod.isListDecl()) {
             t.getContents().add(Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()));
             t.getContents().add(Variable.getFreshVar(prod.getSort()));

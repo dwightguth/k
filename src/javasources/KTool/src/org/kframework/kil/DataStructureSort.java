@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 
 import java.io.Serializable;
@@ -158,6 +159,6 @@ public class DataStructureSort implements Serializable {
 
     @Override
     public int hashCode() {
-        return (name + type + unitLabel + elementLabel + constructorLabel).hashCode() * Context.HASH_PRIME + operatorLabels.hashCode();
+        return (name + type + unitLabel + elementLabel + constructorLabel).hashCode() * Constants.HASH_PRIME + operatorLabels.hashCode();
     }
 }

@@ -35,7 +35,7 @@ public class UnparserBackend extends BasicBackend {
 
         String unparsedText = unparserFilter.getResult();
 
-        FileUtil.save(context.dotk.getAbsolutePath() + "/def.k", unparsedText);
+        FileUtil.save(context.dotk().getAbsolutePath() + "/def.k", unparsedText);
 
         FileUtil.save(options.directory.getPath() + File.separator + FilenameUtils.removeExtension(options.mainDefinitionFile().getName()) + ".unparsed.k", unparsedText);
     }

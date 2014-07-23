@@ -38,7 +38,7 @@ public class BackendJavaKILtoKILTransformer implements Transformer {
 
     public BackendJavaKILtoKILTransformer(Context context) {
         this.context = context;
-        configurationStructureMap = context.getConfigurationStructureMap();
+        configurationStructureMap = context.configurationStructureMap();
     }
 
     @Override
@@ -164,7 +164,7 @@ public class BackendJavaKILtoKILTransformer implements Transformer {
         if (set.hasFrame()) {
             baseTerms.add((org.kframework.kil.Term) set.frame().accept(this));
         }
-        return new SetBuiltin(context.dataStructureSortOf(DataStructureSort.DEFAULT_SET_SORT),
+        return new SetBuiltin(context.dataStructureSorts().get(DataStructureSort.DEFAULT_SET_SORT),
                 baseTerms, elements);
     }
 
@@ -183,7 +183,7 @@ public class BackendJavaKILtoKILTransformer implements Transformer {
         for (Term entry : builtinList.elementsRight()) {
             elementsRight.add((org.kframework.kil.Term)entry.accept(this));
         }
-        return ListBuiltin.of(context.dataStructureSortOf(DataStructureSort.DEFAULT_LIST_SORT),
+        return ListBuiltin.of(context.dataStructureSorts().get(DataStructureSort.DEFAULT_LIST_SORT),
                 baseTerms, elementsLeft, elementsRight);
     }
 
@@ -203,7 +203,7 @@ public class BackendJavaKILtoKILTransformer implements Transformer {
         if (map.hasFrame()) {
             baseTerms.add((org.kframework.kil.Term) map.frame().accept(this));
         }
-        return new MapBuiltin(context.dataStructureSortOf(DataStructureSort.DEFAULT_MAP_SORT),
+        return new MapBuiltin(context.dataStructureSorts().get(DataStructureSort.DEFAULT_MAP_SORT),
                 baseTerms, elements);
     }
 

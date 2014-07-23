@@ -25,6 +25,7 @@ public class AddKStringConversion extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode visit(Module node, Void _)  {
+        Production string2KLabel = Production.makeFunction("KLabel", "String2KLabel", "String", context);
         /* TODO: escape labels when generating KLabel2String and String2KLabel */
         Module retNode = node.shallowCopy();
         retNode.setItems(new ArrayList<ModuleItem>(node.getItems()));
@@ -39,7 +40,7 @@ public class AddKStringConversion extends CopyOnWriteTransformer {
 
             java.util.List<Term> termList = new ArrayList<Term>();
             termList.add(rhs);
-            TermCons termCons = new TermCons(KSorts.KLABEL, String2KLabelCons, termList, context);
+            TermCons termCons = new TermCons(KSorts.KLABEL, termList, string2KLabel);
             rule = new Rule(termCons, KLabelConstant.of(klbl, context), context);
             rule.addAttribute(Attribute.FUNCTION);
             retNode.appendModuleItem(rule);

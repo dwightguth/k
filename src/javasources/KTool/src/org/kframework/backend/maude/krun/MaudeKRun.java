@@ -61,14 +61,14 @@ public class MaudeKRun implements KRun {
         this.context = context;
         this.sw = sw;
 
-        krunTempDir = new File(context.dotk, FileUtil.generateUniqueFolderName("krun"));
+        krunTempDir = new File(context.dotk(), FileUtil.generateUniqueFolderName("krun"));
         inFile = new File(krunTempDir, "maude_in");
         outFile = new File(krunTempDir, "maude_out");
         errFile = new File(krunTempDir, "maude_err");
         xmlOutFile = new File(krunTempDir, "maudeoutput.xml");
         processedXmlOutFile = new File(krunTempDir, "maudeoutput_simplified.xml");
 
-        if (!context.krunOptions.global.debug) {
+        if (!context.krunOptions().global.debug) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     try {
@@ -80,7 +80,7 @@ public class MaudeKRun implements KRun {
             });
         }
 
-        ioServer = context.krunOptions.io();
+        ioServer = context.krunOptions().io();
     }
 
     private boolean ioServer;
@@ -95,11 +95,11 @@ public class MaudeKRun implements KRun {
         FileUtil.save(inFile.getAbsolutePath(), maudeCmd);
 
         int returnValue;
-        if (context.krunOptions.experimental.logIO) {
+        if (context.krunOptions().experimental.logIO) {
             KRunner.main(new String[]{"--maudeFile",
-                    context.kompiled.getAbsolutePath()
+                    context.kompiled().getAbsolutePath()
                         + K.fileSeparator + "main.maude", "--moduleName",
-                    context.kompileOptions.mainModule(), "--commandFile",
+                    context.kompileOptions().mainModule(), "--commandFile",
                     inFile.getAbsolutePath(), "--outputFile",
                     outFile.getAbsolutePath(), "--errorFile",
                     errFile.getAbsolutePath(), "--createLogs"},
@@ -107,18 +107,18 @@ public class MaudeKRun implements KRun {
         }
         if (!ioServer) {
             returnValue = KRunner.main(new String[]{"--maudeFile",
-                    context.kompiled.getAbsolutePath()
+                    context.kompiled().getAbsolutePath()
                     + K.fileSeparator + "main.maude", "--moduleName",
-                context.kompileOptions.mainModule(), "--commandFile",
+                context.kompileOptions().mainModule(), "--commandFile",
                 inFile.getAbsolutePath(), "--outputFile",
                 outFile.getAbsolutePath(), "--errorFile",
                 errFile.getAbsolutePath(), "--noServer"},
                 context, xmlOutFile);
         } else {
             returnValue = KRunner.main(new String[]{"--maudeFile",
-                    context.kompiled.getAbsolutePath()
+                    context.kompiled().getAbsolutePath()
                     + K.fileSeparator + "main.maude", "--moduleName",
-                context.kompileOptions.mainModule(), "--commandFile",
+                context.kompileOptions().mainModule(), "--commandFile",
                 inFile.getAbsolutePath(), "--outputFile",
                 outFile.getAbsolutePath(), "--errorFile",
                 errFile.getAbsolutePath()},
@@ -144,10 +144,10 @@ public class MaudeKRun implements KRun {
         maudeFilter.visitNode(cfg);
         StringBuilder cmd = new StringBuilder();
 
-        if(context.krunOptions.experimental.trace) {
+        if(context.krunOptions().experimental.trace) {
             cmd.append("set trace on .").append(K.lineSeparator);
         }
-        if(context.krunOptions.experimental.profile) {
+        if(context.krunOptions().experimental.profile) {
             cmd.append("set profile on .").append(K.lineSeparator);
         }
 
@@ -155,7 +155,7 @@ public class MaudeKRun implements KRun {
             .append(setCounter()).append(maude_cmd).append(" ")
             .append(maudeFilter.getResult()).append(" .").append(K.lineSeparator);
 
-        if(context.krunOptions.experimental.profile) {
+        if(context.krunOptions().experimental.profile) {
             cmd.append("show profile .").append(K.lineSeparator);
         }
 
@@ -268,9 +268,9 @@ public class MaudeKRun implements KRun {
         sort = sort.replaceAll("`([{}\\[\\](),])", "$1");
         List<Element> list = XmlUtil.getChildElements(xml);
 
-        DataStructureSort listSort = context.dataStructureSortOf(DataStructureSort.DEFAULT_LIST_SORT);
-        DataStructureSort mapSort = context.dataStructureSortOf(DataStructureSort.DEFAULT_MAP_SORT);
-        DataStructureSort setSort = context.dataStructureSortOf(DataStructureSort.DEFAULT_SET_SORT);
+        DataStructureSort listSort = context.dataStructureSorts().get(DataStructureSort.DEFAULT_LIST_SORT);
+        DataStructureSort mapSort = context.dataStructureSorts().get(DataStructureSort.DEFAULT_MAP_SORT);
+        DataStructureSort setSort = context.dataStructureSorts().get(DataStructureSort.DEFAULT_SET_SORT);
 
         try {
             if ((sort.equals("BagItem") || sort.equals("[Bag]")) && op.equals("<_>_</_>")) {
@@ -410,23 +410,20 @@ public class MaudeKRun implements KRun {
                 //return new Hole(sort);
                 return Hole.KITEM_HOLE;
             } else {
-                Set<String> conses = context.labels.get(StringUtil.unescapeMaude(op));
-                Set<String> validConses = new HashSet<String>();
-                List<Term> possibleTerms = new ArrayList<Term>();
-                assertXMLTerm(conses != null);
-                for (String cons : conses) {
-                    Production p = context.conses.get(cons);
+                Set<Production> validProductions = new HashSet<>();
+                for (Production p : context.klabels().get(StringUtil.unescapeMaude(op))) {
                     if (p.getSort().equals(sort) && p.getArity() == list.size()) {
-                        validConses.add(cons);
+                        validProductions.add(p);
                     }
                 }
-                assertXMLTerm(validConses.size() > 0);
+                List<Term> possibleTerms = new ArrayList<Term>();
+                assertXMLTerm(validProductions.size() > 0);
                 List<Term> contents = new ArrayList<Term>();
                 for (Element elem : list) {
                     contents.add(parseXML(elem, context));
                 }
-                for (String cons : validConses) {
-                    possibleTerms.add(new TermCons(sort, cons, contents, context));
+                for (Production p : validProductions) {
+                    possibleTerms.add(new TermCons(sort, contents, p));
                 }
                 if (possibleTerms.size() == 1) {
                     return possibleTerms.get(0);
@@ -473,7 +470,7 @@ public class MaudeKRun implements KRun {
                                         RuleCompilerSteps compilationInfo)
             throws KRunExecutionException {
         StringBuilder cmd = new StringBuilder();
-        if (context.krunOptions.experimental.trace) {
+        if (context.krunOptions().experimental.trace) {
           cmd.append("set trace on .").append(K.lineSeparator);
         }
         cmd.append("set show command off .").append(K.lineSeparator).append(setCounter()).append("search ");
@@ -497,8 +494,8 @@ public class MaudeKRun implements KRun {
             patternString += " such that " + patternCondition.getResult() + " = # true(.KList)";
         }
         cmd.append(patternString).append(" .");
-        boolean showGraph = context.krunOptions.graph || context.krunOptions.experimental.debugger()
-                || context.krunOptions.experimental.debuggerGui();
+        boolean showGraph = context.krunOptions().graph || context.krunOptions().experimental.debugger()
+                || context.krunOptions().experimental.debuggerGui();
         if (showGraph) {
             cmd.append(K.lineSeparator).append("show search graph .");
         }
@@ -585,7 +582,7 @@ public class MaudeKRun implements KRun {
                         return Transition.label(labelAttribute, context);
                     }
                 }
-                return Transition.rule(context.locations.get(filename + ":(" + location + ")"),
+                return Transition.rule(context.locations().get(filename + ":(" + location + ")"),
                         context);
             }
         };
@@ -659,7 +656,7 @@ public class MaudeKRun implements KRun {
         StringBuilder cmd = new StringBuilder()
             .append("mod MCK is").append(K.lineSeparator)
             .append(" including ")
-            .append(context.kompileOptions.mainModule()).append(" .").append(K.lineSeparator).append(K.lineSeparator)
+            .append(context.kompileOptions().mainModule()).append(" .").append(K.lineSeparator).append(K.lineSeparator)
             .append(" op #initConfig : -> Bag .").append(K.lineSeparator).append(K.lineSeparator)
             .append(" eq #initConfig  =").append(K.lineSeparator)
             .append(cfgFilter.getResult()).append(" .").append(K.lineSeparator)

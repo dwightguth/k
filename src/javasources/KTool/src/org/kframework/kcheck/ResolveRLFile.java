@@ -1,7 +1,6 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kcheck;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,10 +8,7 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
-import org.kframework.parser.ProgramLoader;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.general.GlobalSettings;
 
 public class ResolveRLFile extends CopyOnWriteTransformer {
 
@@ -24,7 +20,7 @@ public class ResolveRLFile extends CopyOnWriteTransformer {
 
         // resolve reachability rules
         String rlFileContent = null;//FileUtil.getFileContent(GlobalSettings.CHECK);
-        context.kompiled = context.dotk.getAbsoluteFile();
+        //context.kompiled = context.dotk.getAbsoluteFile();
         ASTNode rlModule = null;//DefinitionLoader.parseString(rlFileContent,
                 //GlobalSettings.CHECK, context);
         RetrieveRRVisitor rrrv = new RetrieveRRVisitor(context);
@@ -35,7 +31,7 @@ public class ResolveRLFile extends CopyOnWriteTransformer {
         if (RLBackend.PGM != null) {
             String pgmContent = FileUtil.getFileContent(pgmFilePath);
             //try {
-                context.kompiled = context.dotk.getAbsoluteFile();
+                //context.kompiled = context.dotk.getAbsoluteFile();
                 //program = (Term) ProgramLoader.loadPgmAst(pgmContent,
                 //        GlobalSettings.CHECK, "K", context);
             //} catch (IOException e1) {

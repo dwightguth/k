@@ -19,8 +19,8 @@ import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.general.GlobalSettings;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Transformer class compiling collection (bag, list, map and set) terms into K internal
@@ -139,13 +139,13 @@ public class CompileDataStructures extends CopyOnWriteTransformer {
         }
         KList kList = (KList) node.getChild();
 
-        List<Production> productions = context.productionsOf(kLabelConstant.getLabel());
+        Collection<Production> productions = context.klabels().get(kLabelConstant.getLabel());
         if (productions.isEmpty()) {
             return node;
         }
         Production production = productions.iterator().next();
 
-        DataStructureSort sort = context.dataStructureSortOf(production.getSort());
+        DataStructureSort sort = context.dataStructureSorts().get(production.getSort());
         if (sort == null) {
             return node;
         }

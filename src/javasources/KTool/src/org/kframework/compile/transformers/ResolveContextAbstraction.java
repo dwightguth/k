@@ -25,8 +25,8 @@ public class ResolveContextAbstraction extends CopyOnWriteTransformer {
 
     public ResolveContextAbstraction(org.kframework.kil.loader.Context context) {
         super("Resolve Context Abstraction", context);
-        config = context.getConfigurationStructureMap();
-        maxLevel = context.getMaxConfigurationLevel();
+        config = context.configurationStructureMap();
+        maxLevel = context.maxConfigurationLevel();
     }
 
     @Override

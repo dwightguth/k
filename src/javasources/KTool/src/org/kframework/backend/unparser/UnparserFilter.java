@@ -64,8 +64,8 @@ public class UnparserFilter extends NonCachingVisitor {
         this.annotateLocation = annotateLocation;
         this.outputMode = outputMode;
         //TODO(dwightguth): clean up pretty printing so we don't need this ugly hack
-        if (context.krunOptions != null) {
-            terminalColor = context.krunOptions.terminalColor();
+        if (context.krunOptions() != null) {
+            terminalColor = context.krunOptions().terminalColor();
         }
     }
 
@@ -270,7 +270,7 @@ public class UnparserFilter extends NonCachingVisitor {
             }
         }
         String colorCode = "";
-        Cell declaredCell = context.cells.get(cell.getLabel());
+        Cell declaredCell = context.configurationStructureMap().get(cell.getLabel()).cell;
         if (declaredCell != null) {
             String declaredColor = declaredCell.getCellAttributes().get("color");
             if (declaredColor != null) {

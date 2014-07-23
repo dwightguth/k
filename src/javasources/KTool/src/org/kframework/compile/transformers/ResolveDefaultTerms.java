@@ -24,7 +24,7 @@ public class ResolveDefaultTerms extends CopyOnWriteTransformer {
 
     public ResolveDefaultTerms(Context context) {
         super("Resolve Default Terms", context);
-        config = context.getConfigurationStructureMap();
+        config = context.configurationStructureMap();
     }
 
     @Override

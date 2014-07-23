@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.kframework.kil.loader.*;
-import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.utils.StringUtil;
 import org.kframework.utils.xml.XML;
 import org.w3c.dom.Element;
 
@@ -16,18 +14,16 @@ import org.w3c.dom.Element;
  */
 public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<?>> {
     /** A unique identifier corresponding to a production, matching the SDF cons */
-    protected final String cons;
     protected java.util.List<Term> contents;
-    protected Production production;
+    protected final Production production;
 
     private int cachedHashCode = 0;
     private boolean upToDateHash = false;
 
-    public TermCons(Element element, Context context) {
+    public TermCons(Element element, MutableContext context) {
         super(element);
         this.sort = element.getAttribute(Constants.SORT_sort_ATTR);
-        this.cons = element.getAttribute(Constants.CONS_cons_ATTR);
-        this.production = context.conses.get(cons);
+        this.production = context.conses.get(element.getAttribute(Constants.CONS_cons_ATTR));
         assert this.production != null;
 
         contents = new ArrayList<Term>();
@@ -36,28 +32,19 @@ public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<
             contents.add((Term) JavaClassesFactory.getTerm(e));
     }
 
-    public TermCons(String sort, String cons, org.kframework.kil.loader.Context context) {
-        this(sort, cons, new ArrayList<Term>(), context);
+    public TermCons(String sort, Production p) {
+        this(sort, new ArrayList<Term>(), p);
     }
 
     public TermCons(TermCons node) {
         super(node);
-        this.cons = node.cons;
         this.contents = new ArrayList<Term>(node.contents);
         this.production = node.production;
         assert this.production != null;
     }
 
-    public TermCons(String psort, String listCons, List<Term> genContents, Context context) {
-        super(psort);
-        cons = listCons;
-        contents = genContents;
-        production = context.conses.get(cons);
-    }
-
     public TermCons(String psort, List<Term> contents, Production production) {
         super(psort);
-        cons = null;
         this.contents = contents;
         this.production = production;
     }
@@ -100,10 +87,6 @@ public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<
         this.sort = sort;
     }
 
-    public String getCons() {
-        return cons;
-    }
-
     public java.util.List<Term> getContents() {
         upToDateHash = false;
         return contents;
@@ -144,7 +127,6 @@ public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<
 
         if (!tc.getSort().equals(sort))
             return false;
-        if (cons != null ? !cons.equals(tc.cons) : tc.cons != null) return false;
         if (!production.equals(tc.production)) return false;
         if (contents.size() != tc.contents.size()) return false;
         for (int i = 0; i < tc.contents.size(); i++) {
@@ -158,8 +140,7 @@ public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<
     @Override
     public int hashCode() {
         if (!upToDateHash) {
-            cachedHashCode = cons != null ? cons.hashCode() : 0;
-            cachedHashCode = 31 * cachedHashCode + production.hashCode();
+            cachedHashCode = production.hashCode();
             for (Term t : contents)
                 cachedHashCode = 31 * cachedHashCode + t.hashCode();
             upToDateHash = true;
@@ -182,8 +163,6 @@ public class TermCons extends Term implements Interfaces.MutableList<Term, Enum<
         TermCons tc = (TermCons) obj;
 
         if (!tc.getSort().equals(this.sort))
-            return false;
-        if (!tc.cons.equals(cons))
             return false;
 
         if (tc.contents.size() != contents.size())

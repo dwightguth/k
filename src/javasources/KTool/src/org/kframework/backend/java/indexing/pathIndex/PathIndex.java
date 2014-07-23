@@ -62,7 +62,7 @@ public class PathIndex implements RuleIndex, Serializable{
     @Deprecated
     public PathIndex(Definition definition) {
         this.definition = definition;
-        this.indexingStats = definition.context().javaExecutionOptions.indexingStats;
+        this.indexingStats = definition.context().javaExecutionOptions().indexingStats;
         this.indexedRules = new LinkedHashMap<>();
         termVisitor = new TermVisitor(definition.context());
         buildIndex();

@@ -106,7 +106,7 @@ public class AddPathCondition extends CopyOnWriteTransformer {
 
             Attributes atts = node.getAttributes();
             Term cond = condition;
-            if (context.smtOptions.smt != SMTSolver.NONE) {
+            if (context.smtOptions().smt != SMTSolver.NONE) {
                 List<Term> myList = new ArrayList<Term>();
                 myList.add(condition);
                 myList.add(checkSat(pathCondition, context));

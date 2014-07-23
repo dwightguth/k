@@ -6,6 +6,7 @@ import java.io.*;
 import org.kframework.backend.maude.MaudeFilter;
 import org.kframework.backend.unparser.IndentationOptions;
 import org.kframework.backend.unparser.KastFilter;
+import org.kframework.compile.CompiledDefinition;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
@@ -67,16 +68,9 @@ public class KastFrontEnd {
 
 
             File compiledFile = options.definitionLoading.definition();
-            Context context;
-            KompileOptions kompileOptions = BinaryLoader.load(KompileOptions.class, new File(compiledFile, "kompile-options.bin").getAbsolutePath(), options.global.debug);
+            CompiledDefinition context = BinaryLoader.loadOrDie(CompiledDefinition.class, new File(compiledFile, "def.bin").getAbsolutePath());
+            context.kompileOptions().global = options.global;
 
-            //merge kast options into kompile options object
-            kompileOptions.global = options.global;
-            context = new Context(kompileOptions);
-            context.kompiled = compiledFile;
-
-            //need to call this in order to initialize the context object
-            ExecutionContext.getDefinition(Stopwatch.instance(), context);
             String sort = options.sort(context);
 
             try {

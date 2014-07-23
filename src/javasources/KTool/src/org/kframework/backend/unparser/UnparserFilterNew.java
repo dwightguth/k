@@ -74,8 +74,8 @@ public class UnparserFilterNew extends NonCachingVisitor {
         if (outputMode == OutputMode.NO_WRAP) {
             indenter.setWidth(-1);
         }
-        if (context.krunOptions != null) {
-            terminalColor = context.krunOptions.terminalColor();
+        if (context.krunOptions() != null) {
+            terminalColor = context.krunOptions().terminalColor();
         }
     }
 
@@ -291,7 +291,7 @@ public class UnparserFilterNew extends NonCachingVisitor {
             if (o1 instanceof Cell && o2 instanceof Cell
                     && (!((Cell) o1).getLabel().equals(((Cell) o2).getLabel()))) {
                 Cell crntCell = (Cell) stack.peek();
-                ConfigurationStructureMap sons = context.getConfigurationStructureMap().get(crntCell.getLabel()).sons;
+                ConfigurationStructureMap sons = context.configurationStructureMap().get(crntCell.getLabel()).sons;
                 return sons.positionOf(((Cell) o1).getLabel()) < sons.positionOf(((Cell) o2).getLabel()) ? -1 : 1;
             }
 
@@ -314,7 +314,7 @@ public class UnparserFilterNew extends NonCachingVisitor {
             }
         }
         String colorCode = "";
-        Cell declaredCell = context.cells.get(cell.getLabel());
+        Cell declaredCell = context.configurationStructureMap().get(cell.getLabel()).cell;
         if (declaredCell != null) {
             String declaredColor = declaredCell.getCellAttributes().get("color");
             if (declaredColor != null) {
@@ -804,7 +804,7 @@ public class UnparserFilterNew extends NonCachingVisitor {
 
     private List<Terminal> findRightSyntax(String sort){
 
-        Production p = context.canonicalBracketForSort.get(sort);
+        Production p = context.canonicalBracketForSort().get(sort);
         if (p == null) {
             return new ArrayList<Terminal>();
         } else {

@@ -66,7 +66,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
         public Void visit(Syntax node, Void _) {
             String sort = node.getSort().getName();
 
-            if (context.isListSort(sort))
+            if (context.listSorts().containsKey(sort))
                 lists.add(sort);
 
             if (MetaK.isKSort(sort))
@@ -86,7 +86,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
                 return null;
             }
 
-            if (context.getDataStructureSorts().containsKey(node.getSort())) {
+            if (context.dataStructureSorts().containsKey(node.getSort())) {
                 /* predicate definition for builtin collection sorts is deferred to each backend */
                 return null;
             }
@@ -234,14 +234,14 @@ public class AddPredicates extends CopyOnWriteTransformer {
                     rule.getCellAttributes().getContents().add(Attribute.FUNCTION);
                     retNode.appendModuleItem(rule);
                      */
-                } else if (context.getTokenSorts().contains(sort)) {
+                } else if (context.tokenSorts().containsKey(sort)) {
                     /* defer membership predicate for lexical token to each backend */
                 }
             }
         }
 
         /* add collection membership predicates */
-        for (String sort : context.getDataStructureSorts().keySet()) {
+        for (String sort : context.dataStructureSorts().keySet()) {
             retNode.addConstant(KSorts.KLABEL, AddPredicates.predicate(sort));
         }
 

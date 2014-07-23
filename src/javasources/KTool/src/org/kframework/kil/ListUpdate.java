@@ -1,7 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
-import org.kframework.kil.loader.Context;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.Visitor;
 
 import java.util.Collection;
@@ -53,9 +53,9 @@ public class ListUpdate extends Term implements Interfaces.Collection<Term, List
     @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * Context.HASH_PRIME + base.hashCode();
-        hash = hash * Context.HASH_PRIME + removeLeft.hashCode();
-        hash = hash * Context.HASH_PRIME + removeRight.hashCode();
+        hash = hash * Constants.HASH_PRIME + base.hashCode();
+        hash = hash * Constants.HASH_PRIME + removeLeft.hashCode();
+        hash = hash * Constants.HASH_PRIME + removeRight.hashCode();
         return hash;
     }
 

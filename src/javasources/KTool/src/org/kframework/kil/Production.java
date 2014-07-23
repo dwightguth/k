@@ -35,8 +35,7 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
             funProd.addAttribute(new Attribute("klabel", funName));
             String consAttr = funSort + "1" + funName + "Syn";
             funProd.addAttribute(new Attribute("cons", consAttr));
-            context.conses.put(consAttr, funProd);
-            context.putLabel(funProd, consAttr);
+            context.productions().add(funProd);
         }
 
         return funProd;
@@ -92,7 +91,7 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
     public boolean isConstant(org.kframework.kil.loader.Context context) {
         return isTerminal() && (sort.startsWith("#") ||
                                 sort.equals(KSorts.KLABEL) ||
-                                context.getTokenSorts().contains(this.getSort()));
+                                context.tokenSorts().containsKey(this.getSort()));
     }
 
     public boolean isBracket() {

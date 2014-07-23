@@ -31,7 +31,7 @@ public class MaudeFilter extends BackendFilter {
     public MaudeFilter(Context context) {
         super(context);
         unusedTransitions = new HashSet<>(options.transition.size());
-        this.cfgStr = context.getConfigurationStructureMap();
+        this.cfgStr = context.configurationStructureMap();
     }
 
     @Override
@@ -75,7 +75,7 @@ public class MaudeFilter extends BackendFilter {
           result.append(" is\n");
 
         result.append(" op fresh : #String -> KItem . \n");
-        for (Map.Entry<String, String> entry : context.freshFunctionNames.entrySet()) {
+        for (Map.Entry<String, String> entry : context.freshFunctionNames().entrySet()) {
             result.append(" eq fresh(\"").append(entry.getKey()).append("\") = ");
             result.append(StringUtil.escapeMaude(entry.getValue()));
             result.append("('#counter(.KList)) .\n");
@@ -90,7 +90,7 @@ public class MaudeFilter extends BackendFilter {
           }
 
           // TODO(AndreiS): move this in a more approprite place
-          for (String sort : context.getTokenSorts()) {
+          for (String sort : context.tokenSorts().keySet()) {
             String tokenKItem = "_`(_`)(#token(\"" + sort + "\", V:" + StringBuiltin.SORT_NAME
               + "), .KList)";
             String sortKItem = "_`(_`)(#_(\"" + sort + "\")" + ", .KList)";
@@ -103,7 +103,7 @@ public class MaudeFilter extends BackendFilter {
                           + " .\n");
           }
 
-          for (Map.Entry<String, DataStructureSort> entry : context.getDataStructureSorts().entrySet()) {
+          for (Map.Entry<String, DataStructureSort> entry : context.dataStructureSorts().entrySet()) {
             String lhs = "_`(_`)(" + AddPredicates.syntaxPredicate(entry.getKey()) + ", "
               + "_`(_`)(" + entry.getValue().type() + "2KLabel_(V:"
               + entry.getValue().type() + "), .KList))";
@@ -438,10 +438,10 @@ public class MaudeFilter extends BackendFilter {
             variable.setSort(KSorts.KITEM);
         }
          if (MetaK.isBuiltinSort(variable.getSort())
-                || context.getDataStructureSorts().containsKey(variable.getSort())) {
+                || context.dataStructureSorts().containsKey(variable.getSort())) {
             result.append("_`(_`)(");
-            if (context.getDataStructureSorts().containsKey(variable.getSort())) {
-                  String sort = context.dataStructureSortOf(variable.getSort()).type();
+            if (context.dataStructureSorts().containsKey(variable.getSort())) {
+                  String sort = context.dataStructureSorts().get(variable.getSort()).type();
                   sort = sort.equals("K") ? "KList" : sort;
                 result.append(sort + "2KLabel_(");
             } else {
@@ -455,14 +455,14 @@ public class MaudeFilter extends BackendFilter {
             result.append(variable.getName());
         }
         result.append(":");
-        if (context.getDataStructureSorts().containsKey(variable.getSort())) {
-            result.append(context.dataStructureSortOf(variable.getSort()).type());
+        if (context.dataStructureSorts().containsKey(variable.getSort())) {
+            result.append(context.dataStructureSorts().get(variable.getSort()).type());
         } else {
             result.append(variable.getSort());
         }
 
         if (MetaK.isBuiltinSort(variable.getSort())
-                || context.getDataStructureSorts().containsKey(variable.getSort())) {
+                || context.dataStructureSorts().containsKey(variable.getSort())) {
             result.append(")");
             result.append(", ");
             result.append(".KList");
@@ -478,7 +478,7 @@ public class MaudeFilter extends BackendFilter {
             result.append(".");
             result.append(sort);
         } else {
-            Production prd = context.listConses.get(sort);
+            Production prd = context.listSorts().get(sort);
             UserList ul = (UserList) prd.getItems().get(0);
             result.append(".List`{\"");
             result.append(ul.getSeparator());
@@ -588,7 +588,7 @@ public class MaudeFilter extends BackendFilter {
 
     @Override
     public Void visit(TermCons termCons, Void _) {
-        Production pr = context.conses.get(termCons.getCons());
+        Production pr = termCons.getProduction();
         String cons = StringUtil.escapeMaude(pr.getLabel());
 
         if (pr.containsAttribute("maudeop")) {
