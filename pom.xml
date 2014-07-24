@@ -295,7 +295,7 @@
                 <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest${native.script.extension}">
                   <arg value="${config}" />
                   <arg value="-v" />
-                  <arg value="-report" />
+                  <arg value="--report" />
                 </exec>
               </target>
               <skip>${skipKTest}</skip>
