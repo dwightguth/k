@@ -14,7 +14,6 @@ import org.kframework.kil.Module;
 import org.kframework.kil.Require;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
-import org.kframework.kompile.KompileOptions.Backend;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.basic.Basic;
 import org.kframework.utils.errorsystem.KException;

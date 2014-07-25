@@ -2,6 +2,7 @@
 package org.kframework.main;
 
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Arrays;
 
 import org.fusesource.jansi.AnsiConsole;
@@ -10,6 +11,8 @@ import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 import org.kframework.utils.general.GlobalSettings;
 
+import com.martiansoftware.nailgun.NGContext;
+
 public class Main {
 
     /**
@@ -17,9 +20,24 @@ public class Main {
      *            - the running arguments for the K3 tool. First argument must be one of the following: kompile|kast|krun.
      * @throws IOException when loadDefinition fails
      */
+
+    public static void nailMain(NGContext context) {
+        System.setProperty("user.dir", context.getWorkingDirectory());
+        main(context.getArgs());
+    }
+
     public static void main(String[] args) {
         Stopwatch.instance();
         AnsiConsole.systemInstall();
+
+        Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                AnsiConsole.systemUninstall();
+                e.printStackTrace();
+            }
+        });
 
         boolean succeeded = true;
         if (args.length >= 1) {
@@ -61,10 +79,12 @@ public class Main {
             } catch (KEMException e) {
                 // terminated with errors, so we need to return nonzero error code.
                 GlobalSettings.kem.print();
+                AnsiConsole.systemUninstall();
                 System.exit(1);
             }
 
             GlobalSettings.kem.print();
+            AnsiConsole.systemUninstall();
             System.exit(succeeded ? 0 : 1);
         }
         invalidJarArguments();
@@ -72,6 +92,7 @@ public class Main {
 
     private static void invalidJarArguments() {
         System.err.println("The first argument of K3 not recognized. Try -kompile, -kast, -krun or -kpp.");
+        AnsiConsole.systemUninstall();
         System.exit(1);
     }
 }

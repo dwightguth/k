@@ -135,6 +135,11 @@
       <version>1.9.0</version>
     </dependency>
     <dependency>
+      <groupId>com.martiansoftware</groupId>
+      <artifactId>nailgun-server</artifactId>
+      <version>0.9.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
@@ -391,7 +396,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>org.kframework.main.Main</mainClass>
+              <mainClass>com.martiansoftware.nailgun.NGServer</mainClass>
               <addClasspath>true</addClasspath>
             </manifest>
             <manifestEntries>
@@ -444,6 +449,16 @@
               <stripVersion>true</stripVersion>
               <stripClassifier>true</stripClassifier>
               <includeTypes>${native.library.type}</includeTypes>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-jar-dependencies</id>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeTypes>jar</includeTypes>
               <includeScope>runtime</includeScope>
             </configuration>
           </execution>

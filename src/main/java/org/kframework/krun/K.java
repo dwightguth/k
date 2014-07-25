@@ -22,7 +22,6 @@ public class K {
     }
 
     public static void setTool(Tool tool) {
-        assert K.tool == null : "Can only call setTool once";
         K.tool = tool;
     }
 

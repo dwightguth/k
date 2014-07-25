@@ -1,8 +1,6 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil.loader;
 
-import java.util.HashMap;
-
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Ambiguity;
 import org.kframework.kil.Attribute;
@@ -35,20 +33,14 @@ import org.w3c.dom.Element;
  * Factory for creating KIL classes from XML nodes. Must call startConstruction/endConstruction around calls to getTerm, to supply a Context.
  */
 public class JavaClassesFactory {
-    private static Context context = null;
 
-    /** Set the context to use */
-    public static synchronized void startConstruction(Context context) {
-        assert JavaClassesFactory.context == null;
-        JavaClassesFactory.context = context;
+    private final Context context;
+
+    public JavaClassesFactory(Context context) {
+        this.context = context;
     }
 
-    public static synchronized void endConstruction() {
-        assert JavaClassesFactory.context != null;
-        JavaClassesFactory.context = null;
-    }
-
-    public static ASTNode getTerm(Element element) {
+    public ASTNode getTerm(Element element) {
         assert context != null;
         // used for a new feature - loading java classes at first step (Basic Parsing)
         if (Constants.RULE.equals(element.getNodeName()))
@@ -120,11 +112,5 @@ public class JavaClassesFactory {
 
         System.out.println(">>> " + element.getNodeName() + " <<< - unimplemented yet: org.kframework.kil.loader.JavaClassesFactory");
         return null;
-    }
-
-    private static java.util.Map<Integer, ASTNode> cache = new HashMap<Integer, ASTNode>();
-
-    public static void clearCache() {
-        cache.clear();
     }
 }
