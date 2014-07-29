@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
+import org.kframework.kil.loader.Context;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -61,6 +64,8 @@ public final class Sort implements MaximalSharing, Serializable {
      */
     private final int ordinal;
 
+    private final ImmutableList<TypeParameter> dependencies;
+
     /**
      * Gets the corresponding {@code Sort} from its {@code String}
      * representation.
@@ -73,26 +78,27 @@ public final class Sort implements MaximalSharing, Serializable {
      *            the name of the sort
      * @return the sort
      */
-    public static Sort of(String name) {
+    public static Sort of(String name, TypeParameter... dependencies) {
         Sort sort = cache.get(name);
         if (sort == null) {
-            sort = new Sort(name, cache.size());
+            sort = new Sort(name, cache.size(), dependencies);
             cache.put(name, sort);
         }
         return sort;
     }
 
-    public static Set<Sort> of(Collection<org.kframework.kil.Sort> sorts) {
+    public static Set<Sort> of(Collection<org.kframework.kil.Sort> sorts, Context context) {
         ImmutableSet.Builder<Sort> builder = ImmutableSet.builder();
         for (org.kframework.kil.Sort name : sorts) {
-            builder.add(Sort.of(name.getName()));
+            builder.add(name.toBackendJava(context));
         }
         return builder.build();
     }
 
-    private Sort(String name, int ordinal) {
+    private Sort(String name, int ordinal, TypeParameter... dependencies) {
         this.name = name;
         this.ordinal = ordinal;
+        this.dependencies = ImmutableList.copyOf(dependencies);
     }
 
     public String name() {
@@ -108,8 +114,13 @@ public final class Sort implements MaximalSharing, Serializable {
                 + "{\"" + separator + "\"}");
     }
 
-    public org.kframework.kil.Sort toFrontEnd() {
-        return org.kframework.kil.Sort.of(name);
+    public org.kframework.kil.Sort toFrontEnd(Context context) {
+        org.kframework.kil.TypeParameter[] dependencies =
+                new org.kframework.kil.TypeParameter[this.dependencies.size()];
+        for (int i = 0; i < dependencies.length; i++) {
+            dependencies[i] = this.dependencies.get(i).toFrontEnd(context);
+        }
+        return org.kframework.kil.Sort.of(name, dependencies);
     }
 
     @Override

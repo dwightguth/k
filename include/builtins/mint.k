@@ -17,7 +17,7 @@ module MINT
   syntax MInt{I} ::= mi(I:Int, Int)    [function, hook(#MINT:constructor)]
 
   /* Function returning the bit width of this machine integer. */
-  syntax Int ::= bitwidthMInt(MInt{_})   [function, hook(#MINT:bitwidth)]
+  syntax I:Int ::= bitwidthMInt(MInt{I})   [function, hook(#MINT:bitwidth)]
 
   /*
    * Functions returning the signed and unsigned interpretations of this
@@ -143,14 +143,14 @@ module MINT
    * The bits of the first machine integer are on the more significant
    * positions.
    */
-  syntax MInt{_} ::= concatenateMInt(MInt{_}, MInt{_})   [function, hook(#MINT:concatenate)]
+  syntax MInt{K requires I +Int J ==Int K} ::= concatenateMInt(MInt{I}, MInt{J})   [function, hook(#MINT:concatenate)]
 
   /*
    * Returns a machine integer with the underlying bits the bits of the given
    * machine integer in the given range. The bit on position 0 is the most
    * significant bit.
    */
-  syntax MInt{_} ::= extractMInt(MInt{_}, Int, Int)   [function, hook(#MINT:extract)]
+  syntax MInt{K requires I -Int J ==Int K} ::= extractMInt(MInt{_}, I:Int, J:Int)   [function, hook(#MINT:extract)]
 
   /*
    * Returns a list of the first digits representing the given machine integer,

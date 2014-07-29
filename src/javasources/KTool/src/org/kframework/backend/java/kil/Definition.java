@@ -59,7 +59,7 @@ public class Definition extends JavaSymbolicObject {
         frozenKLabels = new HashSet<>();
 
         subsorts = new Subsorts(context);
-        tokenSorts = Sort.of(context.getTokenSorts());
+        tokenSorts = Sort.of(context.getTokenSorts(), context);
 
         ImmutableSet.Builder<Sort> builder = ImmutableSet.builder();
         // TODO(YilongL): this is confusing; give a better name to tokenSorts
