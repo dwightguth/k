@@ -14,10 +14,10 @@ module MINT
   imports LIST
 
   /* Machine integer of bit width and value. */
-  syntax MInt ::= mi(Int, Int)    [function, hook(#MINT:constructor)]
+  syntax MInt{I} ::= mi(I:Int, Int)    [function, hook(#MINT:constructor)]
 
   /* Function returning the bit width of this machine integer. */
-  syntax Int ::= bitwidthMInt(MInt)   [function, hook(#MINT:bitwidth)]
+  syntax Int ::= bitwidthMInt(MInt{_})   [function, hook(#MINT:bitwidth)]
 
   /*
    * Functions returning the signed and unsigned interpretations of this
@@ -26,11 +26,11 @@ module MINT
    *           2^(bitwidth - 1) - 1
    *   uvalue  returns an integer between 0 and 2^bitwidth - 1
    */
-  syntax Int ::= svalueMInt(MInt)     [function, hook(#MINT:svalue)]
-               | uvalueMInt(MInt)     [function, hook(#MINT:uvalue)]
+  syntax Int ::= svalueMInt(MInt{_})     [function, hook(#MINT:svalue)]
+               | uvalueMInt(MInt{_})     [function, hook(#MINT:uvalue)]
 
   /* Checks whether a machine integer is zero */
-  syntax Bool ::= zeroMInt(MInt)    [function, hook(#MINT:zero)]
+  syntax Bool ::= zeroMInt(MInt{_})    [function, hook(#MINT:zero)]
 
   /*
    * Functions for signed and unsigned minimum and maximum values of a machine
@@ -67,10 +67,10 @@ module MINT
    * overflowMInt(saddMInt(...))  returns true if overflow is detected during
    *                              the execution of the operation
    */
-  syntax MInt ::= miMInt(List)          [function]
-  rule miMInt(ListItem(MI:MInt) ListItem(_:Bool)) => MI
+  syntax MInt{_} ::= miMInt(List)          [function]
+  rule miMInt(ListItem(MI:MInt{_}) ListItem(_:Bool)) => MI
   syntax Bool ::= overflowMInt(List)    [function]
-  rule overflowMInt(ListItem(_:MInt) ListItem(B:Bool)) => B
+  rule overflowMInt(ListItem(_:MInt{_}) ListItem(B:Bool)) => B
 
   /*
    * Arithmetic and comparison operations
@@ -82,9 +82,9 @@ module MINT
    * Addition, subtraction, and multiplication are the same for signed and
    * unsigned integers represented in 2's complement
    */
-  syntax MInt ::= addMInt(MInt, MInt)   [function, hook(#MINT:add)]
-                | subMInt(MInt, MInt)   [function, hook(#MINT:sub)]
-                | mulMInt(MInt, MInt)   [function, hook(#MINT:mul)]
+  syntax MInt{I} ::= addMInt(MInt{I}, MInt{I})   [function, hook(#MINT:add)]
+                   | subMInt(MInt{I}, MInt{I})   [function, hook(#MINT:sub)]
+                   | mulMInt(MInt{I}, MInt{I})   [function, hook(#MINT:mul)]
 
   /*
    * Division and reminder
@@ -95,47 +95,47 @@ module MINT
    * udiv/urem  operation interprets operands as unsigned; undefined if the
    *            second argument is 0
    */
-  syntax List ::= sdivMInt(MInt, MInt)    [function, hook(#MINT:sdiv)]
-                | sremMInt(MInt, MInt)    [function, hook(#MINT:srem)]
-  syntax MInt ::= udivMInt(MInt, MInt)    [function, hook(#MINT:udiv)]
-                | uremMInt(MInt, MInt)    [function, hook(#MINT:urem)]
+  syntax List ::= sdivMInt(MInt{I}, MInt{I})    [function, hook(#MINT:sdiv)]
+                | sremMInt(MInt{I}, MInt{I})    [function, hook(#MINT:srem)]
+  syntax MInt{I} ::= udivMInt(MInt{I}, MInt{I})    [function, hook(#MINT:udiv)]
+                   | uremMInt(MInt{I}, MInt{I})    [function, hook(#MINT:urem)]
 
   /*
    * Addition, subtraction and multiplication with overflow detection; each
    * operation returns a pair of result and overflow flag represented as a list
    * of 2 elements
    */
-  syntax List ::= saddMInt(MInt, MInt)    [function, hook(#MINT:sadd)]
-                | uaddMInt(MInt, MInt)    [function, hook(#MINT:uadd)]
-                | ssubMInt(MInt, MInt)    [function, hook(#MINT:ssub)]
-                | usubMInt(MInt, MInt)    [function, hook(#MINT:usub)]
-                | smulMInt(MInt, MInt)    [function, hook(#MINT:smul)]
-                | umulMInt(MInt, MInt)    [function, hook(#MINT:umul)]
+  syntax List ::= saddMInt(MInt{I}, MInt{I})    [function, hook(#MINT:sadd)]
+                | uaddMInt(MInt{I}, MInt{I})    [function, hook(#MINT:uadd)]
+                | ssubMInt(MInt{I}, MInt{I})    [function, hook(#MINT:ssub)]
+                | usubMInt(MInt{I}, MInt{I})    [function, hook(#MINT:usub)]
+                | smulMInt(MInt{I}, MInt{I})    [function, hook(#MINT:smul)]
+                | umulMInt(MInt{I}, MInt{I})    [function, hook(#MINT:umul)]
 
   /* Shift operations; the second operand must be non-negative */
-  syntax MInt ::= shlMInt(MInt, Int)    [function, hook(#MINT:shl)]
-                | ashrMInt(MInt, Int)   [function, hook(#MINT:ashr)]
-                | lshrMInt(MInt, Int)   [function, hook(#MINT:lshr)]
+  syntax MInt{I} ::= shlMInt(MInt{I}, Int)    [function, hook(#MINT:shl)]
+                   | ashrMInt(MInt{I}, Int)   [function, hook(#MINT:ashr)]
+                   | lshrMInt(MInt{I}, Int)   [function, hook(#MINT:lshr)]
 
   /* Bitwise operations */
-  syntax MInt ::= andMInt(MInt, MInt)   [function, hook(#MINT:and)]
-                | orMInt(MInt, MInt)    [function, hook(#MINT:or)]
-                | xorMInt(MInt, MInt)   [function, hook(#MINT:xor)]
+  syntax MInt{I} ::= andMInt(MInt{I}, MInt{I})   [function, hook(#MINT:and)]
+                   | orMInt(MInt{I}, MInt{I})    [function, hook(#MINT:or)]
+                   | xorMInt(MInt{I}, MInt{I})   [function, hook(#MINT:xor)]
 
-  syntax MInt ::= negMInt(MInt)   [function]
+  syntax MInt{I} ::= negMInt(MInt{I})   [function]
   rule negMInt(MI:MInt) => xorMInt(MI, mi(bitwidthMInt(MI), 0))
 
   /* Comparison operations */
-  syntax Bool ::= sltMInt(MInt, MInt)   [function, hook(#MINT:slt)]
-                | ultMInt(MInt, MInt)   [function, hook(#MINT:ult)]
-                | sleMInt(MInt, MInt)   [function, hook(#MINT:sle)]
-                | uleMInt(MInt, MInt)   [function, hook(#MINT:ule)]
-                | sgtMInt(MInt, MInt)   [function, hook(#MINT:sgt)]
-                | ugtMInt(MInt, MInt)   [function, hook(#MINT:ugt)]
-                | sgeMInt(MInt, MInt)   [function, hook(#MINT:sge)]
-                | ugeMInt(MInt, MInt)   [function, hook(#MINT:uge)]
-                | eqMInt(MInt, MInt)    [function, hook(#MINT:eq)]
-                | neMInt(MInt, MInt)    [function, hook(#MINT:ne)]
+  syntax Bool ::= sltMInt(MInt{I}, MInt{I})   [function, hook(#MINT:slt)]
+                | ultMInt(MInt{I}, MInt{I})   [function, hook(#MINT:ult)]
+                | sleMInt(MInt{I}, MInt{I})   [function, hook(#MINT:sle)]
+                | uleMInt(MInt{I}, MInt{I})   [function, hook(#MINT:ule)]
+                | sgtMInt(MInt{I}, MInt{I})   [function, hook(#MINT:sgt)]
+                | ugtMInt(MInt{I}, MInt{I})   [function, hook(#MINT:ugt)]
+                | sgeMInt(MInt{I}, MInt{I})   [function, hook(#MINT:sge)]
+                | ugeMInt(MInt{I}, MInt{I})   [function, hook(#MINT:uge)]
+                | eqMInt(MInt{I}, MInt{I})    [function, hook(#MINT:eq)]
+                | neMInt(MInt{I}, MInt{I})    [function, hook(#MINT:ne)]
 
   /*
    * Returns a machine integer with the underlying bits the bits of the first
@@ -143,28 +143,28 @@ module MINT
    * The bits of the first machine integer are on the more significant
    * positions.
    */
-  syntax MInt ::= concatenateMInt(MInt, MInt)   [function, hook(#MINT:concatenate)]
+  syntax MInt{_} ::= concatenateMInt(MInt{_}, MInt{_})   [function, hook(#MINT:concatenate)]
 
   /*
    * Returns a machine integer with the underlying bits the bits of the given
    * machine integer in the given range. The bit on position 0 is the most
    * significant bit.
    */
-  syntax MInt ::= extractMInt(MInt, Int, Int)   [function, hook(#MINT:extract)]
+  syntax MInt{_} ::= extractMInt(MInt{_}, Int, Int)   [function, hook(#MINT:extract)]
 
   /*
    * Returns a list of the first digits representing the given machine integer,
    * each digit a machine integer on the given bitwidth. Useful for serializing
    * a integer to a sequence of bytes.
    */
-  syntax List ::= digitsOfMInt(MInt, Int, Int)   [function, hook(#MINT:toDigits)]
+  syntax List ::= digitsOfMInt(MInt{_}, Int, Int)   [function, hook(#MINT:toDigits)]
 
   /*
    * Returns a machine integer representing the given list of digits. Each digit
    * is represented as a machine integers. The list must be non-empty. Useful
    * for deserializing an integer from a sequence of bytes.
    */
-  syntax MInt ::= mIntOfDigits(List)   [function, hook(#MINT:fromDigits)]
+  syntax MInt{_} ::= mIntOfDigits(List)   [function, hook(#MINT:fromDigits)]
 
 endmodule
 
