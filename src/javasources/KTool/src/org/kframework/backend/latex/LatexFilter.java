@@ -193,7 +193,7 @@ public class LatexFilter extends BackendFilter {
         final boolean parens = wantParens.peek();
         final boolean hasBR = containsBR(col);
         if (col.isEmpty()) {
-            printEmpty(col.getSort().getName());
+            printEmpty(col.getSort().toString());
             return null;
         }
         if (hasBR) {
@@ -243,7 +243,7 @@ public class LatexFilter extends BackendFilter {
             result.append("\\variable");
         }
         if (var.getSort() != null) {
-            result.append("[" + StringUtil.latexify(var.getSort().getName()) + "]");
+            result.append("[" + StringUtil.latexify(var.getSort().toString()) + "]");
         }
         if (!var.getName().equals(MetaK.Constants.anyVarSymbol)) {
             result.append("{" + makeIndices(makeGreek(StringUtil.latexify(var.getName()))) + "}");
@@ -270,7 +270,7 @@ public class LatexFilter extends BackendFilter {
 
     @Override
     public Void visit(ListTerminator e, Void _) {
-        printEmpty(e.getSort().getName());
+        printEmpty(e.getSort().toString());
         return null;
     }
 
@@ -384,13 +384,13 @@ public class LatexFilter extends BackendFilter {
 
     @Override
     public Void visit(Token t, Void _) {
-        result.append("\\constant[" + StringUtil.latexify(t.tokenSort().getName()) + "]{" + StringUtil.latexify(t.value()) + "}");
+        result.append("\\constant[" + StringUtil.latexify(t.tokenSort().toString()) + "]{" + StringUtil.latexify(t.value()) + "}");
         return null;
     }
 
     @Override
     public Void visit(KSequence k, Void _) {
-        if (k.getContents().isEmpty()) printEmpty(Sort.K.getName());
+        if (k.getContents().isEmpty()) printEmpty(Sort.K.toString());
         else printList(k.getContents(), "\\kra");
         return null;
 
@@ -399,7 +399,7 @@ public class LatexFilter extends BackendFilter {
     @Override
     public Void visit(KApp app, Void _) {
         if (app.getLabel() instanceof Token) {
-            result.append("\\constant[" + StringUtil.latexify(((Token)app.getLabel()).tokenSort().getName()) + "]{" + StringUtil.latexify(((Token)app.getLabel()).value()) + "}");
+            result.append("\\constant[" + StringUtil.latexify(((Token)app.getLabel()).tokenSort().toString()) + "]{" + StringUtil.latexify(((Token)app.getLabel()).value()) + "}");
         } else {
             this.visitNode(app.getLabel());
             result.append("(");

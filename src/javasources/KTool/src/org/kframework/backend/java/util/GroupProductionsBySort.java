@@ -26,7 +26,7 @@ import com.google.common.collect.Lists;
 public class GroupProductionsBySort {
 
     private final Definition definition;
-    private final Map<String, List<Production>> prodsOfSort;
+    private final Map<Sort, List<Production>> prodsOfSort;
     /* the relation between productions and K label constants is many-to-one */
     private final Map<Production, KLabelConstant> klabelOfProd;
 
@@ -34,8 +34,8 @@ public class GroupProductionsBySort {
         assert definition != null;
         this.definition = definition;
 
-        ImmutableMap.Builder<String, List<Production>> sort2ProdsBuilder = ImmutableMap.builder();
-        Map<String, ImmutableList.Builder<Production>> prodsBuilders = new HashMap<String, ImmutableList.Builder<Production>>();
+        ImmutableMap.Builder<Sort, List<Production>> sort2ProdsBuilder = ImmutableMap.builder();
+        Map<Sort, ImmutableList.Builder<Production>> prodsBuilders = new HashMap<Sort, ImmutableList.Builder<Production>>();
         klabelOfProd = new HashMap<Production, KLabelConstant>();
 
         for (KLabelConstant klabel : definition.kLabels())
@@ -45,7 +45,7 @@ public class GroupProductionsBySort {
                 if (prod.containsAttribute(Attribute.BRACKET.getKey()))
                     continue;
 
-                String sortName = prod.getSort().getName();
+                Sort sortName = prod.getSort().toBackendJava();
                 if (!prodsBuilders.containsKey(sortName)) {
                     ImmutableList.Builder<Production> b = ImmutableList.builder();
                     prodsBuilders.put(sortName, b);
@@ -53,7 +53,7 @@ public class GroupProductionsBySort {
                 prodsBuilders.get(sortName).add(prod);
                 klabelOfProd.put(prod, klabel);
             }
-        for (Entry<String, ImmutableList.Builder<Production>> entry : prodsBuilders.entrySet()) {
+        for (Entry<Sort, ImmutableList.Builder<Production>> entry : prodsBuilders.entrySet()) {
             sort2ProdsBuilder.put(entry.getKey(), entry.getValue().build());
         }
         prodsOfSort = sort2ProdsBuilder.build();
@@ -67,7 +67,7 @@ public class GroupProductionsBySort {
                 List<Term> items = Lists.newArrayListWithCapacity(prod.getItems().size());
                 for (ProductionItem prodItem : prod.getItems())
                     if (prodItem instanceof org.kframework.kil.NonTerminal)
-                        items.add(Variable.getFreshVariable(Sort.of(((org.kframework.kil.NonTerminal) prodItem).getSort().getName())));
+                        items.add(Variable.getFreshVariable(((org.kframework.kil.NonTerminal) prodItem).getSort().toBackendJava()));
                 KItem kitem = KItem.of(klabelOfProd.get(prod), new KList(items), context);
                 freshTerms.add(kitem);
             }

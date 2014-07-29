@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.kframework.kil.KSorts;
+import org.kframework.kil.Sort;
 import org.kframework.parser.concrete2.Rule.DeleteRule;
 import org.kframework.utils.algorithms.SCCTarjan;
 
@@ -149,7 +149,7 @@ public class Grammar implements Serializable {
      */
     private NextableState addWhitespace(NextableState start) {
         PrimitiveState whitespace = new RegExState(
-            "whitespace", start.nt, pattern, KSorts.KITEM);
+            "whitespace", start.nt, pattern, Sort.KITEM.toString());
         RuleState deleteToken = new RuleState(
             "whitespace-D", start.nt, new DeleteRule(1, true));
         whitespace.next.add(deleteToken);

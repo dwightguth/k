@@ -4,7 +4,6 @@ package org.kframework.compile.checks;
 import java.util.HashMap;
 import java.util.List;
 
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Production;
 import org.kframework.kil.ProductionItem;
 import org.kframework.kil.Sentence;

@@ -239,7 +239,7 @@ public class HTMLFilter extends BackendFilter {
 
     public Void visit(Collection col, Void _) {
         if (col.isEmpty()) {
-            printEmpty(col.getSort().getName());
+            printEmpty(col.getSort().toString());
             return _;
         }
         List<Term> contents = col.getContents();

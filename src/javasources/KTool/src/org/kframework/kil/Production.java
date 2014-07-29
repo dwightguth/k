@@ -2,7 +2,6 @@
 package org.kframework.kil;
 
 import com.google.common.collect.Multimap;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.visitors.Visitor;
 
 import java.util.ArrayList;
@@ -168,7 +167,7 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
 
         String klabel = attributes.get("klabel");
         if (klabel == null) {
-            if (sort.toString().equals(KSorts.KLABEL))
+            if (sort.equals(Sort.KLABEL))
                 klabel = getPrefixLabel();
             else
                 klabel = "'" + getPrefixLabel();

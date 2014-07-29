@@ -9,7 +9,6 @@ import org.kframework.backend.java.kil.Sort;
 import org.kframework.kil.loader.Context;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 /**
  * Subsort relation.
@@ -37,7 +36,7 @@ public class Subsorts implements Serializable {
         int maxOrd = -1;
         for (org.kframework.kil.Sort genericKILSort : genericKILSorts) {
             /* ensure all sorts in context have Java-backend counterparts */
-            Sort sort = Sort.of(genericKILSort.getName());
+            Sort sort = genericKILSort.toBackendJava();
             setBuilder.add(sort);
             maxOrd = Math.max(maxOrd, sort.ordinal());
         }

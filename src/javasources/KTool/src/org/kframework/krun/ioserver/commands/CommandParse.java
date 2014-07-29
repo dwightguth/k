@@ -2,6 +2,7 @@
 package org.kframework.krun.ioserver.commands;
 
 import org.kframework.backend.maude.MaudeFilter;
+import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
@@ -28,7 +29,7 @@ public class CommandParse extends Command {
     public void run() {
         try {
             RunProcess rp = new RunProcess();
-            Term kast = rp.runParser(context.krunOptions.configurationCreation.parser(context), stringToParse, true, sort, context);
+            Term kast = rp.runParser(context.krunOptions.configurationCreation.parser(context), stringToParse, true, Sort.of(sort), context);
             MaudeFilter mf = new MaudeFilter(context);
             mf.visitNode(kast);
             succeed(mf.getResult().toString());

@@ -2,7 +2,6 @@
 package org.kframework.backend.unparser;
 
 import org.kframework.compile.utils.MaudeHelper;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.visitors.BasicVisitor;
 import org.kframework.utils.errorsystem.KException;
@@ -138,7 +137,7 @@ public class KastFilter extends BasicVisitor {
         Sort sort = empty.getSort();
         if (MaudeHelper.basicSorts.contains(sort)) {
             result.write(".");
-            result.write(sort.getName());
+            result.write(sort.toString());
         } else {
             Production prd = context.listConses.get(sort);
             UserList ul = (UserList) prd.getItems().get(0);
@@ -252,7 +251,7 @@ public class KastFilter extends BasicVisitor {
     public Void visit(KInjectedLabel kInjectedLabel, Void _) {
         Term term = kInjectedLabel.getTerm();
         if (term.getSort().isKSort()) {
-            result.write(KInjectedLabel.getInjectedSort(term.getSort()).getName());
+            result.write(KInjectedLabel.getInjectedSort(term.getSort()).toString());
             result.write("2KLabel_(");
         } else {
             result.write("#_(");

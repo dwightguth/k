@@ -36,7 +36,7 @@ public class NonTerminal extends ProductionItem {
 
     @Override
     public String toString() {
-        return sort.getName();
+        return sort.toString();
     }
 
     @Override

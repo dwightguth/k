@@ -7,7 +7,6 @@ import org.kframework.kil.Definition;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KItemProjection;
 import org.kframework.kil.KLabelInjection;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.PriorityBlock;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rewrite;

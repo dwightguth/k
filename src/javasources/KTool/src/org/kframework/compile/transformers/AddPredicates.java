@@ -9,7 +9,6 @@ import org.kframework.kil.Configuration;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KInjectedLabel;
 import org.kframework.kil.KLabelConstant;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.ListTerminator;
 import org.kframework.kil.Module;
 import org.kframework.kil.ModuleItem;
@@ -144,7 +143,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
     public static final KLabelConstant VariablePredicate =
             KLabelConstant.of(predicate("Variable"));
     public static final KLabelConstant KSymbolicPredicate =
-            KLabelConstant.of(symbolicPredicate(KSorts.K));
+            KLabelConstant.of(symbolicPredicate(Sort.K));
 
 
     public static final String predicate(String sort) {
@@ -158,7 +157,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
         return predicate(sort);
     }
 
-    public static final String symbolicPredicate(String sort) {
+    public static final String symbolicPredicate(Sort sort) {
         assert AddSymbolicK.allowSymbolic(sort):
                 "invalid symbolic predicate " + predicate(SymbolicPredicatePrefix + sort)
                         + " for sort "+ sort;
@@ -182,8 +181,8 @@ public class AddPredicates extends CopyOnWriteTransformer {
                 // declare isSort predicate as KLabel
                 retNode.addConstant(Sort.KLABEL, pred);
 
-                if (AddSymbolicK.allowKSymbolic(sort.getName())) {
-                    String symPred = AddPredicates.symbolicPredicate(sort.getName());
+                if (AddSymbolicK.allowKSymbolic(sort)) {
+                    String symPred = AddPredicates.symbolicPredicate(sort);
                     // declare isSymbolicSort predicate as KLabel
                     retNode.addConstant(Sort.KLABEL, symPred);
 
@@ -198,7 +197,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
                     rule.addAttribute(Attribute.PREDICATE);
                     retNode.appendModuleItem(rule);
 
-                    String symCtor = AddSymbolicK.symbolicConstructor(sort.getName());
+                    String symCtor = AddSymbolicK.symbolicConstructor(sort);
                     var = Variable.getFreshVar(Sort.KLIST);
                     Term symTerm = KApp.of(KLabelConstant.of(symCtor, context), var);
 

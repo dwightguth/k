@@ -4,6 +4,7 @@ package org.kframework.kast;
 import java.io.File;
 import java.util.List;
 
+import org.kframework.kil.Sort;
 import org.kframework.kil.loader.Context;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.ParserType;
@@ -11,6 +12,7 @@ import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.options.BaseEnumConverter;
 import org.kframework.utils.options.DefinitionLoadingOptions;
 
+import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.ParametersDelegate;
@@ -76,13 +78,21 @@ public final class KastOptions {
     @Parameter(names={"--sort", "-s"}, description="The start sort for the default parser. " +
             "The default is the sort of $PGM from the configuration. A sort may also be specified " +
             "with the 'KRUN_SORT' environment variable, in which case it is used if the option is " +
-            "not specified on the command line.")
-    private String sort;
+            "not specified on the command line.", converter=SortConverter.class)
+    private Sort sort;
 
-    public String sort(Context context) {
+    static class SortConverter implements IStringConverter<Sort> {
+
+        @Override
+        public Sort convert(String sort) {
+            return Sort.of(sort);
+        }
+    }
+
+    public Sort sort(Context context) {
         if (sort == null) {
             if (System.getenv("KRUN_SORT") != null) {
-                sort = System.getenv("KRUN_SORT");
+                sort = Sort.of(System.getenv("KRUN_SORT"));
             } else {
                 sort = context.startSymbolPgm;
             }

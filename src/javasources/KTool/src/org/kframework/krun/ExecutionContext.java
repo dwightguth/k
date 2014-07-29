@@ -101,8 +101,7 @@ public class ExecutionContext {
                         "User specified configuration variable " + name + " which does not exist."));
             }
             Sort sort = context.configVarSorts.get(name);
-            String startSymbol = sort == null ? null : sort.getName();
-            Term parsed = new RunProcess().runParserOrDie(parser, value, false, startSymbol, context);
+            Term parsed = new RunProcess().runParserOrDie(parser, value, false, sort, context);
             parsed = (Term) new ResolveVariableAttribute(context).visitNode(parsed);
             output.put("$" + name, parsed);
         }

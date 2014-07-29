@@ -29,6 +29,7 @@ import org.kframework.kil.Definition;
 import org.kframework.kil.Module;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sentence;
+import org.kframework.kil.Sort;
 import org.kframework.kil.StringBuiltin;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
@@ -135,7 +136,7 @@ public class KRunFrontEnd {
                     sw.printTotal("Search total");
                 } else if (options.experimental.ltlmc() != null) {
                     Term formula = new RunProcess().runParserOrDie("kast -e",
-                            options.experimental.ltlmc(), false, "LtlFormula", context);
+                            options.experimental.ltlmc(), false, Sort.LTL_FORMULA, context);
 
                     result = krun.modelCheck(
                                     formula,

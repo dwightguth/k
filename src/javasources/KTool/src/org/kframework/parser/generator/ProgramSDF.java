@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 import org.kframework.compile.transformers.AddSymbolicK;
 import org.kframework.kil.Definition;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Lexical;
 import org.kframework.kil.Module;
 import org.kframework.kil.Production;
@@ -157,8 +156,8 @@ public class ProgramSDF {
             for (String s : psdfv.startSorts) {
                 Sort sort = Sort.of(s);
                 if (!sort.isBaseSort() && !context.isListSort(sort))
-                    if (AddSymbolicK.allowKSymbolic(s)) {
-                        sdf.append("    \"" + AddSymbolicK.symbolicConstructor(s) + "\"    \"(\" UnitDz \")\"    -> ");
+                    if (AddSymbolicK.allowKSymbolic(sort)) {
+                        sdf.append("    \"" + AddSymbolicK.symbolicConstructor(sort) + "\"    \"(\" UnitDz \")\"    -> ");
                         sdf.append(StringUtil.escapeSortName(s) + "    {cons(\"" + StringUtil.escapeSortName(s) + "1Symb\")}\n");
                     }
             }

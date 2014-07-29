@@ -2,7 +2,6 @@
 package org.kframework.backend.unparser;
 
 import org.kframework.compile.utils.ConfigurationStructureMap;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.visitors.NonCachingVisitor;
 import org.kframework.krun.ColorSetting;
@@ -647,7 +646,7 @@ public class UnparserFilterNew extends NonCachingVisitor {
         prepare(kInjectedLabel);
         Term term = kInjectedLabel.getTerm();
         if (term.getSort().isKSort()) {
-            indenter.write(KInjectedLabel.getInjectedSort(term.getSort()).getName());
+            indenter.write(KInjectedLabel.getInjectedSort(term.getSort()).toString());
             indenter.write("2KLabel ");
         } else {
             indenter.write("# ");
@@ -763,7 +762,7 @@ public class UnparserFilterNew extends NonCachingVisitor {
         if (c.isSyntactic()) {
             indenter.write(":");
         }
-        indenter.write(c.getSort().getName());
+        indenter.write(c.getSort().toString());
         return postpare();
     }
 

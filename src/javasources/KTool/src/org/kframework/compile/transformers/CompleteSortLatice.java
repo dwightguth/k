@@ -2,7 +2,6 @@
 package org.kframework.compile.transformers;
 
 import org.kframework.kil.ASTNode;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Module;
 import org.kframework.kil.ModuleItem;
 import org.kframework.kil.Production;

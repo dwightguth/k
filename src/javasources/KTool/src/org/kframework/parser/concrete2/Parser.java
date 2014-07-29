@@ -6,7 +6,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.kil.Ambiguity;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KList;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.Token;

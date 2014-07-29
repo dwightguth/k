@@ -9,7 +9,6 @@ import org.kframework.kil.Ambiguity;
 import org.kframework.kil.Configuration;
 import org.kframework.kil.KList;
 import org.kframework.kil.KSequence;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Rewrite;
 import org.kframework.kil.NonTerminal;
 import org.kframework.kil.Sort;

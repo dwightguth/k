@@ -37,7 +37,6 @@ import org.kframework.compile.transformers.StrictnessToContexts;
 import org.kframework.compile.utils.CheckVisitorStep;
 import org.kframework.compile.utils.CompilerStepDone;
 import org.kframework.compile.utils.CompilerSteps;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.visitors.BasicVisitor;
 import org.kframework.kil.loader.Context;
@@ -275,7 +274,7 @@ class KoreFilter extends BasicVisitor {
         if (node.isSyntactic()) {
             indenter.write(":");
         }
-        indenter.write(node.getSort().getName());
+        indenter.write(node.getSort().toString());
         indenter.write(")");
         return null;
     }
@@ -450,7 +449,7 @@ class KoreFilter extends BasicVisitor {
         public Void visit(KInjectedLabel kInjectedLabel, Void _) {
             Term term = kInjectedLabel.getTerm();
             if (term.getSort().isKSort()) {
-                indenter.write(KInjectedLabel.getInjectedSort(term.getSort()).getName());
+                indenter.write(KInjectedLabel.getInjectedSort(term.getSort()).toString());
                 indenter.write("2KLabel ");
             } else {
                 indenter.write("# ");

@@ -204,9 +204,9 @@ public class Definition2SDF {
             if (!sort.getSort().isKSort()) {
                 sdf.append("    \"" + AddPredicates.syntaxPredicate(sort.getName()) + "\"      -> DzKLabel\n");
             }
-            if (AddSymbolicK.allowKSymbolic(sort.getName())) {
-                sdf.append("    \"" + AddPredicates.symbolicPredicate(sort.getName()) + "\"      -> DzKLabel\n");
-                sdf.append("    \"" + AddSymbolicK.symbolicConstructor(sort.getName()) + "\"      -> DzKLabel\n");
+            if (AddSymbolicK.allowKSymbolic(sort.getSort())) {
+                sdf.append("    \"" + AddPredicates.symbolicPredicate(sort.getSort()) + "\"      -> DzKLabel\n");
+                sdf.append("    \"" + AddSymbolicK.symbolicConstructor(sort.getSort()) + "\"      -> DzKLabel\n");
             }
         }
 

@@ -7,7 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.kframework.kil.Configuration;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Lexical;
 import org.kframework.kil.Production;
 import org.kframework.kil.ProductionItem;
@@ -73,7 +72,7 @@ public class KSyntax2GrammarStatesFilter extends BasicVisitor {
                  */
                 RuleState labelState = new RuleState(ntName + "-L", nt, new WrapLabelRule(prd, prd.getSort()));
                 NonTerminalState IdState = new NonTerminalState(ntName + "-S", nt, grammar.get(ul.getSort().getName()), false);
-                PrimitiveState separatorState = new RegExState(ntName + "-T", nt, Pattern.compile(ul.getSeparator(), Pattern.LITERAL), KSorts.KITEM);
+                PrimitiveState separatorState = new RegExState(ntName + "-T", nt, Pattern.compile(ul.getSeparator(), Pattern.LITERAL), Sort.KITEM.toString());
                 RuleState deleteToken = new RuleState(ntName + "-D", nt, new DeleteRule(1, true));
 
                 if (ul.getListType().equals(UserList.ZERO_OR_MORE)) {
@@ -139,7 +138,7 @@ public class KSyntax2GrammarStatesFilter extends BasicVisitor {
                     NonTerminalState IdState = new NonTerminalState(ntName + "-S", NeIdsNt,
                             grammar.get(ul.getSort().getName()), false);
                     PrimitiveState separatorState = new RegExState(ntName + "-T", NeIdsNt,
-                            Pattern.compile(ul.getSeparator(), Pattern.LITERAL), KSorts.KITEM);
+                            Pattern.compile(ul.getSeparator(), Pattern.LITERAL), Sort.KITEM.toString());
                     RuleState deleteToken = new RuleState(ntName + "-D", NeIdsNt,
                             new DeleteRule(1, true));
                     NonTerminalState NeIdsState = new NonTerminalState(ntName + "-S", NeIdsNt,
@@ -223,7 +222,7 @@ public class KSyntax2GrammarStatesFilter extends BasicVisitor {
                     Terminal terminal = (Terminal) prdItem;
                     PrimitiveState pstate = new RegExState(
                             prd.getSort() + "-T", nt,
-                            Pattern.compile(terminal.getTerminal(), Pattern.LITERAL), KSorts.KITEM);
+                            Pattern.compile(terminal.getTerminal(), Pattern.LITERAL), Sort.KITEM.toString());
                     previous.next.add(pstate);
                     RuleState del = new RuleState("DelTerminalRS", nt, new DeleteRule(1, true));
                     pstate.next.add(del);

@@ -332,7 +332,7 @@ public class DefinitionLoader {
         return def;
     }
 
-    public static Term parseCmdString(String content, String filename, String startSymbol, Context context) throws ParseFailedException {
+    public static Term parseCmdString(String content, String filename, Sort startSymbol, Context context) throws ParseFailedException {
         if (!context.initialized) {
             assert false : "You need to load the definition before you call parsePattern!";
         }
@@ -350,7 +350,7 @@ public class DefinitionLoader {
         config = new CellEndLabelFilter(context).visitNode(config);
         //if (checkInclusion)
         //    config = new InclusionFilter(localModule, context).visitNode(config);
-        config = new TypeSystemFilter2(Sort.of(startSymbol), context).visitNode(config);
+        config = new TypeSystemFilter2(startSymbol, context).visitNode(config);
         config = new CellTypesFilter(context).visitNode(config);
         config = new CorrectRewritePriorityFilter(context).visitNode(config);
         config = new CorrectKSeqFilter(context).visitNode(config);
@@ -379,7 +379,7 @@ public class DefinitionLoader {
         return (Term) config;
     }
 
-    public static ASTNode parsePattern(String pattern, String filename, String startSymbol, Context context) throws ParseFailedException {
+    public static ASTNode parsePattern(String pattern, String filename, Sort startSymbol, Context context) throws ParseFailedException {
         if (!context.initialized) {
             assert false : "You need to load the definition before you call parsePattern!";
         }
@@ -399,7 +399,7 @@ public class DefinitionLoader {
         config = new CellEndLabelFilter(context).visitNode(config);
         //if (checkInclusion)
         //    config = new InclusionFilter(localModule, context).visitNode(config);
-        config = new TypeSystemFilter2(Sort.of(startSymbol), context).visitNode(config);
+        config = new TypeSystemFilter2(startSymbol, context).visitNode(config);
         config = new CellTypesFilter(context).visitNode(config);
         config = new CorrectRewritePriorityFilter(context).visitNode(config);
         config = new CorrectKSeqFilter(context).visitNode(config);

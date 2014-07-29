@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 public class Sort implements Serializable {
@@ -47,22 +48,30 @@ public class Sort implements Serializable {
 
     /* LTL builtin sorts */
     public static final Sort BUILTIN_LTL_FORMULA = Sort.of("#LtlFormula");
+    public static final Sort LTL_FORMULA = Sort.of("LtlFormula");
     public static final Sort BUILTIN_PROP = Sort.of("#Prop");
     public static final Sort BUILTIN_MODEL_CHECKER_STATE = Sort.of("#ModelCheckerState");
     public static final Sort BUILTIN_MODEL_CHECK_RESULT = Sort.of("#ModelCheckResult");
 
     private final String name;
 
-    public static Sort of(String name) {
-        return new Sort(name);
+    private final ImmutableList<TypeParameter> dependencies;
+
+    public static Sort of(String name, TypeParameter... dependencies) {
+        return new Sort(name, dependencies);
     }
 
-    private Sort(String name) {
+    private Sort(String name, TypeParameter[] dependencies) {
         this.name = name;
+        this.dependencies = ImmutableList.copyOf(dependencies);
     }
 
     public String getName() {
         return name;
+    }
+
+    public ImmutableList<TypeParameter> getDependencies() {
+        return dependencies;
     }
 
     public org.kframework.backend.java.kil.Sort toBackendJava() {
@@ -70,25 +79,51 @@ public class Sort implements Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Sort)) {
-            return false;
-        }
-        Sort other = (Sort) obj;
-        return name.equals(other.name);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((dependencies == null) ? 0 : dependencies.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return name.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Sort other = (Sort) obj;
+        if (dependencies == null) {
+            if (other.dependencies != null)
+                return false;
+        } else if (!dependencies.equals(other.dependencies))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
     }
 
     @Override
     public String toString() {
-        return name;
+        StringBuilder sb = new StringBuilder();
+        sb.append(getName());
+        if (dependencies.size() > 0) {
+            sb.append("{");
+            String conn = "";
+            for (TypeParameter tp : dependencies) {
+                sb.append(conn).append(tp);
+                conn = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
     private static Set<Sort> K_SORTS = ImmutableSet.of(K, BAG, BAG_ITEM, KITEM,

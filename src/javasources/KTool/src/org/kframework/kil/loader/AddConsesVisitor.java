@@ -2,7 +2,6 @@
 package org.kframework.kil.loader;
 
 import org.kframework.kil.Attribute;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Production;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Terminal;

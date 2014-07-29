@@ -9,6 +9,7 @@ import org.kframework.backend.java.kil.KList;
 import org.kframework.backend.java.kil.KSequence;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
+import org.kframework.kil.Sort;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.krun.RunProcess;
@@ -118,7 +119,7 @@ public class BuiltinIOOperations {
             RunProcess rp = new RunProcess();
             org.kframework.kil.Term kast = rp.runParser(
                     context(context).ccOptions.parser(context(context)),
-                    term1.stringValue(), true, term2.stringValue(), context(context));
+                    term1.stringValue(), true, Sort.of(term2.stringValue()), context(context));
             Term term = Term.of(kast, definition(context));
             term = term.evaluate(context);
             return term;

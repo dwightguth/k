@@ -3,7 +3,6 @@ package org.kframework.compile.transformers;
 
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.KApp;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.ListTerminator;
 import org.kframework.kil.Production;
 import org.kframework.kil.ProductionItem;

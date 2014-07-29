@@ -94,7 +94,7 @@ public class RunProcess {
 
     }
 
-    public Term runParserOrDie(String parser, String pgm, boolean isPgm, String startSymbol, Context context) {
+    public Term runParserOrDie(String parser, String pgm, boolean isPgm, Sort startSymbol, Context context) {
         try {
             return runParser(parser, pgm, isPgm, startSymbol, context);
         } catch (ParseFailedException e) {
@@ -106,7 +106,7 @@ public class RunProcess {
     /*
      * run the process denoted by the parser ("kast" or an external parser specified with --parser option) and return the AST obtained by parser
      */
-    public Term runParser(String parser, String value, boolean isNotFile, String startSymbol, Context context) throws ParseFailedException {
+    public Term runParser(String parser, String value, boolean isNotFile, Sort startSymbol, Context context) throws ParseFailedException {
         Term term;
 
         if (startSymbol == null) {
@@ -150,7 +150,7 @@ public class RunProcess {
                 List<String> tokens = new ArrayList<>(Arrays.asList(parser.split(" ")));
                 tokens.add(value);
                 Map<String, String> environment = new HashMap<>();
-                environment.put("KRUN_SORT", startSymbol);
+                environment.put("KRUN_SORT", startSymbol.toString());
                 environment.put("KRUN_COMPILED_DEF", context.kompiled.getParentFile().getAbsolutePath());
                 if (isNotFile) {
                     environment.put("KRUN_IS_NOT_FILE", "true");

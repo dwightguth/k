@@ -2,8 +2,6 @@
 package org.kframework.compile.checks;
 
 import org.kframework.kil.Cell;
-import org.kframework.kil.DataStructureSort;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Sort;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.BasicVisitor;

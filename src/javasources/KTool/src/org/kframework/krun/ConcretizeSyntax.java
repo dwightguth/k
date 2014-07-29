@@ -2,7 +2,6 @@
 package org.kframework.krun;
 
 import org.kframework.backend.kore.ToKAppTransformer;
-import org.kframework.backend.unparser.UnparserFilterNew;
 import org.kframework.compile.transformers.AddEmptyLists;
 import org.kframework.compile.transformers.Cell2DataStructure;
 import org.kframework.kil.*;
@@ -12,7 +11,6 @@ import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -125,11 +123,11 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
                 }
             } else if (child.equals(KList.EMPTY)) {
                 //could be a list terminator, which don't have conses
-                Set<String> sorts = context.listLabels.get(klabel);
+                Set<Sort> sorts = context.listLabels.get(klabel);
                 possibleTerms = new ArrayList<Term>();
                 if (sorts != null) {
-                    for (String sort : sorts) {
-                            possibleTerms.add(new ListTerminator(Sort.of(sort), null));
+                    for (Sort sort : sorts) {
+                            possibleTerms.add(new ListTerminator(sort, null));
                     }
                     if (possibleTerms.size() == 0) {
                         return super.visit(kapp, null);

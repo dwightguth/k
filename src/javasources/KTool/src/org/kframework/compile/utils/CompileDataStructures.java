@@ -7,7 +7,6 @@ import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KLabelConstant;
 import org.kframework.kil.KList;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.MapUpdate;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rewrite;

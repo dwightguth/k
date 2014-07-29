@@ -2,7 +2,6 @@
 package org.kframework.kil.loader;
 
 import org.kframework.kil.Definition;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Production;
 import org.kframework.kil.ProductionItem;
 import org.kframework.kil.NonTerminal;

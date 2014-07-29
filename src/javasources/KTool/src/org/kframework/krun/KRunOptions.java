@@ -11,7 +11,6 @@ import org.kframework.backend.java.symbolic.JavaExecutionOptions;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Cell;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Variable;
@@ -248,7 +247,7 @@ public final class KRunOptions {
         return DefinitionLoader.parsePattern(
                 patternToParse,
                 "Command line pattern",
-                KSorts.BAG,
+                Sort.BAG,
                 context);
     }
 

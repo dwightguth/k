@@ -2,7 +2,6 @@
 package org.kframework.kil.loader;
 
 import org.kframework.compile.transformers.AddSymbolicK;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
@@ -31,18 +30,18 @@ public class ResolveVariableAttribute extends CopyOnWriteTransformer {
              */
             if (kompileOptions.backend == KompileOptions.Backend.MAUDE) {
                 if (context.variableTokenSorts.contains(node.tokenSort())) {
-                    String sort = KSorts.K;
+                    Sort sort = Sort.K;
                     String name = node.value();
                     int index = node.value().lastIndexOf(":");
                     if (index > 0) {
-                        sort = node.value().substring(index + 1);
+                        sort = Sort.of(node.value().substring(index + 1));
                         name = node.value().substring(0, index);
                     }
 
                     if (Sort.of("#" + sort).isDataSort()) {
                         return KApp.of(KLabelConstant.of(AddSymbolicK.symbolicConstructor(sort)), Token.kAppOf(Sort.BUILTIN_ID, name));
                     } else {
-                        return KApp.of(KLabelConstant.of(AddSymbolicK.symbolicConstructor(KSorts.K)), Token.kAppOf(Sort.BUILTIN_ID, node.value()));
+                        return KApp.of(KLabelConstant.of(AddSymbolicK.symbolicConstructor(Sort.K)), Token.kAppOf(Sort.BUILTIN_ID, node.value()));
                     }
                 }
             }
