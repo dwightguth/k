@@ -14,6 +14,7 @@ import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.compile.transformers.DataStructureToLookupUpdate;
 import org.kframework.compile.utils.*;
 //import org.kframework.kil.*;
+import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.Module;
 import org.kframework.kil.Sort;
 import org.kframework.kil.loader.Context;
@@ -312,7 +313,7 @@ public class JavaSymbolicKRun implements KRun {
         stateMap.put(org.kframework.kil.GenericToken.kAppOf(Sort.ID, "$1"), org.kframework.kil.IntBuiltin.kAppOf("1"));
         ((org.kframework.kil.Cell) o)
                 .setContents(new org.kframework.kil.MapBuiltin(context
-                        .dataStructureSortOf(Sort.MAP),
+                        .dataStructureSortOf(DataStructureSort.DEFAULT_MAP_SORT),
                         Collections.<org.kframework.kil.Term>emptyList(),
                         stateMap));
 

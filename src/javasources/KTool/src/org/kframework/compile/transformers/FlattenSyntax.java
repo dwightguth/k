@@ -84,6 +84,6 @@ public class FlattenSyntax extends CopyOnWriteTransformer {
     public ASTNode visit(NonTerminal node, Void _)  {
         if (!node.getSort().isComputationSort())
             return node;
-        return new NonTerminal(Sort.K);
+        return new NonTerminal(Sort.K.getDecl());
     }
 }

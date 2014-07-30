@@ -2,7 +2,7 @@
 package org.kframework.kil;
 
 import com.google.common.collect.Multimap;
-import org.kframework.compile.utils.MetaK;
+import org.kframework.kil.NonTerminal.SortDecl;
 import org.kframework.kil.visitors.Visitor;
 
 import java.util.ArrayList;
@@ -18,11 +18,11 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
      * steps.
      */
     protected List<ProductionItem> items;
-    protected Sort sort;
+    protected SortDecl sort;
     protected String ownerModuleName;
     private Multimap<Integer, Integer> binderMap;
 
-    public static Production makeFunction(Sort funSort, String funName, Sort argSort, org.kframework.kil.loader.Context context) {
+    public static Production makeFunction(SortDecl funSort, String funName, SortDecl argSort, org.kframework.kil.loader.Context context) {
         List<ProductionItem> prodItems = new ArrayList<ProductionItem>();
         prodItems.add(new Terminal(funName));
         prodItems.add(new Terminal("("));
@@ -31,7 +31,7 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
 
         Production funProd = new Production(new NonTerminal(funSort), prodItems);
         funProd.addAttribute(new Attribute("prefixlabel", funName));
-        if (funSort.isComputationSort()) {
+        if (funSort.getId().isComputationSort()) {
             funProd.addAttribute(new Attribute("klabel", funName));
             String consAttr = funSort + "1" + funName + "Syn";
             funProd.addAttribute(new Attribute("cons", consAttr));
@@ -116,7 +116,7 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
         return items.size() == 1 && items.get(0) instanceof Terminal;
     }
 
-    public Sort getBracketSort() {
+    public SortDecl getBracketSort() {
         assert isBracket();
         return getChildSort(0);
     }
@@ -215,19 +215,19 @@ public class Production extends ASTNode implements Interfaces.MutableList<Produc
         return visitor.complete(this, visitor.visit(this, p));
     }
 
-    public Sort getSort() {
+    public SortDecl getSort() {
         return sort;
     }
 
-    public void setSort(Sort sort) {
+    public void setSort(SortDecl sort) {
         this.sort = sort;
     }
 
-    public Sort getChildSort(int idx) {
+    public SortDecl getChildSort(int idx) {
         int arity = -1;
         if (items.get(0) instanceof UserList) {
             if (idx == 0) {
-                return ((UserList) items.get(0)).getSort();
+                return ((UserList) items.get(0)).getSort().getDecl();
             } else {
                 return this.getSort();
             }

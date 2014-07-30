@@ -9,8 +9,6 @@ import org.kframework.kil.Collection;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 
-import java.util.*;
-
 /**
  * Transformer flattening concrete syntax terms to applications of KLabels
  */
@@ -121,7 +119,7 @@ public class FlattenTerms extends CopyOnWriteTransformer {
                 return KApp.of(new KInjectedLabel(emp));
             }
             // if this is a list sort
-            if (!MaudeHelper.basicSorts.contains(emp.getSort())) {
+            if (!MaudeHelper.basicSorts.contains(emp.getSort().getId())) {
                 Production listProd = context.listConses.get(emp.getSort());
                 String separator = ((UserList) listProd.getItems().get(0)).getSeparator();
                 return new KApp(l, f, KLabelConstant.of(MetaK.getListUnitLabel(separator), context), KList.EMPTY);

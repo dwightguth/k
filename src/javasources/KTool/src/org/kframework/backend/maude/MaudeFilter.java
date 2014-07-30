@@ -126,11 +126,11 @@ public class MaudeFilter extends BackendFilter {
                     ProductionItem item = p.getItems().get(0);
                     if (item instanceof NonTerminal) {
                         NonTerminal nt = (NonTerminal) item;
-                        if (!MaudeHelper.declaredSorts.contains(nt.getSort()) && !MaudeHelper.basicSorts.contains(nt.getSort())) {
+                        if (!MaudeHelper.declaredSorts.contains(nt) && !MaudeHelper.basicSorts.contains(nt.getSort())) {
                             result.append("sort ");
                             result.append(p.getItems().get(0));
                             result.append(" .\n");
-                            MaudeHelper.declaredSorts.add(nt.getSort());
+                            MaudeHelper.declaredSorts.add(nt);
                         }
                         result.append("subsort ");
                         result.append(nt);
@@ -473,7 +473,7 @@ public class MaudeFilter extends BackendFilter {
     @Override
     public Void visit(ListTerminator empty, Void _) {
         Sort sort = empty.getSort();
-        if (MaudeHelper.basicSorts.contains(sort) || sort.isCellFragment()) {
+        if (MaudeHelper.basicSorts.contains(sort.getId()) || sort.isCellFragment()) {
             result.append(".");
             result.append(sort);
         } else {

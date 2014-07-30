@@ -2,7 +2,6 @@
 package org.kframework.backend.unparser;
 
 import org.kframework.compile.utils.MaudeHelper;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.visitors.BasicVisitor;
 import org.kframework.utils.errorsystem.KException;
@@ -136,7 +135,7 @@ public class KastFilter extends BasicVisitor {
     @Override
     public Void visit(ListTerminator empty, Void _) {
         Sort sort = empty.getSort();
-        if (MaudeHelper.basicSorts.contains(sort)) {
+        if (MaudeHelper.basicSorts.contains(sort.getId())) {
             result.write(".");
             result.write(sort.getName());
         } else {

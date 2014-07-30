@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import org.kframework.kil.NonTerminal.SortDecl;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.visitors.Visitor;
 import org.w3c.dom.Element;
@@ -73,6 +74,10 @@ public class Variable extends Term {
 
     public static Variable getFreshVar(Sort sort) {
         return new Variable(GENERATED_FRESH_VAR + nextVariableIndex++, sort);
+    }
+
+    public static Variable getFreshVar(SortDecl sort) {
+        return getFreshVar(Sort.of(sort));
     }
 
     public void setName(String name) {

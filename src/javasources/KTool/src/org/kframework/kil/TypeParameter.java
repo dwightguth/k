@@ -32,6 +32,11 @@ public class TypeParameter implements Serializable {
         return requires;
     }
 
+    public Sort getBound() {
+        assert false;
+        return null;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

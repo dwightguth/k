@@ -11,6 +11,7 @@ import org.kframework.kil.CellDataStructure;
 import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KInjectedLabel;
+import org.kframework.kil.NonTerminal.SortDecl;
 import org.kframework.kil.Production;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Sort.SortId;
@@ -135,7 +136,7 @@ public class Context implements Serializable {
     /**
      * {@link Map} of sort names into {@link DataStructureSort} instances.
      */
-    private Map<Sort, DataStructureSort> dataStructureSorts;
+    private Map<SortDecl, DataStructureSort> dataStructureSorts;
 
     /**
      * {@link Set} of sorts with lexical productions.
@@ -546,6 +547,12 @@ public class Context implements Serializable {
     }
 
     public DataStructureSort dataStructureSortOf(Sort sort) {
+        assert initialized : "Context is not initialized yet";
+
+        return dataStructureSorts.get(sort.getDecl());
+    }
+
+    public DataStructureSort dataStructureSortOf(SortDecl sort) {
         assert initialized : "Context is not initialized yet";
 
         return dataStructureSorts.get(sort);

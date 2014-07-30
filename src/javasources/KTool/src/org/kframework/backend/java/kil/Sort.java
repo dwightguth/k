@@ -68,6 +68,21 @@ public final class Sort implements MaximalSharing, Serializable {
     private final ImmutableList<Sort> parameters;
 
     /**
+     * Gets the most unconstrained instance of this SortId. For sorts with no
+     * dependencies, this is the single sort with this id. For sorts with dependencies,
+     * an unconstrained dependency is created for each type parameter.
+     * @param id
+     * @return
+     */
+    public static Sort ofs(SortDecl id) {
+        Sort[] params = new Sort[id.getArity()];
+        for (int i = 0; i < params.length; i++) {
+            params[i] = Sort.SHARP_BOT;
+        }
+        return Sort.of(id.getName(), params);
+    }
+
+    /**
      * Gets the corresponding {@code Sort} from its {@code String}
      * representation.
      * <p>

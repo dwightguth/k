@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.kframework.kil.NonTerminal.SortDecl;
 import org.kframework.kil.loader.Context;
 
 import com.google.common.collect.ImmutableList;
@@ -104,6 +105,46 @@ public class Sort implements Serializable {
         public String toString() {
             return Sort.of(this).toString();
         }
+
+        public boolean isCellSort() {
+            return getName().endsWith(CELL_SORT_NAME) || getName().endsWith(CELL_FRAGMENT_NAME);
+        }
+
+        public boolean isComputationSort() {
+            return equals(K) || equals(KITEM) || !isKSort();
+        }
+
+        private static Set<SortId> K_SORTS = ImmutableSet.of(K.id, BAG.id, BAG_ITEM.id, KITEM.id,
+                KLIST.id, CELL_LABEL.id, KLABEL.id);
+
+        private static Set<SortId> BASE_SORTS = ImmutableSet.of(K.id, KRESULT.id, KITEM.id,
+                KLIST.id, BAG.id, BAG_ITEM.id, KLABEL.id, CELL_LABEL.id);
+
+        public boolean isKSort() {
+            return K_SORTS.contains(this);
+        }
+
+        public boolean isBaseSort() {
+            return BASE_SORTS.contains(this);
+        }
+        public static Set<SortId> getBaseSorts() {
+            return new HashSet<SortId>(BASE_SORTS);
+        }
+
+
+
+        public boolean isBuiltinSort() {
+            /* TODO: replace with a proper table of builtins */
+            return equals(Sort.BUILTIN_BOOL.id)
+                   || equals(Sort.BUILTIN_INT.id)
+                   || equals(Sort.BUILTIN_STRING.id)
+                   || equals(Sort.BUILTIN_FLOAT.id)
+                   /* LTL builtin sorts */
+//                   || sort.equals(Sort.SHARP_LTL_FORMULA)
+                   || equals(Sort.BUILTIN_PROP.id)
+                   || equals(Sort.BUILTIN_MODEL_CHECKER_STATE.id)
+                   || equals(Sort.BUILTIN_MODEL_CHECK_RESULT.id);
+        }
     }
 
     private final SortId id;
@@ -125,12 +166,12 @@ public class Sort implements Serializable {
      * @param id
      * @return
      */
-    public static Sort of(SortId id) {
-        Sort[] params = new Sort[id.arity];
+    public static Sort of(SortDecl decl) {
+        Sort[] params = new Sort[decl.getId().arity];
         for (int i = 0; i < params.length; i++) {
-            params[i] = Sort.BUILTIN_BOT;
+            params[i] = decl.getParameters().get(i).getBound();
         }
-        return new Sort(id.name, params);
+        return new Sort(decl.getId().name, params);
     }
 
     private Sort(String name, Sort[] parameters) {
@@ -153,6 +194,11 @@ public class Sort implements Serializable {
 
     public ImmutableList<Sort> getParameters() {
         return parameters;
+    }
+
+    public SortDecl getDecl() {
+        assert id.arity == 0;
+        return new SortDecl(id);
     }
 
     public org.kframework.backend.java.kil.Sort toBackendJava(Context context) {
@@ -213,21 +259,24 @@ public class Sort implements Serializable {
         return true;
     }
 
-    private static Set<SortId> K_SORTS = ImmutableSet.of(K.id, BAG.id, BAG_ITEM.id, KITEM.id,
-            KLIST.id, CELL_LABEL.id, KLABEL.id);
-
-    private static Set<SortId> BASE_SORTS = ImmutableSet.of(K.id, KRESULT.id, KITEM.id,
-            KLIST.id, BAG.id, BAG_ITEM.id, KLABEL.id, CELL_LABEL.id);
-
     public boolean isKSort() {
-        return K_SORTS.contains(this.id);
+        return id.isKSort();
     }
 
     public boolean isBaseSort() {
-        return BASE_SORTS.contains(this.id);
+        return id.isBaseSort();
     }
-    public static Set<SortId> getBaseSorts() {
-        return new HashSet<SortId>(BASE_SORTS);
+
+    public boolean isComputationSort() {
+        return id.isComputationSort();
+    }
+
+    public boolean isBuiltinSort() {
+        return id.isBuiltinSort();
+    }
+
+    public boolean isCellSort() {
+        return id.isCellSort();
     }
 
     /**
@@ -236,24 +285,7 @@ public class Sort implements Serializable {
      * @return
      */
     public Sort getKSort() {
-        return K_SORTS.contains(this.id) ? this : K;
-    }
-
-    public boolean isComputationSort() {
-        return equals(K) || equals(KITEM) || !isKSort();
-    }
-
-    public boolean isBuiltinSort() {
-        /* TODO: replace with a proper table of builtins */
-        return equals(Sort.BUILTIN_BOOL)
-               || equals(Sort.BUILTIN_INT)
-               || equals(Sort.BUILTIN_STRING)
-               || equals(Sort.BUILTIN_FLOAT)
-               /* LTL builtin sorts */
-//               || sort.equals(Sort.SHARP_LTL_FORMULA)
-               || equals(Sort.BUILTIN_PROP)
-               || equals(Sort.BUILTIN_MODEL_CHECKER_STATE)
-               || equals(Sort.BUILTIN_MODEL_CHECK_RESULT);
+        return SortId.K_SORTS.contains(this.id) ? this : K;
     }
 
     public boolean isDataSort() {
@@ -265,10 +297,6 @@ public class Sort implements Serializable {
     public static final String CELL_SORT_NAME = "CellSort";
     public static final String CELL_FRAGMENT_NAME = "CellFragment";
     public static final String LIST_OF_BOTTOM_PREFIX = "#ListOf";
-
-    public boolean isCellSort() {
-        return id.getName().endsWith(CELL_SORT_NAME) || id.getName().endsWith(CELL_FRAGMENT_NAME);
-    }
 
     public boolean isCellFragment() {
         return id.getName().endsWith(CELL_FRAGMENT_NAME);
