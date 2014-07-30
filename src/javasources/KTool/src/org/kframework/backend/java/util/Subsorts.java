@@ -9,7 +9,6 @@ import org.kframework.backend.java.kil.Sort;
 import org.kframework.kil.loader.Context;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 /**
  * Subsort relation.
@@ -47,7 +46,7 @@ public class Subsorts implements Serializable {
         for (Sort sort1 : sorts) {
             for (Sort sort2 : sorts) {
                 subsort[sort1.ordinal()][sort2.ordinal()] = context
-                        .isSubsorted(sort1.toFrontEnd(), sort2.toFrontEnd());
+                        .isSubsorted(sort1.toFrontEnd(context), sort2.toFrontEnd(context));
             }
         }
     }
@@ -118,7 +117,7 @@ public class Subsorts implements Serializable {
     }
 
     public boolean hasCommonSubsort(Sort sort1, Sort sort2) {
-        return context.hasCommonSubsort(sort1.toFrontEnd(), sort2.toFrontEnd());
+        return context.hasCommonSubsort(sort1.toFrontEnd(context), sort2.toFrontEnd(context));
     }
 
 }

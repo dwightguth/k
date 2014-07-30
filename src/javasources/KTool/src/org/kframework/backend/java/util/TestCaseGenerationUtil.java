@@ -164,7 +164,7 @@ public class TestCaseGenerationUtil {
         Set<Variable> set = cnstrTerm.term().variableSet();
         for (Iterator<Variable> iter = set.iterator(); iter.hasNext();) {
             if (context.isSubsortedEq(org.kframework.kil.Sort.KRESULT,
-                    iter.next().sort().toFrontEnd())) {
+                    iter.next().sort().toFrontEnd(context))) {
                 iter.remove();
             }
         }

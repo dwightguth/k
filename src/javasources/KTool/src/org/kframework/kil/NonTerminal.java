@@ -7,15 +7,25 @@ import org.kframework.kil.visitors.Visitor;
 public class NonTerminal extends ProductionItem {
 
     private Sort sort;
+    private String capture;
 
     public NonTerminal(Sort sort) {
         super();
         this.sort = sort;
     }
 
+    public NonTerminal(Sort sort, String capture) {
+        this(sort);
+        this.capture = capture;
+    }
+
     public NonTerminal(NonTerminal nonTerminal) {
         super(nonTerminal);
         this.sort = nonTerminal.sort;
+    }
+
+    public String getCapture() {
+        return capture;
     }
 
     public String getName() {

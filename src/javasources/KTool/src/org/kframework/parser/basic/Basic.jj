@@ -170,9 +170,11 @@ import org.kframework.kil.Require;
 import org.kframework.kil.Restrictions;
 import org.kframework.kil.NonTerminal;
 import org.kframework.kil.Sort;
+import org.kframework.kil.Sort.SortId;
 import org.kframework.kil.StringSentence;
 import org.kframework.kil.Syntax;
 import org.kframework.kil.Terminal;
+import org.kframework.kil.TypeParameter;
 import org.kframework.kil.UserList;
 import org.kframework.kil.loader.Context;
 
@@ -482,6 +484,11 @@ void UpperId() : {}
   <UPPER_ID> | "List" | "NeList" | "Lexer" | "Token"
 }
 
+void TypeParameter() : {}
+{
+  UpperId() | "_"
+}
+
 /** Parses a string literal and returns the decoded value of that string. */
 String String() : {}
 {
@@ -493,13 +500,16 @@ String String() : {}
 }
 
 /** Parses and returns a NonTerminal but not a List, NeList, Lexer, or Token */
-NonTerminal SimpleSortID() : { String loc = startLoc(); String str; }
+NonTerminal SimpleSortID() : { String loc = startLoc(); String str; String capture = null;
+  List<TypeParameter> params = new ArrayList<TypeParameter>(); }
 {
+  ( LOOKAHEAD(2) <UPPER_ID> { capture = image(); } ":" )?
   <UPPER_ID> { str = image(); }
-  ("{"  { str = str + specialAndImage(); }
-   UpperId() { str = str + specialAndImage(); }
-   "}"  { str = str + specialAndImage(); })?
-  { return markLoc(loc, new NonTerminal(Sort.of(str))); }
+  ("{"
+   TypeParameter() { params.add(new TypeParameter(image())); }
+   ( "," TypeParameter() { params.add(new TypeParameter(image())); } )*
+   "}" )?
+  { return markLoc(loc, new NonTerminal(new SortId(str, params.size()), params, capture)); }
 }
 
 /** Parses and returns a NonTerminal */

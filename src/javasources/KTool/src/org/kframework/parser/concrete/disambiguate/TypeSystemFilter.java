@@ -5,7 +5,6 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Cast;
 import org.kframework.kil.Production;
 import org.kframework.kil.NonTerminal;
-import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.TermCons;
 import org.kframework.kil.UserList;

@@ -3,8 +3,12 @@ package org.kframework.kil;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.kframework.kil.loader.Context;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 public class Sort implements Serializable {
@@ -51,62 +55,179 @@ public class Sort implements Serializable {
     public static final Sort BUILTIN_MODEL_CHECKER_STATE = Sort.of("#ModelCheckerState");
     public static final Sort BUILTIN_MODEL_CHECK_RESULT = Sort.of("#ModelCheckResult");
 
-    private final String name;
+    public static class SortId implements Serializable {
+        private final String name;
+        private final int arity;
 
-    public static Sort of(String name) {
-        return new Sort(name);
+        public SortId(String name, int arity) {
+            this.name = name;
+            this.arity = arity;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getArity() {
+            return arity;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + arity;
+            result = prime * result + ((name == null) ? 0 : name.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SortId other = (SortId) obj;
+            if (arity != other.arity)
+                return false;
+            if (name == null) {
+                if (other.name != null)
+                    return false;
+            } else if (!name.equals(other.name))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return Sort.of(this).toString();
+        }
     }
 
-    private Sort(String name) {
-        this.name = name;
+    private final SortId id;
+
+    private final ImmutableList<Sort> parameters;
+
+    public static Sort of(String name, Sort... parameters) {
+        return new Sort(name, parameters);
+    }
+
+    public static Sort of(String name, List<Sort> parameters) {
+        return new Sort(name, parameters);
+    }
+
+    /**
+     * Gets the most unconstrained instance of this SortId. For sorts with no
+     * dependencies, this is the single sort with this id. For sorts with dependencies,
+     * an unconstrained dependency is created for each type parameter.
+     * @param id
+     * @return
+     */
+    public static Sort of(SortId id) {
+        Sort[] params = new Sort[id.arity];
+        for (int i = 0; i < params.length; i++) {
+            params[i] = Sort.BUILTIN_BOT;
+        }
+        return new Sort(id.name, params);
+    }
+
+    private Sort(String name, Sort[] parameters) {
+        this.id = new SortId(name, parameters.length);
+        this.parameters = ImmutableList.copyOf(parameters);
+    }
+
+    private Sort(String name, List<Sort> dependencies) {
+        this.id = new SortId(name, dependencies.size());
+        this.parameters = ImmutableList.copyOf(dependencies);
+    }
+
+    public SortId getId() {
+        return id;
     }
 
     public String getName() {
-        return name;
+        return id.name;
     }
 
-    public org.kframework.backend.java.kil.Sort toBackendJava() {
-        return org.kframework.backend.java.kil.Sort.of(name);
+    public ImmutableList<Sort> getParameters() {
+        return parameters;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    public org.kframework.backend.java.kil.Sort toBackendJava(Context context) {
+        org.kframework.backend.java.kil.Sort[] parameters =
+                new org.kframework.backend.java.kil.Sort[this.parameters.size()];
+        for (int i = 0; i < parameters.length; i++) {
+            parameters[i] = this.parameters.get(i).toBackendJava(context);
         }
-        if (!(obj instanceof Sort)) {
-            return false;
-        }
-        Sort other = (Sort) obj;
-        return name.equals(other.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return name.hashCode();
+        return org.kframework.backend.java.kil.Sort.of(id.name, parameters);
     }
 
     @Override
     public String toString() {
-        return name;
+        StringBuilder sb = new StringBuilder();
+        sb.append(getName());
+        if (parameters.size() > 0) {
+            sb.append("{");
+            String conn = "";
+            for (Sort tp : parameters) {
+                sb.append(conn).append(tp);
+                conn = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
-    private static Set<Sort> K_SORTS = ImmutableSet.of(K, BAG, BAG_ITEM, KITEM,
-            KLIST, CELL_LABEL, KLABEL);
 
-    private static Set<Sort> BASE_SORTS = ImmutableSet.of(K, KRESULT, KITEM,
-            KLIST, BAG, BAG_ITEM, KLABEL, CELL_LABEL);
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((parameters == null) ? 0 : parameters.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Sort other = (Sort) obj;
+        if (parameters == null) {
+            if (other.parameters != null)
+                return false;
+        } else if (!parameters.equals(other.parameters))
+            return false;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        return true;
+    }
+
+    private static Set<SortId> K_SORTS = ImmutableSet.of(K.id, BAG.id, BAG_ITEM.id, KITEM.id,
+            KLIST.id, CELL_LABEL.id, KLABEL.id);
+
+    private static Set<SortId> BASE_SORTS = ImmutableSet.of(K.id, KRESULT.id, KITEM.id,
+            KLIST.id, BAG.id, BAG_ITEM.id, KLABEL.id, CELL_LABEL.id);
 
     public boolean isKSort() {
-        return K_SORTS.contains(this);
+        return K_SORTS.contains(this.id);
     }
 
     public boolean isBaseSort() {
-        return BASE_SORTS.contains(this);
+        return BASE_SORTS.contains(this.id);
     }
-
-    public static Set<Sort> getBaseSorts() {
-        return new HashSet<Sort>(BASE_SORTS);
+    public static Set<SortId> getBaseSorts() {
+        return new HashSet<SortId>(BASE_SORTS);
     }
 
     /**
@@ -115,7 +236,7 @@ public class Sort implements Serializable {
      * @return
      */
     public Sort getKSort() {
-        return K_SORTS.contains(this) ? this : K;
+        return K_SORTS.contains(this.id) ? this : K;
     }
 
     public boolean isComputationSort() {
@@ -146,15 +267,15 @@ public class Sort implements Serializable {
     public static final String LIST_OF_BOTTOM_PREFIX = "#ListOf";
 
     public boolean isCellSort() {
-        return name.endsWith(CELL_SORT_NAME) || name.endsWith(CELL_FRAGMENT_NAME);
+        return id.getName().endsWith(CELL_SORT_NAME) || id.getName().endsWith(CELL_FRAGMENT_NAME);
     }
 
     public boolean isCellFragment() {
-        return name.endsWith(CELL_FRAGMENT_NAME);
+        return id.getName().endsWith(CELL_FRAGMENT_NAME);
     }
 
     public Sort getUserListSort(String separator) {
-        return Sort.of(LIST_OF_BOTTOM_PREFIX + name + "{\"" + separator + "\"}");
+        return Sort.of(LIST_OF_BOTTOM_PREFIX + id.getName() + "{\"" + separator + "\"}");
     }
 
     /**

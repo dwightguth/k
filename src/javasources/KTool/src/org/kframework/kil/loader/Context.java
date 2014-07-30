@@ -13,6 +13,7 @@ import org.kframework.kil.KApp;
 import org.kframework.kil.KInjectedLabel;
 import org.kframework.kil.Production;
 import org.kframework.kil.Sort;
+import org.kframework.kil.Sort.SortId;
 import org.kframework.kil.Term;
 import org.kframework.kil.UserList;
 import org.kframework.kompile.KompileOptions;
@@ -96,7 +97,7 @@ public class Context implements Serializable {
 
     public Map<Sort, Production> canonicalBracketForSort = new HashMap<>();
     private Poset<Sort> subsorts = Poset.create();
-    public java.util.Set<Sort> definedSorts = Sort.getBaseSorts();
+    public java.util.Set<SortId> definedSorts = Sort.getBaseSorts();
     private Poset<String> priorities = Poset.create();
     private Poset<String> assocLeft = Poset.create();
     private Poset<String> assocRight = Poset.create();

@@ -175,14 +175,16 @@ public class DefinitionSDF {
         // print variables, HOLEs, cast
         for (NonTerminal s : psdfv.userSorts) {
             if (!s.getSort().isBaseSort()) {
-                sdf.append("    VARID  \":" + s.getName() + "\"        -> " + StringUtil.escapeSortName(s.getName()) + "DzVar            {cons(\"" + StringUtil.escapeSortName(s.getName()) + "12Var\")}\n");
+                String suffix = "";//getSortSuffix(s);
+                sdf.append("    VARID  \":" + s.getName() + "\" " + suffix + "       -> " + StringUtil.escapeSortName(s.getName()) + "DzVar            {cons(\"" + StringUtil.escapeSortName(s.getName()) + "12Var\")}\n");
             }
         }
         // print variables, cast
         sdf.append("\n");
         for (NonTerminal s : psdfv.userSorts) {
             if (!s.getSort().isBaseSort()) {
-                sdf.append("     K CastTypeDz \"" + s.getName() + "\"    -> " + StringUtil.escapeSortName(s.getName()) + "DzVar    {cons(\"" + StringUtil.escapeSortName(s.getName()) + "1Cast\")}\n");
+                String suffix = "";//getSortSuffix(s);
+                sdf.append("     K CastTypeDz \"" + s.getName() + "\" " + suffix + "   -> " + StringUtil.escapeSortName(s.getName()) + "DzVar    {cons(\"" + StringUtil.escapeSortName(s.getName()) + "1Cast\")}\n");
             }
         }
         for (NonTerminal s : psdfv.userSorts) {
@@ -299,5 +301,18 @@ public class DefinitionSDF {
         }
 
         return sdf;
+    }
+
+    private static String getSortSuffix(NonTerminal s) {
+        int arity = s.getSort().getId().getArity();
+        String conn = "\"{\" ", suffix = "";
+        for (int i = 0; i < arity; i++) {
+            suffix += conn + "K ";
+            conn = "\",\" ";
+        }
+        if (!suffix.isEmpty()) {
+            suffix += "\"}\"";
+        }
+        return suffix;
     }
 }

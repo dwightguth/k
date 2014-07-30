@@ -17,7 +17,7 @@ module MINT
   syntax MInt{I} ::= mi(I:Int, Int)    [function, hook(#MINT:constructor)]
 
   /* Function returning the bit width of this machine integer. */
-  syntax Int ::= bitwidthMInt(MInt{_})   [function, hook(#MINT:bitwidth)]
+  syntax I:Int ::= bitwidthMInt(MInt{I})   [function, hook(#MINT:bitwidth)]
 
   /*
    * Functions returning the signed and unsigned interpretations of this
@@ -68,9 +68,9 @@ module MINT
    *                              the execution of the operation
    */
   syntax MInt{_} ::= miMInt(List)          [function]
-  rule miMInt(ListItem(MI:MInt{_}) ListItem(_:Bool)) => MI
+  rule miMInt(ListItem(MI:MInt) ListItem(_:Bool)) => MI
   syntax Bool ::= overflowMInt(List)    [function]
-  rule overflowMInt(ListItem(_:MInt{_}) ListItem(B:Bool)) => B
+  rule overflowMInt(ListItem(_:MInt) ListItem(B:Bool)) => B
 
   /*
    * Arithmetic and comparison operations

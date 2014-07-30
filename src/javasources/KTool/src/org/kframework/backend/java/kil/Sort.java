@@ -7,6 +7,10 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
+import org.kframework.kil.Sort.SortId;
+import org.kframework.kil.loader.Context;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -50,7 +54,7 @@ public final class Sort implements MaximalSharing, Serializable {
     /**
      * {@code String} representation of this {@code Sort}.
      */
-    private final String name;
+    private final SortId id;
 
     /**
      * Each sort is tagged with an unique ordinal, which is determined by the
@@ -60,6 +64,8 @@ public final class Sort implements MaximalSharing, Serializable {
      * de-serialization should have no effect on it.
      */
     private final int ordinal;
+
+    private final ImmutableList<Sort> parameters;
 
     /**
      * Gets the corresponding {@code Sort} from its {@code String}
@@ -73,30 +79,31 @@ public final class Sort implements MaximalSharing, Serializable {
      *            the name of the sort
      * @return the sort
      */
-    public static Sort of(String name) {
+    public static Sort of(String name, Sort... parameters) {
         Sort sort = cache.get(name);
         if (sort == null) {
-            sort = new Sort(name, cache.size());
+            sort = new Sort(name, cache.size(), parameters);
             cache.put(name, sort);
         }
         return sort;
     }
 
-    public static Set<Sort> of(Collection<org.kframework.kil.Sort> sorts) {
+    public static Set<Sort> of(Collection<org.kframework.kil.Sort> sorts, Context context) {
         ImmutableSet.Builder<Sort> builder = ImmutableSet.builder();
         for (org.kframework.kil.Sort name : sorts) {
-            builder.add(Sort.of(name.getName()));
+            builder.add(name.toBackendJava(context));
         }
         return builder.build();
     }
 
-    private Sort(String name, int ordinal) {
-        this.name = name;
+    private Sort(String name, int ordinal, Sort... parameters) {
+        this.id = new SortId(name, parameters.length);
         this.ordinal = ordinal;
+        this.parameters = ImmutableList.copyOf(parameters);
     }
 
     public String name() {
-        return name;
+        return id.getName();
     }
 
     public int ordinal() {
@@ -104,12 +111,17 @@ public final class Sort implements MaximalSharing, Serializable {
     }
 
     public Sort getUserListSort(String separator) {
-        return Sort.of(org.kframework.kil.Sort.LIST_OF_BOTTOM_PREFIX + name
+        return Sort.of(org.kframework.kil.Sort.LIST_OF_BOTTOM_PREFIX + id.getName()
                 + "{\"" + separator + "\"}");
     }
 
-    public org.kframework.kil.Sort toFrontEnd() {
-        return org.kframework.kil.Sort.of(name);
+    public org.kframework.kil.Sort toFrontEnd(Context context) {
+        org.kframework.kil.Sort[] parameters =
+                new org.kframework.kil.Sort[this.parameters.size()];
+        for (int i = 0; i < parameters.length; i++) {
+            parameters[i] = this.parameters.get(i).toFrontEnd(context);
+        }
+        return org.kframework.kil.Sort.of(id.getName(), parameters);
     }
 
     @Override
@@ -124,7 +136,7 @@ public final class Sort implements MaximalSharing, Serializable {
 
     @Override
     public String toString() {
-        return name;
+        return id.getName();
     }
 
     /**
@@ -132,14 +144,14 @@ public final class Sort implements MaximalSharing, Serializable {
      * there is a cached instance.
      */
     Object readResolve() throws ObjectStreamException {
-        Sort sort = cache.get(name);
+        Sort sort = cache.get(id.getName());
         if (sort == null) {
             /* do not use Sort#of to cache this sort; we need to
              * preserve the original ordinal */
             sort = this;
-            cache.put(name, sort);
+            cache.put(id.getName(), sort);
         } else {
-            assert this.ordinal == sort.ordinal : "ordinal of sort " + name
+            assert this.ordinal == sort.ordinal : "ordinal of sort " + id.getName()
                     + " changes after deserialization.";
         }
         return sort;

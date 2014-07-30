@@ -13,6 +13,7 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Ambiguity;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.Sort;
+import org.kframework.kil.Sort.SortId;
 import org.kframework.kil.Term;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
@@ -81,10 +82,10 @@ public class VariableTypeInferenceFilter extends ParseForestTransformer {
                 VarHashMap solution = new VarHashMap();
                 for (Map.Entry<String, Set<String>> entry : variant.entrySet()) {
                     Set<String> mins = new HashSet<String>();
-                    for (Sort sort : context.definedSorts) { // for every declared sort
+                    for (SortId sort : context.definedSorts) { // for every declared sort
                         boolean min = true;
                         for (String var : entry.getValue()) {
-                            if (!context.isSubsortedEq(Sort.of(var), sort)) {
+                            if (!context.isSubsortedEq(Sort.of(var), Sort.of(sort))) {
                                 min = false;
                                 break;
                             }
