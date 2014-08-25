@@ -1,7 +1,9 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
+require "builtins/mint.k"
 
 module KERNELC-SEMANTICS
   imports KERNELC-SYNTAX
+  imports MINT
 
   /*
    * Macros
@@ -24,7 +26,7 @@ module KERNELC-SEMANTICS
   syntax EvaluatedExpressions ::= List{EvaluatedExpression, ","}
 
   syntax TypedValue ::= "tv" "(" Type "," Value ")"
-  syntax Value ::= Int
+  syntax Value ::= MInt
                  | Float
                  | Pointer
                  | "undef"
@@ -135,7 +137,7 @@ module KERNELC-SEMANTICS
   rule false ? _:Expression : E:Expression => E   [structural]
 
   syntax KItem ::= "expression2bool" "(" Expression ")"           [strict]
-  rule expression2bool(tv(int, I:Int)) => I =/=K 0                [structural]
+  rule expression2bool(tv(int, I:MInt)) => I =/=K mi(32, 0)     [structural]
   rule expression2bool(tv(T:Type *, P:Pointer)) => P =/=K null    [structural]
 
 
@@ -232,44 +234,44 @@ module KERNELC-SEMANTICS
   /*
    * Boolean and arithmetic operations
    */
-  rule I:Int => tv(int, I)                    [structural]
+  rule I:Int => tv(int, mi(32, I))                    [structural]
   // TODO: node unary -Int?
-  rule -tv(int, I:Int) => tv(int, 0 -Int I)   [structural]
-  rule ~tv(int, I:Int) => tv(int, ~Int I)     [structural]
+  rule -tv(int, I:MInt) => tv(int, subMInt(mi(32, 0), I))   [structural]
+  rule ~tv(int, I:MInt) => tv(int, negMInt(I))      [structural]
   rule
-    tv(int, I1:Int) + tv(int, I2:Int) => tv(int, I1 +Int I2)
+    tv(int, I1:MInt) + tv(int, I2:MInt) => tv(int, addMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) - tv(int, I2:Int) => tv(int, I1 -Int I2)
+    tv(int, I1:MInt) - tv(int, I2:MInt) => tv(int, subMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) * tv(int, I2:Int) => tv(int, I1 *Int I2)
+    tv(int, I1:MInt) * tv(int, I2:MInt) => tv(int, mulMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) / tv(int, I2:Int) => tv(int, I1 /Int I2)
+    tv(int, I1:MInt) / tv(int, I2:MInt) => tv(int, miMInt(sdivMInt(I1, I2)))
     requires I2 =/=K 0
     [structural]
   rule
-    tv(int, I1:Int) % tv(int, I2:Int) => tv(int, I1 %Int I2)
+    tv(int, I1:MInt) % tv(int, I2:MInt) => tv(int, miMInt(sremMInt(I1, I2)))
     requires I2 =/=K 0
     [structural]
   rule
-    tv(int, I1:Int) << tv(int, I2:Int) => tv(int, I1 <<Int I2)
+    tv(int, I1:MInt) << tv(int, I2:MInt) => tv(int, shlMInt(I1, svalueMInt(I2)))
     [structural]
   rule
-    tv(int, I1:Int) >> tv(int, I2:Int) => tv(int, I1 >>Int I2)
+    tv(int, I1:MInt) >> tv(int, I2:MInt) => tv(int, ashrMInt(I1, svalueMInt(I2)))
     [structural]
   rule
-    tv(int, I1:Int) >= tv(int, I2:Int) => bool2int(I1 >=Int I2)
+    tv(int, I1:MInt) >= tv(int, I2:MInt) => bool2int(sgeMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) >  tv(int, I2:Int) => bool2int(I1 >Int  I2)
+    tv(int, I1:MInt) >  tv(int, I2:MInt) => bool2int(sgtMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) <= tv(int, I2:Int) => bool2int(I1 <=Int I2)
+    tv(int, I1:MInt) <= tv(int, I2:MInt) => bool2int(sleMInt(I1, I2))
     [structural]
   rule
-    tv(int, I1:Int) <  tv(int, I2:Int) => bool2int(I1 <Int  I2)
+    tv(int, I1:MInt) <  tv(int, I2:MInt) => bool2int(sltMInt(I1, I2))
     [structural]
 
   rule F:Float => tv(double, F)                         [structural]
@@ -313,8 +315,8 @@ module KERNELC-SEMANTICS
     [structural]
 
   syntax KItem ::= "bool2int" "(" Bool ")"
-  rule bool2int( true) => tv(int, 1)    [structural]
-  rule bool2int(false) => tv(int, 0)    [structural]
+  rule bool2int( true) => tv(int, mi(32, 1))    [structural]
+  rule bool2int(false) => tv(int, mi(32, 0))    [structural]
 
 
   /*
@@ -354,11 +356,11 @@ module KERNELC-SEMANTICS
   /*
    * Sizeof
    */
-  rule sizeof(int) => tv(int, 1)        [structural]
-  rule sizeof(double) => tv(int, 1)     [structural]
-  rule sizeof(T:Type *) => tv(int, 1)   [structural]
+  rule sizeof(int) => tv(int, mi(32, 1))        [structural]
+  rule sizeof(double) => tv(int, mi(32, 1))     [structural]
+  rule sizeof(T:Type *) => tv(int, mi(32, 1))   [structural]
   rule
-    <k> sizeof(struct S:Id) => tv(int, size(Members)) ...</k>
+    <k> sizeof(struct S:Id) => tv(int, mi(32, size(Members))) ...</k>
     <struct>... S |-> Members:Map ...</struct>
     [structural]
 
@@ -370,16 +372,16 @@ module KERNELC-SEMANTICS
   // TODO: check why the HOLE below does not become a freezer
   rule
     <k>
-      malloc(tv(int, Size:Int)) ~> (struct S:Id *) HOLE:>Expression
+      malloc(tv(int, Size:MInt)) ~> (struct S:Id *) HOLE:>Expression
     =>
       tv(struct S *, object(!I:Int))
     ...</k>
     <heap>... .Map => object(!I) |-> initializeObject(Members) ...</heap>
     <struct>... S |-> Members:Map ...</struct>
-    when Size ==K size(Members)
+    when svalueMInt(Size) ==K size(Members)
     [structural]
   syntax TypedValue ::= makeNewObject(Int)
-  rule malloc(tv(int, Size:Int)) => makeNewObject(Size)
+  rule malloc(tv(int, Size:MInt)) => makeNewObject(svalueMInt(Size))
   rule
     <k>
       (struct S:Id *) makeNewObject(Size)
@@ -402,13 +404,13 @@ module KERNELC-SEMANTICS
     <k>
       scanf(_:String, tv(int *, P:Pointer))
     =>
-      tv(int *, P) = tv(int, I); ~> tv(void, undef)
+      tv(int *, P) = tv(int, mi(32, I)); ~> tv(void, undef)
     ...</k>
     <in> ListItem(I:Int) => .List ...</in>
     [structural]
   rule
-    <k> printf(_:String, tv(int, I:Int)) => tv(void, undef) ...</k>
-    <out>... .List => ListItem(I) </out>
+    <k> printf(_:String, tv(int, I:MInt)) => tv(void, undef) ...</k>
+    <out>... .List => ListItem(svalueMInt(I)) </out>
     [structural]
   rule printf(_:String) => tv(void, undef)   [structural]
 

@@ -20,7 +20,7 @@ rule [loop-inv]:
   ...</env>
   <heap>...
     object(LX) |-> tv (struct listNode *, LP:Pointer => null)
-    object(LS) |-> tv (int, S:Int => S +Int sum(A))
+    object(LS) |-> tv (int, S:MInt{bitwidth(32)} => addMInt(S, sum(A)))
     list(LP)(A:IntSeq)
   ...</heap>
 

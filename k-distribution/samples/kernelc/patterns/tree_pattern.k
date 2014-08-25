@@ -44,7 +44,7 @@ module TREE-PATTERN
   syntax Map ::= "tree" "(" Pointer ")" "(" Tree ")"    [pattern(1)]
   rule tree(object(P:Int))(node(I:Int, TL:Tree, TR:Tree))
     => object(P) |-> (
-          value |-> tv(int, I)
+          value |-> tv(int, mi(32, I))
           left  |-> tv(struct treeNode *, ?PL:Pointer)
           right |-> tv(struct treeNode *, ?PR:Pointer))
        tree(?PL)(TL)
@@ -61,8 +61,8 @@ module TREE-PATTERN
   syntax Map ::= "htree" "(" Pointer ")" "(" Tree ")"   [pattern(1)]
   rule htree(object(P:Int))(node(I:Int, TL:Tree, TR:Tree))
     => object(P) |-> (
-          value  |-> tv(int, I)
-          height |-> tv(int, tree_height(node(I:Int, TL:Tree, TR:Tree)))
+          value  |-> tv(int, mi(32, I))
+          height |-> tv(int, mi(32, tree_height(node(I:Int, TL:Tree, TR:Tree))))
           left   |-> tv(struct node *, ?PL:Pointer)
           right  |-> tv(struct node *, ?PR:Pointer))
        htree(?PL)(TL)

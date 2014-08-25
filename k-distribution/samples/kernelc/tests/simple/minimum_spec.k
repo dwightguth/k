@@ -7,9 +7,8 @@ module MINIMUM-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    minimum(tv(int, X:Int), tv(int, Y:Int))
+    minimum(tv(int, X:MInt{bitwidth(32)}), tv(int, Y:MInt{bitwidth(32)}))
   =>
-    tv(int, minInt(X, Y))
-  ...</k>
-
+    tv(int, sMinMInt(X, Y))
+  ...</k> 
 endmodule

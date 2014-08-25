@@ -7,9 +7,9 @@ module MULTIPLICATION-BY-ADDITION-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    multiplication_by_addition(tv(int, X:Int), tv(int, Y:Int))
+    multiplication_by_addition(tv(int, X:MInt{bitwidth(32)}), tv(int, Y:MInt{bitwidth(32)}))
   =>
-    tv(int, X *Int Y)
+    tv(int, mulMInt(X, Y))
   ...</k>
 
 endmodule

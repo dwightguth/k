@@ -8,7 +8,7 @@ rule
   <struct>... STRUCT:Map ...</struct>
   <fun>... FUN:Map ...</fun>
   <k>
-    add(tv(int, V:Int), tv(struct listNode *, LP:Pointer))
+    add(tv(int, V:MInt{bitwidth(32)}), tv(struct listNode *, LP:Pointer))
   =>
     tv(struct listNode *, ?LP:Pointer)
   ...</k>

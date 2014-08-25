@@ -7,9 +7,9 @@ module COMM-ASSOC-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    comm_assoc(tv(int, X:Int), tv(int, Y:Int), tv(int, Z:Int))
+    comm_assoc(tv(int, X:MInt{bitwidth(32)}), tv(int, Y:MInt{bitwidth(32)}), tv(int, Z:MInt{bitwidth(32)}))
   =>
-    tv(int, 1)
+    tv(int, mi(32, 1))
   ...</k>
 
 endmodule

@@ -7,9 +7,9 @@ module AVERAGE-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    average(tv(int, X:Int), tv(int, Y:Int), tv(int, Z:Int))
+    average(tv(int, X:MInt{bitwidth(32)}), tv(int, Y:MInt{bitwidth(32)}), tv(int, Z:MInt{bitwidth(32)}))
   =>
-    tv(int, (X +Int Y +Int Z) /Int 3)
-  ...</k>
+    tv(int, miMInt(sdivMInt(addMInt(addMInt(X, Y), Z), mi(32, 3))))
+  ...</k> 
 
 endmodule

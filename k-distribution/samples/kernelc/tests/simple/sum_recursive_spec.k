@@ -7,10 +7,10 @@ module SUM-RECURSIVE-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    sum_recursive(tv(int, N:Int))
+    sum_recursive(tv(int, N:MInt{bitwidth(32)}))
   =>
-    tv(int, (N +Int 1) *Int N /Int 2)
+    tv(int, udivMInt(mulMInt(N, addMInt(N, mi(32, 1))), mi(32, 2)))
   ...</k>
-requires N >=Int 0
+requires sgeMInt(N, mi(32, 0)) andBool sltMInt(N, mi(32, 65536))
 
 endmodule

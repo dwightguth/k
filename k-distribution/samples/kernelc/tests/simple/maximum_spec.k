@@ -7,9 +7,9 @@ module MAXIMUM-SPEC
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    maximum(tv(int, X:Int), tv(int, Y:Int))
+    maximum(tv(int, X:MInt{bitwidth(32)}), tv(int, Y:MInt{bitwidth(32)}))
   =>
-    tv(int, maxInt(X, Y))
+    tv(int, sMaxMInt(X, Y))
   ...</k>
 
 endmodule

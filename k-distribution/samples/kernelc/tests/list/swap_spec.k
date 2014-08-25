@@ -13,7 +13,7 @@ rule
     tv(struct listNode *, ?LP:Pointer)
   ...</k>
   <heap>...
-    lseg(LP, null)([V1:Int] @ [V2:Int] @ L:IntSeq)
+    lseg(LP, null)([V1:MInt] @ [V2:MInt] @ L:IntSeq)
   =>
     lseg(?LP, null)([V2] @ [V1] @ L)
   ...</heap>

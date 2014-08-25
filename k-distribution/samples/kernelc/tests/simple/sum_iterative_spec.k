@@ -18,18 +18,18 @@ rule
     s |-> tv(int *, object(P2:Int))
   ...</env>
   <heap>...
-    object(P1) |-> tv(int, N:Int => 0)
-    object(P2) |-> tv(int, S:Int => S +Int ((N +Int 1) *Int N /Int 2))
+    object(P1) |-> tv(int, N:MInt{bitwidth(32)} => mi(32, 0))
+    object(P2) |-> tv(int, S:MInt{bitwidth(32)} => addMInt(S, udivMInt(mulMInt(N, addMInt(N, mi(32, 1))), mi(32, 2))))
   ...</heap>
-requires N >=Int 0
+requires sgeMInt(N, mi(32, 0)) andBool sltMInt(N, mi(32, 65536))
 
 rule
   <fun>... FUN:Map ...</fun>
   <k>
-    sum_iterative(tv(int, N:Int))
+    sum_iterative(tv(int, N:MInt{bitwidth(32)}))
   =>
-    tv(int, (N +Int 1) *Int N /Int 2)
-  ...</k>
-requires N >=Int 0
+    tv(int, udivMInt(mulMInt(N, addMInt(N, mi(32, 1))), mi(32, 2)))
+  ...</k> 
+requires sgeMInt(N, mi(32, 0)) andBool sltMInt(N, mi(32, 65536))
 
 endmodule

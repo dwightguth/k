@@ -14,7 +14,7 @@ rule
   ...</k>
   <heap>...
     LP |-> (
-      val  |-> tv(int, _:Int)
+      val  |-> tv(int, _:MInt)
       next |-> tv(struct listNode *, Tail)
     )
     list(Tail)(L:IntSeq)
