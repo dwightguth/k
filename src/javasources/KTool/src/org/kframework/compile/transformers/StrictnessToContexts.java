@@ -112,27 +112,28 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
             }
 
             for (int i = 0; i < strictnessPositions.size(); i++) {
-                TermCons termCons = (TermCons) MetaK.getTerm(prod, context);
+                KApp kapp = (KApp) MetaK.getTerm(prod, context);
+                KList klist = (KList) kapp.getChild();
                 if (context.kompileOptions.experimental.legacyKast) {
                     for (int j = 0; j < prod.getArity(); ++j) {
-                        termCons.getContents().get(j).setSort(Sort.KITEM);
+                        klist.getContents().get(j).setSort(Sort.KITEM);
                     }
                 }
 
                 // insert HOLE instead of the term
-                termCons.getContents().set(-1 + strictnessPositions.get(i),
+                klist.getContents().set(-1 + strictnessPositions.get(i),
                         Hole.KITEM_HOLE);
 
                 // is seqstrict the elements before the argument should be KResult
                 if (isSeq) {
                     for (int j = 0; j < i; ++j) {
-                        Term arg = termCons.getContents().get(-1 + strictnessPositions.get(j));
+                        Term arg = klist.getContents().get(-1 + strictnessPositions.get(j));
                         arg.setSort(Sort.KRESULT);
                     }
                 }
 
                 org.kframework.kil.Context ctx = new org.kframework.kil.Context();
-                ctx.setBody(termCons);
+                ctx.setBody(kapp);
                 ctx.copyAttributesFrom(prod);
                 ctx.setLocation(prod.getLocation());
                 ctx.setSource(prod.getSource());
