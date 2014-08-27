@@ -257,18 +257,19 @@ public class MetaK {
                            StringBuiltin.kAppOf(prod.getSort().getName()),
                            Variable.getFreshVar(Sort.STRING));
         }
-        TermCons t = new TermCons(prod.getSort(), prod);
         if (prod.isListDecl()) {
-            t.getContents().add(Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()));
-            t.getContents().add(Variable.getFreshVar(prod.getSort()));
+            KApp t = KApp.of(prod.getKLabel(),
+                    Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()),
+                    Variable.getFreshVar(prod.getSort()));
             return t;
         }
+        List<Term> terms = new ArrayList<>();
         for (ProductionItem item : prod.getItems()) {
             if (item instanceof NonTerminal) {
-                t.getContents().add(Variable.getFreshVar(((NonTerminal) item).getSort()));
+                terms.add(Variable.getFreshVar(((NonTerminal) item).getSort()));
             }
         }
-        return t;
+        return KApp.of(prod.getKLabel(), terms.toArray(new Term[terms.size()]));
     }
 
     public static boolean isAnonVar(Variable node) {

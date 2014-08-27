@@ -7,6 +7,7 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KLabelConstant;
+import org.kframework.kil.KList;
 import org.kframework.kil.Module;
 import org.kframework.kil.ModuleItem;
 import org.kframework.kil.Production;
@@ -14,7 +15,6 @@ import org.kframework.kil.Rule;
 import org.kframework.kil.Sort;
 import org.kframework.kil.StringBuiltin;
 import org.kframework.kil.Term;
-import org.kframework.kil.TermCons;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
@@ -125,10 +125,10 @@ public class AddK2SMTLib  extends CopyOnWriteTransformer {
             if (prod.isConstant()) {
                 rhs = StringBuiltin.kAppOf(smtLbl);
             } else {
-                TermCons termCons = ((TermCons) term);
+                KApp kapp = (KApp) term;
                 rhs = StringBuiltin.kAppOf("(" + smtLbl);
-                for (int idx = 0; idx < ((TermCons) term).arity(); ++idx) {
-                    Variable var = (Variable) termCons.getSubterm(idx);
+                for (int idx = 0; idx < prod.getArity(); ++idx) {
+                    Variable var = (Variable) ((KList)kapp.getChild()).getContents().get(idx);
                     rhs = appendString(rhs, StringBuiltin.SPACE, context);
                     rhs = appendString(rhs, KApp.of(K_TO_SMTLIB, var), context);
                 }
