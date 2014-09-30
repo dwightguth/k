@@ -806,6 +806,9 @@ public class UnparserFilter extends NonCachingVisitor {
         }
         stack.push(astNode);
         if (annotateLocation) {
+            if (astNode.getLocation() == null) {
+                astNode.setLocation(new Location(0, 0, 0, 0));
+            }
             astNode.getLocation().lineStart = indenter.getLineNo();
             astNode.getLocation().columnStart = indenter.getColNo();
         }
