@@ -46,7 +46,7 @@
         <executions>
           <execution>
             <id>exec-ktest</id>
-            <phase>integration-test</phase>
+            <phase>verify</phase>
             <configuration>
               <target>
                 <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest${native.script.extension}">
@@ -59,46 +59,11 @@
                 </exec>
               </target>
               <skip>${skipKTest}</skip>
-              <failOnError>false</failOnError>
+              <failOnError>true</failOnError>
             </configuration>
             <goals>
               <goal>run</goal>
             </goals>
-          </execution>
-          <execution>
-            <id>cleanup-ktest</id>
-            <phase>post-integration-test</phase>
-            <configuration>
-              <target>
-                <move file="${ktestDir}/junit-reports" tofile="target/ktest-reports" failonerror="false" />
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.17</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>verify-ktest</id>
-            <goals>
-              <goal>verify</goal>
-            </goals>
-            <configuration>
-              <skipITs>${skipKTest}</skipITs>
-              <reportsDirectory>${project.build.directory}/ktest-reports</reportsDirectory>
-              <summaryFile>${project.build.directory}/ktest-reports/summary.xml</summaryFile>
-            </configuration>
           </execution>
         </executions>
       </plugin>
