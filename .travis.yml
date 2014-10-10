@@ -6,7 +6,8 @@ script: mvn verify -Dbase=HEAD^1 $FLAGS
 jdk:
   - oraclejdk8
 env:
-  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tutorial"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tutorial/1_k"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tutorial/2_languages"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tests/newparser -Dconfig=config.xml"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tests/regression -Dconfig=config.xml"
