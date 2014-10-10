@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2013-2014 K Team. All Rights Reserved. -->
+
+<tests>
+  <test
+      definition="agent.k"
+      programs="../programs"
+      results="../../../tests/examples/agent"
+      extension="agent"
+      >
+    <all-programs>
+      <krun-option name="--output" value="none" />
+      <krun-option name="--color" value="off" />
+    </all-programs>
+    <program name="p22.agent">
+      <krun-option name="--output" value="pretty" />
+      <krun-option name="--search" />
+      <krun-option name="--pattern" value="&lt;out&gt; L:List &lt;/out&gt;" />
+    </program>
+    <program name="p23.agent">
+      <krun-option name="--output" value="pretty" />
+      <krun-option name="--search" />
+      <krun-option name="--pattern" value="&lt;out&gt; L:List &lt;/out&gt;" />
+    </program>
+  </test>
+</tests>
