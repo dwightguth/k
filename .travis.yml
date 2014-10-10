@@ -1,0 +1,9 @@
+language: java
+install:
+  - mvn install -DskipTests -DskipKTest
+  - sudo apt-get install texlive-latex-base
+script: mvn verify -Dbase=HEAD^1
+jdk:
+  - oraclejdk8
+env:
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin
