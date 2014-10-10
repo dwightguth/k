@@ -49,7 +49,7 @@
             <phase>verify</phase>
             <configuration>
               <target>
-                <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest${native.script.extension}">
+                <exec dir="${ktestDir}" executable="${project.build.directory}/release/k/bin/ktest${native.script.extension}" failonerror="true">
                   <arg value="${config}" />
                   <arg value="-v" />
                   <arg value="--report" />
