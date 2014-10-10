@@ -8,6 +8,11 @@ jdk:
 env:
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tutorial/1_k"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tutorial/2_languages"
-  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/quine"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/java_rewrite_engine"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/bf"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/agent"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/wcet"
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=samples/kernelc"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tests/newparser -Dconfig=config.xml"
   - PATH=$PATH:$TRAVIS_BUILD_DIR/k/k-distribution/target/release/k/bin FLAGS="-DktestDir=tests/regression -Dconfig=config.xml"
