@@ -54,6 +54,8 @@
                   <arg value="-v" />
                   <arg value="--report" />
                   <arg value="--debug" />
+                  <arg value="--threads" />
+                  <arg value="2" />
                 </exec>
               </target>
               <skip>${skipKTest}</skip>
