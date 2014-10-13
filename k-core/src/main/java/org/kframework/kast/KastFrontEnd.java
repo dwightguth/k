@@ -1,7 +1,6 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kast;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +16,6 @@ import org.kframework.main.FrontEnd;
 import org.kframework.parser.ProgramLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KExceptionManager;
-import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.JarInfo;
 import org.kframework.utils.inject.JCommanderModule;
 import org.kframework.utils.inject.JCommanderModule.ExperimentalUsage;
@@ -87,16 +85,7 @@ public class KastFrontEnd extends FrontEnd {
                 kast.append("\n");
             }
 
-            try {
-                Writer outWriter = new OutputStreamWriter(System.out);
-                try {
-                    FileUtil.toWriter(kast, outWriter);
-                } finally {
-                    outWriter.flush();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            System.out.print(kast.toString());
 
             sw.printIntermediate("Maudify Program");
             sw.printTotal("Total");
