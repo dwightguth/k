@@ -12,7 +12,6 @@ import org.kframework.kil.Bracket;
 import org.kframework.kil.Cast;
 import org.kframework.kil.Cell;
 import org.kframework.kil.Configuration;
-import org.kframework.kil.Definition;
 import org.kframework.kil.FreezerHole;
 import org.kframework.kil.Hole;
 import org.kframework.kil.KApp;
@@ -98,8 +97,6 @@ public class JavaClassesFactory {
             return new Hole(element);
         if (Constants.FREEZERHOLE.equals(element.getNodeName()))
             return new FreezerHole(element);
-        if (Constants.DEFINITION.equals(element.getNodeName()))
-            return new Definition(element);
         if (Constants.AMB.equals(element.getNodeName()))
             return new Ambiguity(element);
         if (Constants.TAG.equals(element.getNodeName()))

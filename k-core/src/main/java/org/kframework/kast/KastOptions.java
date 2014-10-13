@@ -1,7 +1,6 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.kast;
 
-import java.io.File;
 import java.util.List;
 
 import com.beust.jcommander.IStringConverter;
@@ -45,11 +44,14 @@ public final class KastOptions {
         if (parameters == null || parameters.size() != 1) {
             GlobalSettings.kem.registerCriticalError("You have to provide a file in order to kast a program.");
         }
-        File f = new File(parameters.get(0));
-        if (!f.exists() || f.isDirectory()) {
-            GlobalSettings.kem.registerCriticalError("Could not find file: " + f.getAbsolutePath());
-        }
-        return FileUtil.getFileContent(parameters.get(0));
+        return files.loadFromWorkingDirectory(parameters.get(0));
+    }
+
+    private FileUtil files;
+
+    @Inject
+    public void setFiles(FileUtil files) {
+        this.files = files;
     }
 
     /**
