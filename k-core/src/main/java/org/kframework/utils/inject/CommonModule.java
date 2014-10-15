@@ -21,7 +21,7 @@ public class CommonModule extends AbstractModule {
         requestStaticInjection(BinaryLoader.class);
         requestStaticInjection(Tool.class);
 
-        bind(File.class).annotatedWith(WorkingDir.class).toInstance(new File("."));
+        bind(File.class).annotatedWith(WorkingDir.class).toInstance(new File(System.getProperty("user.dir")));
 
         //TODO(dwightguth): when we upgrade to Guice 4.0, add
         //binder().requireAtInjectOnConstructors()
