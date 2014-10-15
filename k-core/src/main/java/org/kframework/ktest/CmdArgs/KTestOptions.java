@@ -137,6 +137,10 @@ public class KTestOptions {
             validateValueWith=PositiveInteger.class)
     private int threads = Runtime.getRuntime().availableProcessors();
 
+    @Parameter(names="--fork", description="Whether or not to fork a new process for each kompile/krun execution.",
+            arity=1, converter=OnOffConverter.class)
+    private boolean fork = true;
+
     /**
      * Generate a junit-like report.
      */
@@ -327,6 +331,10 @@ public class KTestOptions {
 
     public int getThreads() {
         return threads;
+    }
+
+    public boolean getFork() {
+        return fork;
     }
 
     public void setDebug(boolean debug) {
