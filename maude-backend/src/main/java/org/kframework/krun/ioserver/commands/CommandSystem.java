@@ -4,9 +4,10 @@ package org.kframework.krun.ioserver.commands;
 import org.kframework.krun.RunProcess;
 import org.kframework.krun.RunProcess.ProcessOutput;
 import org.kframework.krun.api.io.FileSystem;
+
 import java.net.Socket;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class CommandSystem extends Command {
 
