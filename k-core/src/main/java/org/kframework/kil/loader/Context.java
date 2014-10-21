@@ -549,6 +549,8 @@ public class Context implements Serializable {
         return conses;
     }
 
+    private int[] number = {0};
+
     public void computeConses() {
         assert conses == null : "can only compute conses once";
         conses = HashBiMap.create();
@@ -565,7 +567,7 @@ public class Context implements Serializable {
                 if (p.isListDecl())
                     cons = StringUtil.escapeSort(p.getSort()) + "1" + "ListSyn";
                 else
-                    cons = StringUtil.escapeSort(p.getSort()) + "1" + StringUtil.getUniqueId() + "Syn";
+                    cons = StringUtil.escapeSort(p.getSort()) + "1" + StringUtil.getUniqueId(number) + "Syn";
                 conses.put(cons, p);
             }
         }

@@ -73,7 +73,7 @@ public interface Prover {
                 String proofFile = options.experimental.prove;
                 String content = files.loadFromWorkingDirectory(proofFile);
                 Definition parsed = loader.parseString(content,
-                        Sources.fromFile(proofFile), context);
+                        Sources.fromFile(files.resolveWorkingDirectory(proofFile)), context);
                 Module mod = parsed.getSingletonModule();
                 KRunProofResult<Set<Term>> result = prover.prove(mod, initialConfiguration);
                 sw.printIntermediate("Proof total");
