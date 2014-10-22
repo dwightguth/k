@@ -19,8 +19,6 @@ public class CommonModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        requestStaticInjection(Tool.class);
-
         bind(File.class).annotatedWith(WorkingDir.class).toInstance(new File("."));
         bind(new TypeLiteral<Map<String, String>>() {}).annotatedWith(Environment.class).toInstance(System.getenv());
 
