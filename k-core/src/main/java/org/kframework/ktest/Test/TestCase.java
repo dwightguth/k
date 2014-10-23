@@ -483,9 +483,9 @@ public class TestCase {
 
                     ret.add(new KRunProgram(this, pgmFilePath,
                             this.files.resolveWorkingDirectory(definitionFilePath), args,
-                            this.files.resolveWorkingDirectory(inputFilePath),
-                            this.files.resolveWorkingDirectory(outputFilePath),
-                            this.files.resolveWorkingDirectory(errorFilePath),
+                            inputFilePath == null ? null : this.files.resolveWorkingDirectory(inputFilePath),
+                            outputFilePath == null ? null : this.files.resolveWorkingDirectory(outputFilePath),
+                            errorFilePath == null ? null : this.files.resolveWorkingDirectory(errorFilePath),
                             getNewOutputFilePath(outputFileName), profile.isRegex()));
                 }
             } else {
