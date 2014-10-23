@@ -18,7 +18,6 @@ import org.kframework.kil.loader.AddAutoIncludedModulesVisitor;
 import org.kframework.kil.loader.CollectConfigCellsVisitor;
 import org.kframework.kil.loader.CollectModuleImportsVisitor;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
@@ -229,9 +228,7 @@ public class DefinitionLoader {
 
             sw.printIntermediate("Importing Files");
             // ------------------------------------- parse configs
-            JavaClassesFactory.startConstruction(context);
             def = (Definition) new ParseConfigsFilter(context, kem).visitNode(def);
-            JavaClassesFactory.endConstruction();
             new CollectConfigCellsVisitor(context).visitNode(def);
 
             // sort List in streaming cells
@@ -240,7 +237,6 @@ public class DefinitionLoader {
             sw.printIntermediate("Parsing Configs");
 
             // ----------------------------------- parse rules
-            JavaClassesFactory.startConstruction(context);
             Map<String, CachedSentence> cachedDef;
             // load definition if possible
             try {
@@ -266,7 +262,6 @@ public class DefinitionLoader {
                 // save definition
                 loader.saveOrDie(cache, clf.getKept());
             }
-            JavaClassesFactory.endConstruction();
 
             // really important to do disambiguation after we save the cache to disk because
             // the objects in the sentences are mutable, and we risk altering them and miss
