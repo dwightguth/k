@@ -19,7 +19,7 @@ public class AddBracketsFilter2 extends ParseForestTransformer {
     public AddBracketsFilter2(Context context, TermLoader loader) {
         super("Add more brackets", context);
         this.loader = loader;
-        org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
+        org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(context.files.resolveKompiled("."));
     }
 
     private Term reparsed = null;
