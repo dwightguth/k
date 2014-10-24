@@ -20,6 +20,7 @@ import org.kframework.kil.loader.CollectModuleImportsVisitor;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.utils.errorsystem.ParseFailedException;
+import org.kframework.parser.concrete.DefinitionLocalKParser;
 import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
 import org.kframework.parser.generator.OuterParser;
 import org.kframework.parser.generator.CacheLookupFilter;
@@ -39,6 +40,7 @@ import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
+
 import com.google.inject.Inject;
 
 public class DefinitionLoader {
@@ -153,6 +155,8 @@ public class DefinitionLoader {
         sw.printIntermediate("Checks");
 
         // ------------------------------------- generate files
+
+        DefinitionLocalKParser.init(files.resolveKompiled("."));
         ResourceExtractor.ExtractDefSDF(files.resolveTemp("def"));
         ResourceExtractor.ExtractGroundSDF(files.resolveTemp("ground"));
 
@@ -223,9 +227,6 @@ public class DefinitionLoader {
             sw.printIntermediate("Generate TBLDef");
         }
 
-        org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(files.resolveKompiled("."));
-
-        sw.printIntermediate("Importing Files");
         // ------------------------------------- parse configs
         def = (Definition) new ParseConfigsFilter(context, kem).visitNode(def);
         new CollectConfigCellsVisitor(context).visitNode(def);
