@@ -153,7 +153,7 @@ public class ConfigFileParser {
                 (LocationData) includeNode.getUserData(LocationData.LOCATION_DATA_KEY);
 
         String fileValue = includeAttrs.getNamedItem("file").getNodeValue();
-        String file = concat(files.resolveWorkingDirectory(cmdArgs.getTargetFile()).getAbsolutePath(),fileValue);
+        String file = concat(files.resolveWorkingDirectory(cmdArgs.getTargetFile()).getParentFile().getAbsolutePath(),fileValue);
 
         if (!new File(file).isFile())
             throw new InvalidConfigError(
