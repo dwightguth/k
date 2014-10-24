@@ -76,8 +76,7 @@ public class ProgramLoader {
         // ------------------------------------- import files in Stratego
         ASTNode out;
 
-        org.kframework.parser.concrete.ThreadLocalKParser.ImportTblPgm(context.files.resolveKompiled("."));
-        String parsed = org.kframework.parser.concrete.ThreadLocalKParser.ParseProgramString(content, startSymbol.toString());
+        String parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseProgramString(content, startSymbol.toString(), context.files.resolveKompiled("."));
         Document doc = XmlLoader.getXMLDoc(parsed);
 
         XmlLoader.addSource(doc.getFirstChild(), source);
@@ -115,14 +114,12 @@ public class ProgramLoader {
 
         ASTNode out;
         if (whatParser == ParserType.GROUND) {
-            org.kframework.parser.concrete.ThreadLocalKParser.ImportTblGround(context.files.resolveKompiled("."));
             out = termLoader.parseCmdString(new String(content), source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
             out = new FlattenTerms(context).visitNode(out);
         } else if (whatParser == ParserType.RULES) {
-            org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(context.files.resolveKompiled("."));
             out = termLoader.parsePattern(new String(content), source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);

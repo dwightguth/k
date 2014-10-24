@@ -13,7 +13,6 @@ import org.kframework.kast.KastFrontEnd;
 import org.kframework.kompile.KompileFrontEnd;
 import org.kframework.krun.KRunFrontEnd;
 import org.kframework.ktest.KTestFrontEnd;
-import org.kframework.parser.concrete.ThreadLocalKParser;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 import org.kframework.utils.file.FileSystemModule;
@@ -33,7 +32,6 @@ public class Main {
      * @throws IOException when loadDefinition fails
      */
     public static void main(String[] args) {
-        ThreadLocalKParser.init();
         if (args.length >= 1) {
 
             String[] args2 = Arrays.copyOfRange(args, 1, args.length);
@@ -45,7 +43,6 @@ public class Main {
     }
 
     public static void nailMain(NGContext context) {
-        ThreadLocalKParser.init();
         if (context.getArgs().length >= 1) {
 
             String[] args2 = Arrays.copyOfRange(context.getArgs(), 1, context.getArgs().length);

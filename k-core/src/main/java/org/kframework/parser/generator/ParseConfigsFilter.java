@@ -70,11 +70,11 @@ public class ParseConfigsFilter extends ParseForestTransformer {
                 String parsed = null;
                 if (ss.containsAttribute("kore")) {
                     long startTime = System.currentTimeMillis();
-                    parsed = org.kframework.parser.concrete.ThreadLocalKParser.ParseKoreString(ss.getContent());
+                    parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKoreString(ss.getContent(), context.files.resolveKompiled("."));
                     if (globalOptions.verbose)
                         System.out.println("Parsing with Kore: " + ss.getSource() + ":" + ss.getLocation() + " - " + (System.currentTimeMillis() - startTime));
                 } else
-                    parsed = org.kframework.parser.concrete.ThreadLocalKParser.ParseKConfigString(ss.getContent());
+                    parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKConfigString(ss.getContent(), context.files.resolveKompiled("."));
                 Document doc = XmlLoader.getXMLDoc(parsed);
 
                 // replace the old xml node with the newly parsed sentence
