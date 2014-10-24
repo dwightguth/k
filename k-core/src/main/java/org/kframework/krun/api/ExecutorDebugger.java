@@ -59,7 +59,7 @@ public class ExecutorDebugger implements Debugger {
     @Override
     public void start(Term initialConfiguration) throws KRunExecutionException {
         try {
-            org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
+            org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(context.files.resolveKompiled("."));
             ASTNode pattern = loader.parsePattern(
                     KRunOptions.DEFAULT_PATTERN,
                     null,
