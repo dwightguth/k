@@ -186,7 +186,7 @@ public interface Executor {
                 s.addAttribute(Attribute.ANYWHERE);
                 return s;
             }
-            org.kframework.parser.concrete.KParser
+            org.kframework.parser.concrete.ThreadLocalKParser
             .ImportTblRule(context.files.resolveKompiled("."));
             return loader.parsePattern(
                     patternToParse,

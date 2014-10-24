@@ -223,7 +223,7 @@ public class DefinitionLoader {
             sw.printIntermediate("Generate TBLDef");
         }
 
-        org.kframework.parser.concrete.KParser.ImportTblRule(files.resolveKompiled("."));
+        org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(files.resolveKompiled("."));
 
         sw.printIntermediate("Importing Files");
         // ------------------------------------- parse configs

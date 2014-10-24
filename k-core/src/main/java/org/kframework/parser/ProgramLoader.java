@@ -76,8 +76,8 @@ public class ProgramLoader {
         // ------------------------------------- import files in Stratego
         ASTNode out;
 
-        org.kframework.parser.concrete.KParser.ImportTblPgm(context.files.resolveKompiled("."));
-        String parsed = org.kframework.parser.concrete.KParser.ParseProgramString(content, startSymbol.toString());
+        org.kframework.parser.concrete.ThreadLocalKParser.ImportTblPgm(context.files.resolveKompiled("."));
+        String parsed = org.kframework.parser.concrete.ThreadLocalKParser.ParseProgramString(content, startSymbol.toString());
         Document doc = XmlLoader.getXMLDoc(parsed);
 
         XmlLoader.addSource(doc.getFirstChild(), source);
@@ -115,14 +115,14 @@ public class ProgramLoader {
 
         ASTNode out;
         if (whatParser == ParserType.GROUND) {
-            org.kframework.parser.concrete.KParser.ImportTblGround(context.files.resolveKompiled("."));
+            org.kframework.parser.concrete.ThreadLocalKParser.ImportTblGround(context.files.resolveKompiled("."));
             out = termLoader.parseCmdString(new String(content), source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
             out = new FlattenTerms(context).visitNode(out);
         } else if (whatParser == ParserType.RULES) {
-            org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
+            org.kframework.parser.concrete.ThreadLocalKParser.ImportTblRule(context.files.resolveKompiled("."));
             out = termLoader.parsePattern(new String(content), source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);
