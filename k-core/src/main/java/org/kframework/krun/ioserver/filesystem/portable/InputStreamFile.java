@@ -1,37 +1,60 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.krun.ioserver.filesystem.portable;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+
+import org.kframework.utils.errorsystem.KExceptionManager;
 
 public class InputStreamFile extends File {
 
-    protected FileInputStream is;
+    protected InputStream is;
 
-    public InputStreamFile(FileInputStream is) {
+    private final boolean isatty;
+
+    public InputStreamFile(InputStream is, boolean isatty) {
         this.is = is;
+        this.isatty = isatty;
     }
 
     public long tell() throws IOException {
-        // we can't just assume it's not possible: what if stdin points to a regular file and not a
-        // pipe?
-        try {
-            return is.getChannel().position();
-        } catch (IOException e) {
-            PortableFileSystem.processIOException(e);
-            throw e; //unreachable
+        if (isatty) {
+            throw new IOException("ESPIPE");
+        } else {
+            throw KExceptionManager.internalError("Unsupported file system behavior: attempting to tell from "
+                + "stdin redirected to a file. If you are interested in this behavior, please "
+                + "file an issue on github.");
         }
+        // technically the above code is incorrect (it should be what is below); however,
+        // we cannot guarantee in a client/server architecture that we have access to
+        // the original file descriptors of the client, so we can't actually support this
+        // behavior. Since it is a quite minor use case, I elected to log an error
+        // informing the user of the unsupported behavior rather than trying to fix it,
+        // a solution that would likely require changes to third-party C code.
+//        try {
+//            return is.getChannel().position();
+//        } catch (IOException e) {
+//            PortableFileSystem.processIOException(e);
+//            throw e; //unreachable
+//        }
     }
 
     public void seek(long pos) throws IOException {
-        //see comment on tell
-        try {
-            is.getChannel().position(pos);
-        } catch (IOException e) {
-            PortableFileSystem.processIOException(e);
-            throw e; //unreachable
+        if (isatty) {
+            throw new IOException("ESPIPE");
+        } else {
+            throw KExceptionManager.internalError("Unsupported file system behavior: attempting to seek from "
+                + "stdin redirected to a file. If you are interested in this behavior, please "
+                + "file an issue on github.");
         }
+        //see comment on tell
+//        try {
+//            is.getChannel().position(pos);
+//        } catch (IOException e) {
+//            PortableFileSystem.processIOException(e);
+//            throw e; //unreachable
+//        }
     }
 
     public void putc(byte b) throws IOException {
