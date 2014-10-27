@@ -2,35 +2,54 @@
 package org.kframework.krun.ioserver.filesystem.portable;
 
 import java.io.IOException;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+import org.kframework.utils.errorsystem.KExceptionManager;
 
 public class OutputStreamFile extends File {
 
-    protected FileOutputStream os;
+    protected OutputStream os;
 
-    public OutputStreamFile(FileOutputStream os) {
+    private final KExceptionManager kem;
+
+    public OutputStreamFile(OutputStream os, KExceptionManager kem) {
         this.os = os;
+        this.kem = kem;
     }
 
     public long tell() throws IOException {
-        // we can't just assume it's not possible: what if the stream points to a regular file and not a
-        // pipe?
-        try {
-            return os.getChannel().position();
-        } catch (IOException e) {
-            PortableFileSystem.processIOException(e);
-            throw e; //unreachable
-        }
+        kem.registerInternalWarning("Potentially unsound file system behavior: attempting to tell from "
+                + "stdout or stderr. If these were redirected to a file, you may incorrectly get an #ESPIPE "
+                + "instead of the correct result. If you are interested in the correct behavior, please "
+                + "file an issue on github.");
+        throw new IOException("ESPIPE");
+        // technically the above code is incorrect (it should be what is below); however,
+        // we cannot guarantee in a client/server architecture that we have access to
+        // the original file descriptors of the client, so we can't actually support this
+        // behavior. Since it is a quite minor use case, I elected to log a warning
+        // informing the user of the incorrect behavior rather than trying to fix it,
+        // a solution that would likely require changes to third-party C code.
+//        try {
+//            return os.getChannel().position();
+//        } catch (IOException e) {
+//            PortableFileSystem.processIOException(e);
+//            throw e; //unreachable
+//        }
     }
 
     public void seek(long pos) throws IOException {
+        kem.registerInternalWarning("Potentially unsound file system behavior: attempting to seek from "
+                + "stdout or stderr. If these were redirected to a file, you may incorrectly get an #ESPIPE "
+                + "instead of the correct result. If you are interested in the correct behavior, please "
+                + "file an issue on github.");
+        throw new IOException("ESPIPE");
         //see comment on tell
-        try {
-            os.getChannel().position(pos);
-        } catch (IOException e) {
-            PortableFileSystem.processIOException(e);
-            throw e; //unreachable
-        }
+//        try {
+//            os.getChannel().position(pos);
+//        } catch (IOException e) {
+//            PortableFileSystem.processIOException(e);
+//            throw e; //unreachable
+//        }
     }
 
     public void putc(byte b) throws IOException {

@@ -4,16 +4,17 @@ package org.kframework.krun.ioserver.filesystem.portable;
 import org.junit.Assert;
 import org.junit.Test;
 import org.kframework.krun.api.io.File;
+import org.kframework.utils.BaseTestCase;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 
-public class PortableFileSystemTest {
+public class PortableFileSystemTest extends BaseTestCase {
 
     @Test
     public void testReadFile() throws Exception {
-        PortableFileSystem fs = new PortableFileSystem();
+        PortableFileSystem fs = new PortableFileSystem(kem);
         long fd = fs.open(new java.io.File(getClass().getResource("/fs-test.txt").toURI()).getAbsolutePath(), "r");
         File f = fs.get(fd);
         byte[] file = "foo\n".getBytes(Charset.forName("ASCII"));

@@ -6,6 +6,8 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.kframework.krun.api.io.File;
 import org.kframework.krun.api.io.FileSystem;
 import org.kframework.utils.errorsystem.KExceptionManager;
+
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.EOFException;
@@ -25,13 +27,17 @@ public class PortableFileSystem implements FileSystem {
 
     private Map<FileDescriptor, File> files = new HashMap<FileDescriptor, File>();
 
-    public PortableFileSystem() {
+    private final KExceptionManager kem;
+
+    @Inject
+    public PortableFileSystem(KExceptionManager kem) {
+        this.kem = kem;
         descriptors.put(0L, FileDescriptor.in);
         descriptors.put(1L, FileDescriptor.out);
         descriptors.put(2L, FileDescriptor.err);
-        files.put(FileDescriptor.in, new InputStreamFile(new FileInputStream(FileDescriptor.in)));
-        files.put(FileDescriptor.out, new OutputStreamFile(new FileOutputStream(FileDescriptor.out)));
-        files.put(FileDescriptor.err, new OutputStreamFile(new FileOutputStream(FileDescriptor.err)));
+        files.put(FileDescriptor.in, new InputStreamFile(System.in, kem));
+        files.put(FileDescriptor.out, new OutputStreamFile(System.out, kem));
+        files.put(FileDescriptor.err, new OutputStreamFile(System.err, kem));
     }
 
     public File get(long fd) throws IOException {
@@ -53,15 +59,9 @@ public class PortableFileSystem implements FileSystem {
         try {
             FileDescriptor fileFD;
             File file;
-            if (mode.equals("w")) {
-                FileOutputStream f = new FileOutputStream(path);
-                fileFD = f.getFD();
-                file = new OutputStreamFile(f);
-            } else {
-                RandomAccessFile f = new RandomAccessFile(path, mode);
-                fileFD = f.getFD();
-                file = new RandomAccessFileFile(f);
-            }
+            RandomAccessFile f = new RandomAccessFile(path, mode);
+            fileFD = f.getFD();
+            file = new RandomAccessFileFile(f);
             long fd = fdCounter++;
             descriptors.put(fd, fileFD);
             files.put(fileFD, file);
