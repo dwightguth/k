@@ -3,12 +3,15 @@ package org.kframework.main;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiOutputStream;
 import org.kframework.kast.KastFrontEnd;
 import org.kframework.kompile.KompileFrontEnd;
 import org.kframework.krun.KRunFrontEnd;
@@ -16,6 +19,7 @@ import org.kframework.ktest.KTestFrontEnd;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 import org.kframework.utils.file.FileSystemModule;
+import org.kframework.utils.file.TTYInfo;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -23,6 +27,7 @@ import com.google.inject.Module;
 import com.google.inject.ProvisionException;
 import com.google.inject.spi.Message;
 import com.martiansoftware.nailgun.NGContext;
+import com.martiansoftware.nailgun.ThreadLocalPrintStream;
 
 public class Main {
 
@@ -43,12 +48,28 @@ public class Main {
     }
 
     public static void nailMain(NGContext context) {
+        ThreadLocalPrintStream system_out = (ThreadLocalPrintStream) System.out;
+        ThreadLocalPrintStream system_err = (ThreadLocalPrintStream) System.err;
         if (context.getArgs().length >= 1) {
 
             String[] args2 = Arrays.copyOfRange(context.getArgs(), 1, context.getArgs().length);
             Injector injector = getInjector(new File(context.getWorkingDirectory()), (Map)context.getEnv(), context.getArgs()[0], args2);
+
+            TTYInfo tty = injector.getInstance(TTYInfo.class);
+            if (tty.stdout) {
+                system_out.init(new PrintStream(AnsiConsole.wrapOutputStream(system_out.getPrintStream())));
+            } else {
+                system_out.init(new PrintStream(new AnsiOutputStream(system_out.getPrintStream())));
+            }
+            if (tty.stderr) {
+                system_err.init(new PrintStream(AnsiConsole.wrapOutputStream(system_err.getPrintStream())));
+            } else {
+                system_err.init(new PrintStream(new AnsiOutputStream(system_err.getPrintStream())));
+            }
+
             int result = runApplication(injector);
             context.exit(result);
+            return;
         }
         invalidJarArguments();
     }

@@ -5,7 +5,7 @@ if [ -z "$K_OPTS" ];
   then export K_OPTS="-Xms64m -Xmx16G -Xss32m -XX:ReservedCodeCacheSize=512m"
 fi
 if "$(dirname "$0")/../lib/checkJava"; then
-  java -Djava.awt.headless=true $K_OPTS -ea -cp "$(dirname "$0")/../lib/java/*" com.martiansoftware.nailgun.NGServer "$@"
+  java -Djava.awt.headless=true -Djansi.force=true $K_OPTS -ea -cp "$(dirname "$0")/../lib/java/*" com.martiansoftware.nailgun.NGServer "$@"
 else
   exit 1
 fi
