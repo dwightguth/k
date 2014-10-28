@@ -53,8 +53,7 @@ public class TestSuite {
             cpuTimeSpent += p.getTimeDelta();
         }
 
-        String colorCode = ColorUtil.RgbToAnsi(success ? Color.GREEN : Color.RED,
-                options.getColorSetting(), options.getTerminalColor());
+        String colorCode = new ColorUtil(options.getColorSetting(), options.getTerminalColor()).RgbToAnsi(success ? Color.GREEN : Color.RED);
         String msg = success ? "SUCCESS" : "FAIL (see details above)";
         System.out.format("%n%s%s%s%n", colorCode, msg, ColorUtil.ANSI_NORMAL);
 

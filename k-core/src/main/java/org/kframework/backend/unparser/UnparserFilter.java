@@ -6,7 +6,6 @@ import org.kframework.kil.visitors.NonCachingVisitor;
 import org.kframework.krun.ColorSetting;
 import org.kframework.utils.ColorUtil;
 
-import java.awt.Color;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -16,8 +15,7 @@ public class UnparserFilter extends NonCachingVisitor {
     private boolean firstProduction = false;
     private boolean inConfiguration = false;
     private int inTerm = 0;
-    private ColorSetting color = ColorSetting.OFF;
-    private Color terminalColor = Color.black;
+    private final ColorUtil color;
     private boolean annotateLocation;
     public static int TAB = 4;
     private java.util.List<String> variableList = new java.util.LinkedList<String>();
@@ -46,15 +44,12 @@ public class UnparserFilter extends NonCachingVisitor {
     public UnparserFilter(boolean inConfiguration, ColorSetting color, OutputModes outputMode, boolean annotateLocation, org.kframework.kil.loader.Context context) {
         super(context);
         this.inConfiguration = inConfiguration;
-        this.color = color;
         this.inTerm = 0;
         this.annotateLocation = annotateLocation;
         if (outputMode == OutputModes.NO_WRAP) {
             indenter.setWidth(-1);
         }
-        if (context.colorOptions != null) {
-            terminalColor = context.colorOptions.terminalColor();
-        }
+        this.color = new ColorUtil(color, context.colorOptions.terminalColor());
     }
 
     public String getResult() {
@@ -238,7 +233,7 @@ public class UnparserFilter extends NonCachingVisitor {
         if (declaredCell != null) {
             String declaredColor = declaredCell.getCellAttributes().get("color");
             if (declaredColor != null) {
-                colorCode = ColorUtil.RgbToAnsi(ColorUtil.colors().get(declaredColor), color, terminalColor);
+                colorCode = color.RgbToAnsi(color.colors().get(declaredColor));
                 indenter.write(colorCode);
             }
         }

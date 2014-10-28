@@ -294,8 +294,8 @@ public class Proc<T> implements Runnable {
      * print information messages.
      */
     private void handlePgmResult(ProcOutput normalOutput, ProcOutput debugOutput) {
-        String red = ColorUtil.RgbToAnsi(
-                Color.RED, options.getColorSetting(), options.getTerminalColor());
+        String red = new ColorUtil(options.getColorSetting(), options.getTerminalColor()).RgbToAnsi(
+                Color.RED);
         String logStr = toLogString(args);
         if (normalOutput.returnCode == 0) {
 

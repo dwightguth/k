@@ -11,38 +11,44 @@ import java.util.HashMap;
 
 public class ColorUtil {
 
-    private static Map<String, Color> colors;
+    private Map<String, Color> colors;
 
     /**
      * Terminal code corresponding to closest color for this one, from the list of basic 8
      * terminal codes only.
      */
-    private static Map<Color, String> ansiColorsToTerminalCodes;
+    private Map<Color, String> ansiColorsToTerminalCodes;
 
     /**
      * Terminal code corresponding to closest color for this one, from the list of 216 colors supported by
      * linux terminals.
      */
-    private static Map<Color, String> eightBitColorsToTerminalCodes;
+    private Map<Color, String> eightBitColorsToTerminalCodes;
 
     /**
      * A cache to avoid computing the closest terminal color for a given color each time it is needed.
      */
-    private static Map<Map<Color, String>, Map<Color, String>> colorToCodeConvertCache;
+    private Map<Map<Color, String>, Map<Color, String>> colorToCodeConvertCache;
 
-    public static Map<String, Color> colors() {
-        colors = initColors();
-        return Collections.unmodifiableMap(colors);
-    }
+    private final ColorSetting color;
+    private final Color terminalColor;
 
-    private static void initColors(Color terminalColor) {
+    public ColorUtil(ColorSetting color, Color terminalColor) {
+        this.color = color;
+        this.terminalColor = terminalColor;
         colors = initColors();
         ansiColorsToTerminalCodes = initAnsiColors(terminalColor);
         eightBitColorsToTerminalCodes = initEightBitColors(terminalColor);
         colorToCodeConvertCache = initColorToCodeConvertCache();
+
     }
 
-    private static HashMap<Map<Color, String>, Map<Color, String>> initColorToCodeConvertCache() {
+    public Map<String, Color> colors() {
+        colors = initColors();
+        return Collections.unmodifiableMap(colors);
+    }
+
+    private HashMap<Map<Color, String>, Map<Color, String>> initColorToCodeConvertCache() {
         HashMap<Map<Color, String>, Map<Color, String>> map = new HashMap<>();
         map.put(ansiColorsToTerminalCodes, new HashMap<Color, String>());
         map.put(eightBitColorsToTerminalCodes, new HashMap<Color, String>());
@@ -340,7 +346,7 @@ public class ColorUtil {
         return "\u001b[" + code + "m";
     }
 
-    private static Map<Color, String> initEightBitColors(Color terminalColor) {
+    private Map<Color, String> initEightBitColors(Color terminalColor) {
         Map<Integer, Integer> coordMap = new HashMap<Integer, Integer>();
         coordMap.put(0,0);
         coordMap.put(1,95);
@@ -377,9 +383,8 @@ public class ColorUtil {
         return "\u001b[38;5;" + code + "m";
     }
 
-    public static String RgbToAnsi(Color rgb, ColorSetting colorSetting, Color terminalColor) {
-        initColors(terminalColor); //init static maps if needed
-        switch(colorSetting) {
+    public String RgbToAnsi(Color rgb) {
+        switch(color) {
             case OFF:
                 return "";
             case ON:
@@ -387,11 +392,11 @@ public class ColorUtil {
             case EXTENDED:
                 return getClosestTerminalCode(rgb, eightBitColorsToTerminalCodes, terminalColor);
             default:
-                throw new UnsupportedOperationException("colorSettung: " + colorSetting);
+                throw new UnsupportedOperationException("colorSettung: " + color);
         }
     }
 
-    private static String getClosestTerminalCode(Color rgb, Map<Color, String> codesMap, Color terminalColor) {
+    private String getClosestTerminalCode(Color rgb, Map<Color, String> codesMap, Color terminalColor) {
         if (rgb == null)
             return "";
         if (colorToCodeConvertCache.get(codesMap).get(rgb) == null) {

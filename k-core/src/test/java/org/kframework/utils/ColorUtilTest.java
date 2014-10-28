@@ -12,8 +12,8 @@ public class ColorUtilTest {
 
     @Test
     public void testGetColor() {
-        assertEquals("", ColorUtil.RgbToAnsi(Color.RED, ColorSetting.OFF, Color.BLACK));
-        assertEquals("\u001b[31m", ColorUtil.RgbToAnsi(Color.RED, ColorSetting.ON, Color.BLACK));
-        assertEquals("", ColorUtil.RgbToAnsi(Color.RED, ColorSetting.OFF, Color.RED));
+        assertEquals("", new ColorUtil(ColorSetting.OFF, Color.BLACK).RgbToAnsi(Color.RED));
+        assertEquals("\u001b[31m", new ColorUtil(ColorSetting.ON, Color.BLACK).RgbToAnsi(Color.RED));
+        assertEquals("", new ColorUtil(ColorSetting.OFF, Color.RED).RgbToAnsi(Color.RED));
     }
 }
