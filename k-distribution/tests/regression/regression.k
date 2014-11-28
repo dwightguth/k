@@ -226,7 +226,9 @@ module REGRESSION
   syntax KLabel ::= "'L" | "'A"
   syntax KItem ::= "dummy"
   syntax KResult ::= "res" "(" Id ")"
-  context 'L(HOLE)
+  context 'L(HOLE,, _,, _)
+  context 'L(_,, HOLE,, _)
+  context 'L(_,, _,, HOLE)
   rule 'A(_) => res(String2Id("X"))
 
 

@@ -11,7 +11,6 @@
       results="io/test1/tests"
       posixInitScript="io/test1/prepare.sh"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--parser" value="kast --parser ground" />
@@ -24,7 +23,6 @@
       programs="io/test2/programs"
       results="io/test2/tests"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -37,7 +35,6 @@
       results="strings/tests"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--parser" value="kast --parser ground" />
@@ -50,7 +47,6 @@
       results="list/test1/tests"
       extension="issue"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -63,7 +59,6 @@
       results="list/test2/tests"
       extension="issue"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -76,7 +71,6 @@
       results="list/issue146/tests"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -89,7 +83,6 @@
       results="list/issue709/tests"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -102,7 +95,6 @@
       results="set/test1/tests"
       extension="issue"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -114,7 +106,6 @@
       results="set/test2/tests"
       extension="issue"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
@@ -126,7 +117,6 @@
       programs="visitor/test1"
       results="visitor/test1"
       extension="imp" >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -137,7 +127,6 @@
       programs="visitor/test2"
       results="visitor/test2"
       extension="test" >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -149,7 +138,6 @@
       results="cell_map/test1"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -161,7 +149,6 @@
       results="cell_map/test2"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -173,7 +160,6 @@
       results="cell_list"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -185,7 +171,6 @@
       results="rhs_map_constructor"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -196,7 +181,6 @@
       results="rhs_list_constructor"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -208,7 +192,6 @@
       results="pattern_matching"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
   </test>
 
   <test
@@ -217,7 +200,6 @@
       results="smt_model"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <kompile-option name="--warnings" value="none" />
   </test>
 
@@ -228,7 +210,6 @@
       results="data_structure_iteration/test1"
       extension="test"
       >
-    <kompile-option name="-backend" value="java" />
     <all-programs>
       <krun-option name="-smt" value="none" />
     </all-programs>
@@ -240,7 +221,6 @@
       results="data_structure_iteration/test2"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -252,7 +232,6 @@
       results="machine_integers"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -264,7 +243,6 @@
       results="bag"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
     </all-programs>
@@ -276,7 +254,6 @@
       results="multiple_subsorts"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs regex="true">
       <krun-option name="--smt" value="none" />
       <krun-option name="--pattern" value="&lt;k&gt; V:K &lt;/k&gt;" />
@@ -291,7 +268,6 @@
       results="anywhere/test1/tests"
       extension="test"
       >
-    <kompile-option name="--backend" value="java" />
     <all-programs>
       <krun-option name="--smt" value="none" />
       <krun-option name="--output" value="pretty" />
