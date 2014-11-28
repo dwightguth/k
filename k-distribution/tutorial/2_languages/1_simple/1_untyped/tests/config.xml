@@ -12,6 +12,11 @@
           <krun-option name="--pattern-matching" />
           <krun-option name="--output" value="none" />
         </all-programs>
+        <program name="threads_05.simple">
+          <krun-option name="--pattern-matching" />
+          <krun-option name="--search" />
+          <krun-option name="--bound" value="5" />
+        </program>
         <program name="exceptions_07.simple">
           <krun-option name="--pattern-matching" />
           <krun-option name="--search" />
