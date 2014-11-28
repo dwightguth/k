@@ -419,60 +419,6 @@ public class StringUtil {
         return StringUtil.unEscapeSortName(ret);
     }
 
-    /**
-     * Takes a string as input and creates a continuous token for the maude lexer.
-     * Adds a backquote character to the following characters: ( ) [ ] { } , `
-     * @param tag Input string.
-     * @return A string that would be parsed as a continuous token by maude.
-     */
-    public static String escapeMaude(String tag) {
-        // TODO [andreis]: current implementation appears wrong to me, i.e. '`(`) stays the same rather than becoming '```(```)
-        tag = tag.replaceAll("(?<!`)`", "BKQT");
-        return tag.replaceAll("(?<!`)([\\(\\)\\[\\]\\{\\},])", "`$1");
-    }
-
-    /**
-     * Removes the escaping backqotes required by the maude lexer.
-     * Removes backquote from in front of teh following characters: ( ) [ ] { } , `
-     * @param str A maude specific string representation of a token.
-     * @return String representation of the token without the backquote escaping.
-     */
-    public static String unescapeMaude(String str) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == '`') {
-                if (str.charAt(i + 1) == '`')
-                    sb.append('`');
-                else if (str.charAt(i + 1) == '(')
-                    sb.append('(');
-                else if (str.charAt(i + 1) == ')')
-                    sb.append(')');
-                else if (str.charAt(i + 1) == '[')
-                    sb.append('[');
-                else if (str.charAt(i + 1) == ']')
-                    sb.append(']');
-                else if (str.charAt(i + 1) == '{')
-                    sb.append('{');
-                else if (str.charAt(i + 1) == '}')
-                    sb.append('}');
-                else if (str.charAt(i + 1) == ',')
-                    sb.append(',');
-                else
-                    sb.append(' ');
-                i++;
-            } else {
-                if (i + 3 < str.length() && str.charAt(i) == 'B' && str.charAt(i + 1) == 'K' && str.charAt(i + 2) == 'Q' && str.charAt(i + 3) == 'T') {
-                    sb.append('`');
-                    i += 3;
-                } else {
-                    sb.append(str.charAt(i));
-                }
-            }
-        }
-
-        return sb.toString();
-    }
-
     public static String latexify(String name) {
         return name.replace("\\", "\\textbackslash ").replace("_", "\\_").replace("{", "\\{").replace("}", "\\}").replace("#", "\\#").replace("%", "\\%").replace("$", "\\$")
                 .replace("&", "\\&").replace("~", "\\mbox{\\~{}}").replace("^", "\\mbox{\\^{}}").replace("`", "\\mbox{\\`{}}");

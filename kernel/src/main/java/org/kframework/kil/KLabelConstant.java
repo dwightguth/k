@@ -9,7 +9,6 @@ import org.kframework.compile.transformers.AddPredicates;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.w3c.dom.Element;
 
@@ -87,7 +86,7 @@ public class KLabelConstant extends KLabel {
      */
     public KLabelConstant(Element element) {
         super(element);
-        label = StringUtil.unescapeMaude(element.getAttribute(Constants.VALUE_value_ATTR));
+        label = element.getAttribute(Constants.VALUE_value_ATTR);
     }
 
     @Override
