@@ -5,8 +5,6 @@
   <!-- QUINE -->
   <include file="../quine/tests/config.xml" directory="quine" />
 
-  <include file="../java_rewrite_engine/tests/config.xml" directory="java_rewrite_engine" />
-
   <!-- BF -->
   <include file="../bf/tests/config.xml" directory="bf" />
 
