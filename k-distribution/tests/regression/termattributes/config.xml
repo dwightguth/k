@@ -9,7 +9,6 @@
         results="." >
         <all-programs>
           <krun-option name="--parser" value="kast --parser rules" />
-          <krun-option name="--term" />
         </all-programs>
   </test>
 

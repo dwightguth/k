@@ -7,8 +7,8 @@
       programs="."
       results="."
       extension="issue test"
-      exclude="test22 test23 test30"
-      >
+      exclude="test22 test23 test30 test12"
+      > <!--TODO(yilongli): add test12 back when we have associative matching on KList -->
     <kompile-option name="--transition" value="bar transition hello bye" />
     <all-programs>
       <krun-option name="--smt" value="none" />
@@ -73,11 +73,6 @@
       <krun-option name="--smt" value="none" />
       <krun-option name="--parser" value="kast --parser rules" />
       <krun-option name="--pattern" value="&lt;k&gt; Result:K &lt;/k&gt;" />
-    </program>
-    <program name="test32.test">
-      <krun-option name="--smt" value="none" />
-      <krun-option name="--parser" value="kast --parser rules" />
-      <krun-option name="--term" />
     </program>
     <program name="test28.issue">
       <krun-option name="--parser" value="cat"/>
