@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.ListUtils;
 import org.kframework.backend.java.kil.Cell;
@@ -156,7 +157,6 @@ public class KAbstractRewriteMachine {
             }
 
             if (nextInstr == Instruction.CHOICE) {
-                assert !isStarNested : "nested cells with multiplicity='*' not supported";
                 isStarNested = true; // start of AC-matching
 
                 ExtendedSubstitution oldExtSubst = fExtSubst;
@@ -239,6 +239,32 @@ public class KAbstractRewriteMachine {
         }
     }
 
+    private static void iterateOverSubstitutions(
+            List<List<ExtendedSubstitution>> multiExtSubsts,
+            List<ExtendedSubstitution> result,
+            List<ExtendedSubstitution> choice,
+            int i) {
+        for (ExtendedSubstitution extSubst : multiExtSubsts.get(i)) {
+            List<ExtendedSubstitution> newChoice = ListUtils.union(choice, Collections.singletonList(extSubst));
+            if (i == multiExtSubsts.size() - 1) {
+                Map<Variable, Term> composedSubst = RewriteEngineUtils
+                        .composeSubstitution(
+                                newChoice.stream()
+                                .map(ExtendedSubstitution::substitution)
+                                .collect(Collectors.toList()));
+
+                if (composedSubst != null) {
+                    List<Cell<?>> composedWrtCells = newChoice.stream()
+                            .map(ExtendedSubstitution::writeCells)
+                            .reduce(Collections.emptyList(), ListUtils::union);
+                    result.add(new ExtendedSubstitution(composedSubst, composedWrtCells));
+                }
+            } else {
+                iterateOverSubstitutions(multiExtSubsts, result, newChoice, i + 1);
+            }
+        }
+    }
+
     /**
      * Similar to {@link RewriteEngineUtils#getMultiSubstitutions(Map, Collection)}
      * except that this method operates on {@code ExtendedSubstitution}.
@@ -249,35 +275,7 @@ public class KAbstractRewriteMachine {
         List<ExtendedSubstitution> result = Lists.newArrayList();
 
         if (!multiExtSubsts.isEmpty()) {
-            assert multiExtSubsts.size() <= 2;
-
-            if (multiExtSubsts.size() == 1) {
-                for (ExtendedSubstitution extSubst : multiExtSubsts.get(0)) {
-                    Map<Variable, Term> composedSubst = RewriteEngineUtils
-                            .composeSubstitution(fSubst.substitution(), extSubst.substitution());
-                    if (composedSubst != null) {
-                        List<Cell<?>> composedWrtCells = ListUtils.union(fSubst.writeCells(), extSubst.writeCells());
-                        result.add(new ExtendedSubstitution(composedSubst, composedWrtCells));
-                    }
-                }
-            } else {
-                for (ExtendedSubstitution subst1 : multiExtSubsts.get(0)) {
-                    for (ExtendedSubstitution subst2 : multiExtSubsts.get(1)) {
-                        Map<Variable, Term> composedSubst = RewriteEngineUtils
-                                .composeSubstitution(
-                                        fSubst.substitution(),
-                                        subst1.substitution(),
-                                        subst2.substitution());
-
-                        if (composedSubst != null) {
-                            List<Cell<?>> composedWrtCells = ListUtils.union(
-                                    fSubst.writeCells(),
-                                    ListUtils.union(subst1.writeCells(), subst2.writeCells()));
-                            result.add(new ExtendedSubstitution(composedSubst, composedWrtCells));
-                        }
-                    }
-                }
-            }
+            iterateOverSubstitutions(multiExtSubsts, result, Collections.singletonList(fSubst), 0);
         } else {
             result.add(new ExtendedSubstitution(
                     Maps.newHashMap(fSubst.substitution()),
