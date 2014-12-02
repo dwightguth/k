@@ -286,17 +286,9 @@ public class RewriteEngineUtils {
             Map<Variable, Term> subst = substs[0];
             for (int idx = 1; idx < substs.length; idx++) {
                 subst = composeSubstitution(subst, substs[idx]);
-                if (subst == null) {
-                    return null;
-                }
             }
             return subst;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Map<Variable, Term> composeSubstitution(List<Map<Variable, Term>> substs) {
-        return composeSubstitution((Map<Variable, Term>[]) substs.toArray(new Map[substs.size()]));
     }
 
 }
