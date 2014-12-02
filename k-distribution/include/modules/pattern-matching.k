@@ -1,7 +1,7 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 require "builtins/k-equal.k"
 
-module PATTERN-MATCHING 
+module PATTERN-MATCHING
   imports K-EQUAL-HOOKS
 
 // adapted from k-prelude.k
