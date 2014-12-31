@@ -1,6 +1,8 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
+
 import org.kframework.kil.visitors.Visitor;
 
 /**
@@ -9,6 +11,9 @@ import org.kframework.kil.visitors.Visitor;
 public class KItemProjection extends Term implements Interfaces.MutableParent<Term, Enum<?>> {
 
     private Term term;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(KItemProjection.class, "term");
 
     public KItemProjection(Sort kind, Term term) {
         super(kind);

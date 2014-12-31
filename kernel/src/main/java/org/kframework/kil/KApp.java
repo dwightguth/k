@@ -6,6 +6,7 @@ import org.kframework.kil.visitors.Visitor;
 import org.kframework.utils.xml.XML;
 import org.w3c.dom.Element;
 
+import java.io.ObjectStreamField;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +23,9 @@ public class KApp extends Term implements Interfaces.MutableParent<Term, KApp.Ch
      * A KList represented as a non-null instance of {@link KList}, {@link Variable} of sort KList, or {@link Ambiguity}.
      */
     private Term child;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(KApp.class, "label", "child");
 
     public static enum Children {
         LABEL, CHILD;

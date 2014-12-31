@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +17,9 @@ import org.kframework.kil.visitors.Visitor;
  */
 public class ListBuiltin extends CollectionBuiltin {
     private final List<Term> elementsRight;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(ListBuiltin.class, "elementsRight");
 
     private ListBuiltin(DataStructureSort sort, List<Term> baseTerms, List<Term> elementsLeft,
                        List<Term> elementsRight) {

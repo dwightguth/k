@@ -1,6 +1,8 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
+
 import org.kframework.kil.visitors.Visitor;
 
 /** Represents a term of sort KLabel made by injecting something else.
@@ -9,6 +11,9 @@ import org.kframework.kil.visitors.Visitor;
  */
 public class KInjectedLabel extends Term implements Interfaces.MutableParent<Term, Enum<?>> {
     protected Term term;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(KInjectedLabel.class, "term");
 
     public KInjectedLabel(Location location, Source source) {
         super(location, source, Sort.KLABEL);

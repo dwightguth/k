@@ -1,12 +1,17 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
+
 import org.kframework.kil.visitors.Visitor;
 
 /** A frozen term. Contains a {@link FreezerHole}. */
 public class Freezer extends Term implements Interfaces.MutableParent<Term, Enum<?>>{
 
     private Term term;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(Freezer.class, "term");
 
     public Freezer(Freezer f) {
         super(f);

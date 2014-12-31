@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +22,9 @@ import org.kframework.kil.visitors.Visitor;
 public class MapBuiltin extends DataStructureBuiltin {
 
     private final Map<Term, Term> elements;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(MapBuiltin.class, "elements");
 
     public MapBuiltin(DataStructureSort sort, Collection<Term> baseTerms, Map<Term, Term> elements) {
         super(sort, baseTerms);

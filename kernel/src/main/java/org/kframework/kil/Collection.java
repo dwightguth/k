@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,9 @@ import org.w3c.dom.Element;
 public abstract class Collection extends Term implements Interfaces.MutableList<Term, Enum<?>> {
 
     protected java.util.List<Term> contents;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(Collection.class, "contents");
 
     public Collection(Sort sort) {
         super(sort);

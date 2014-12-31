@@ -1,8 +1,13 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -13,6 +18,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
 import org.w3c.dom.Element;
 
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.name.Names;
 
@@ -20,10 +26,6 @@ import com.google.inject.name.Names;
  * Base class for K AST. Useful for Visitors and Transformers.
  */
 public abstract class ASTNode implements Serializable {
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
     /**
      * Used on any node for metadata also used on {@link Rule} and {@link Production} for the attribute list.
      */
@@ -324,4 +326,14 @@ public abstract class ASTNode implements Serializable {
     public abstract ASTNode shallowCopy();
 
     protected abstract <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E;
+
+    public static ObjectStreamField[] computeSerialPersistentFields(Class<? extends ASTNode> cls, String... unshared) {
+        List<ObjectStreamField> fields = new ArrayList<>();
+        Set<String> unsharedSet = Sets.newHashSet(unshared);
+        for (Field f : cls.getDeclaredFields()) {
+            if (!Modifier.isTransient(f.getModifiers()) && !Modifier.isStatic(f.getModifiers()))
+                fields.add(new ObjectStreamField(f.getName(), f.getType(), unsharedSet.contains(f.getName())));
+        }
+        return fields.toArray(new ObjectStreamField[fields.size()]);
+    }
 }

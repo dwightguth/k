@@ -3,6 +3,7 @@ package org.kframework.kil;
 
 import org.kframework.kil.loader.Context;
 
+import java.io.ObjectStreamField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -205,6 +206,10 @@ public abstract class DataStructureBuiltin extends Term implements Interfaces.Co
     }
 
     protected final DataStructureSort dataStructureSort;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(DataStructureBuiltin.class, "viewBase", "baseTerms");
+
     /**
      * The single variable allowed in this data structure if occurring in the
      * left-hand side of a rule. Set to {@code null} if this data structure can

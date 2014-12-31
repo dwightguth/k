@@ -4,6 +4,7 @@ package org.kframework.kil;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
 
+import java.io.ObjectStreamField;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -15,6 +16,9 @@ import java.util.Collections;
 public abstract class CollectionBuiltin extends DataStructureBuiltin {
 
     protected final Collection<Term> elements;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(CollectionBuiltin.class, "elements");
 
     public CollectionBuiltin(
             DataStructureSort sort,

@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
+import java.io.ObjectStreamField;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +73,9 @@ public class Cell extends Term implements Interfaces.MutableParent<Term, Enum<?>
 
     Term contents;
     Map<String, String> cellAttributes;
+
+    private static final ObjectStreamField[] serialPersistentFields
+        = computeSerialPersistentFields(Cell.class, "contents");
 
     public Cell(Location location, Source source) {
         super(location, source, Sort.BAG_ITEM);
