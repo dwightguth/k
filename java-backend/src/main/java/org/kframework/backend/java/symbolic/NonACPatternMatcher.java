@@ -19,7 +19,6 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
-import org.kframework.backend.java.util.Profiler;
 import org.kframework.backend.java.util.RewriteEngineUtils;
 import org.kframework.kil.loader.Context;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -86,15 +85,13 @@ public class NonACPatternMatcher {
          * must be variables (no function KLabels, KItem projections, or
          * data-structure lookup/update).
          */
-        Profiler.startTimer(Profiler.ALL_PATTERN_MATCHING_TIMER);
+
         substitution = Maps.newHashMapWithExpectedSize(32);
         tasks.clear();
         taskBuffer.clear();
         tasks.addFirst(Pair.of(subject, pattern));
         failed = false;
-        boolean succeed = match();
-        Profiler.stopTimer(Profiler.ALL_PATTERN_MATCHING_TIMER);
-        if (succeed) {
+        if (match()) {
             // TODO(AndreiS): this ad-hoc evaluation is converting from the KLabel/KList format
             // (used during associative matching) back to builtin representation
             if (termContext.definition().context().krunOptions != null

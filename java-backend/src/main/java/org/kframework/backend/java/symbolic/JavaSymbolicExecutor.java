@@ -14,7 +14,6 @@ import org.kframework.backend.java.kil.Rule;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Variable;
-import org.kframework.backend.java.util.Profiler;
 import org.kframework.compile.utils.RuleCompilerSteps;
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.KRunExecutionException;
@@ -24,7 +23,6 @@ import org.kframework.krun.api.SearchResult;
 import org.kframework.krun.api.SearchResults;
 import org.kframework.krun.api.SearchType;
 import org.kframework.krun.tools.Executor;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -75,9 +73,7 @@ public class JavaSymbolicExecutor implements Executor {
     }
 
     private ConstrainedTerm javaKILRun(org.kframework.kil.Term cfg, int bound) {
-        Profiler.startTimer(Profiler.KIL_TO_BACKEND_TIMER);
         Term term = kilTransformer.transformAndEval(cfg);
-        Profiler.stopTimer(Profiler.KIL_TO_BACKEND_TIMER);
         TermContext termContext = TermContext.of(globalContext);
 
         if (javaOptions.patternMatching) {

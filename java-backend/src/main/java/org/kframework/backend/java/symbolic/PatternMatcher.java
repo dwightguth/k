@@ -21,7 +21,6 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
-import org.kframework.backend.java.util.Profiler;
 import org.kframework.backend.java.util.RewriteEngineUtils;
 import org.kframework.kil.loader.Context;
 
@@ -33,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
@@ -165,15 +163,12 @@ public class PatternMatcher extends AbstractMatcher {
      * @return {@code true} if the matching succeeds; otherwise, {@code false}
      */
     public boolean patternMatch(Term subject, Term pattern) {
-        Profiler.startTimer(Profiler.ALL_PATTERN_MATCHING_TIMER);
         try {
             isStarNested = false;
             match(subject, pattern);
             return true;
         } catch (PatternMatchingFailure e) {
             return false;
-        } finally {
-            Profiler.stopTimer(Profiler.ALL_PATTERN_MATCHING_TIMER);
         }
     }
 
