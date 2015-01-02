@@ -671,7 +671,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
                     rule.matchingInstructions(),
                     rule,
                     termContext);
-            return newRule.equals(rule) ? origRule : newRule;
+            return newRule;
         } catch (KEMException e) {
             e.exception.addTraceFrame("while compiling rule at location " + rule.getSource() + rule.getLocation());
             throw e;
