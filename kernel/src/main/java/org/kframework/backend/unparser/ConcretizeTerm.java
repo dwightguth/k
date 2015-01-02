@@ -20,6 +20,7 @@ import org.kframework.krun.SubstitutionFilter;
 import org.kframework.krun.api.SearchResult;
 import org.kframework.parser.TermLoader;
 import org.kframework.parser.concrete.disambiguate.TypeInferenceSupremumFilter;
+import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
 
 import com.google.inject.Inject;
 
@@ -58,6 +59,7 @@ public class ConcretizeTerm {
         result = (Term) normalizer.visitNode(result);
         result = (Term) new DataStructure2Cell(context).visitNode(result);
         result = (Term) new ConcretizeSyntax(context).visitNode(result);
+        result = (Term) new TypeSystemFilter(context).visitNode(result);
         result = (Term) new TypeInferenceSupremumFilter(context).visitNode(result);
         result = (Term) new FlattenDisambiguationFilter(context).visitNode(result);
         result = (Term) new ConcretizeSyntax.RemoveEmptyLists(context).visitNode(result);

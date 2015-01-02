@@ -68,8 +68,8 @@ public class RewriteEngineUtils {
         for (UninterpretedConstraint.Equality equality : rule.lookups().equalities()) {
             Term lookupOrChoice = equality.leftHandSide();
             Term nonLookupOrChoice =  equality.rightHandSide();
-            List<RHSInstruction> instructions = equality.instructions();
-            Term evalLookupOrChoice = KAbstractRewriteMachine.construct(instructions, crntSubst, null, context, false);
+            List<RHSInstruction> instructions = equality.lhsInstructions();
+            Term evalLookupOrChoice = KAbstractRewriteMachine.construct(lookupOrChoice, instructions, crntSubst, null, context, false);
 
             boolean resolved = false;
             if (evalLookupOrChoice instanceof Bottom
@@ -102,7 +102,7 @@ public class RewriteEngineUtils {
                     // for example: L:List[Int(#"0")] = '#ostream(_)(I:Int), where L is the output buffer
                     //           => '#ostream(_)(Int(#"1")) =? '#ostream(_)(I:Int)
 
-                    Term evalNonLookupOrChoice = nonLookupOrChoice.substituteAndEvaluate(crntSubst, context);
+                    Term evalNonLookupOrChoice = KAbstractRewriteMachine.construct(nonLookupOrChoice, equality.rhsInstructions(), crntSubst, null, context, false);
 
                     PatternMatcher lookupMatcher = new PatternMatcher(rule.isLemma(), context);
                     if (lookupMatcher.patternMatch(evalLookupOrChoice, evalNonLookupOrChoice)) {
@@ -136,7 +136,7 @@ public class RewriteEngineUtils {
                 // TODO(YilongL): in the future, we may have to accumulate
                 // the substitution obtained from evaluating the side
                 // condition
-                Term evaluatedReq = KAbstractRewriteMachine.construct(rule.instructionsOfRequires().get(i), crntSubst, null, context, false);
+                Term evaluatedReq = KAbstractRewriteMachine.construct(require, rule.instructionsOfRequires().get(i), crntSubst, null, context, false);
                 if (!evaluatedReq.equals(BoolToken.TRUE)) {
                     if (RuleAuditing.isAuditBegun()) {
                         System.err.println("Side condition failure: " + require.substituteWithBinders(crntSubst, context) + " evaluated to " + evaluatedReq);

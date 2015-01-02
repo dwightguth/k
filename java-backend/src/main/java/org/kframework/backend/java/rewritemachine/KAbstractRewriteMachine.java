@@ -110,7 +110,7 @@ public class KAbstractRewriteMachine {
                 /* perform local rewrites under write cells */
                 for (CellCollection.Cell cell : solution.writeCells()) {
                     List<RHSInstruction> instructions = getWriteCellInstructions(cell.cellLabel());
-                    cell.setContent(construct(instructions, solution.substitution(), reusableVariables, context, rule.cellsToCopy().contains(cell.cellLabel())));
+                    cell.setContent(construct(getWriteCellRHS(cell.cellLabel()), instructions, solution.substitution(), reusableVariables, context, rule.cellsToCopy().contains(cell.cellLabel())));
                 }
                 Profiler.stopTimer(Profiler.LOCAL_REWRITE_BUILD_RHS_TIMER);
             } else {
@@ -120,9 +120,13 @@ public class KAbstractRewriteMachine {
         return success;
     }
 
-    public static Term construct(List<RHSInstruction> rhsInstructions,
+    public static Term construct(Term rhs, List<RHSInstruction> rhsInstructions,
             Map<Variable, Term> solution, Set<Variable> reusableVariables, TermContext context,
             boolean doClone) {
+
+        if (!rhs.canSubstituteAndEvaluate(solution)) {
+            return rhs;
+        }
 
         if (rhsInstructions.size() == 1) {
             RHSInstruction instruction = rhsInstructions.get(0);

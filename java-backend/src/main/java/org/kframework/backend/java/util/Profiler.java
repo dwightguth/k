@@ -28,6 +28,8 @@ public class Profiler {
     public static final ReentrantStopwatch EVALUATE_REQUIRES_TIMER          =   new ReentrantStopwatch("Evaluate requires");
 
     public static final ReentrantStopwatch DEEP_CLONE_TIMER                 =   new ReentrantStopwatch("Deep clone");
+    public static final ReentrantStopwatch ALL_PATTERN_MATCHING_TIMER       =   new ReentrantStopwatch("All pattern matching");
+    public static final ReentrantStopwatch KIL_TO_BACKEND_TIMER             =   new ReentrantStopwatch("KIL to Backend KIL");
 
     public static void startTimer(ReentrantStopwatch timer) {
         if (ENABLE_PROFILING_MODE) {
@@ -57,6 +59,8 @@ public class Profiler {
                     REWRITE_WITH_UNKOMPILED_RULES_TIMER);
             System.err.println(QUERY_RULE_INDEXING_TIMER);
             System.err.println(DEEP_CLONE_TIMER);
+            System.err.println(ALL_PATTERN_MATCHING_TIMER);
+            System.err.println(KIL_TO_BACKEND_TIMER);
         }
     }
 

@@ -36,13 +36,15 @@ public class UninterpretedConstraint extends JavaSymbolicObject {
 
         private final Term leftHandSide;
         private final Term rightHandSide;
-        private final ImmutableList<RHSInstruction> instructions;
+        private final ImmutableList<RHSInstruction> lhsInstructions;
+        private final ImmutableList<RHSInstruction> rhsInstructions;
         private int hashCode;
 
-        private Equality(Term leftHandSide, Term rightHandSide, ImmutableList<RHSInstruction> instructions) {
+        private Equality(Term leftHandSide, Term rightHandSide, ImmutableList<RHSInstruction> lhsInstructions, ImmutableList<RHSInstruction> rhsInstructions) {
             this.leftHandSide = leftHandSide;
             this.rightHandSide = rightHandSide;
-            this.instructions = instructions;
+            this.lhsInstructions = lhsInstructions;
+            this.rhsInstructions = rhsInstructions;
         }
 
         public Term leftHandSide() {
@@ -53,8 +55,12 @@ public class UninterpretedConstraint extends JavaSymbolicObject {
             return rightHandSide;
         }
 
-        public List<RHSInstruction> instructions() {
-            return instructions;
+        public List<RHSInstruction> lhsInstructions() {
+            return lhsInstructions;
+        }
+
+        public List<RHSInstruction> rhsInstructions() {
+            return rhsInstructions;
         }
 
         @Override
@@ -164,10 +170,12 @@ public class UninterpretedConstraint extends JavaSymbolicObject {
         private final ImmutableList.Builder<Equality> equalitiesBuilder = ImmutableList.builder();
 
         public void add(Term leftHandSide, Term rightHandSide, TermContext context) {
-            GenerateRHSInstructions visitor = new GenerateRHSInstructions(context);
-            leftHandSide.accept(visitor);
+            GenerateRHSInstructions lhsVisitor = new GenerateRHSInstructions(context);
+            leftHandSide.accept(lhsVisitor);
+            GenerateRHSInstructions rhsVisitor = new GenerateRHSInstructions(context);
+            rightHandSide.accept(rhsVisitor);
             equalitiesBuilder.add(new Equality(leftHandSide, rightHandSide,
-                    visitor.getInstructions()));
+                    lhsVisitor.getInstructions(), rhsVisitor.getInstructions()));
         }
 
         public UninterpretedConstraint build() {

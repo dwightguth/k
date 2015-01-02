@@ -459,7 +459,7 @@ public final class KItem extends Term {
                             /* rename rule variables in the rule RHS */
                             rightHandSide = rightHandSide.substituteWithBinders(freshSubstitution, context);
                         }
-                        rightHandSide = KAbstractRewriteMachine.construct(rule.rhsInstructions(), solution, copyOnShareSubstAndEval ? rule.reusableVariables().elementSet() : null,
+                        rightHandSide = KAbstractRewriteMachine.construct(rightHandSide, rule.rhsInstructions(), solution, copyOnShareSubstAndEval ? rule.reusableVariables().elementSet() : null,
                                     context, false);
 
                         if (rule.containsAttribute("owise")) {
@@ -563,14 +563,8 @@ public final class KItem extends Term {
                 if (solution != null) {
                     RuleAuditing.succeed(rule);
                     Term rightHandSide = rule.rightHandSide();
-                    if (copyOnShareSubstAndEval) {
-                        rightHandSide = rightHandSide.copyOnShareSubstAndEval(
-                                solution,
-                                rule.reusableVariables().elementSet(),
-                                context);
-                    } else {
-                        rightHandSide = rightHandSide.substituteAndEvaluate(solution, context);
-                    }
+                    rightHandSide = KAbstractRewriteMachine.construct(rightHandSide, rule.rhsInstructions(), solution, copyOnShareSubstAndEval ? rule.reusableVariables().elementSet() : null,
+                            context, false);
                     return rightHandSide;
                 }
             } finally {

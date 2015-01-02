@@ -9,9 +9,6 @@ import org.kframework.kil.*;
 import org.kframework.kil.Cast.CastType;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.utils.errorsystem.ParseFailedException;
-import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
-
 import com.davekoelle.AlphanumComparator;
 
 import java.util.ArrayList;
@@ -46,11 +43,6 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
     @Override
     public ASTNode visit(KApp kapp, Void _void)  {
         ASTNode t = internalTransform(kapp);
-        try {
-            t = new TypeSystemFilter(context).visitNode(t);
-        } catch (ParseFailedException e) {
-            //type error, so don't disambiguate
-        }
         return t;
     }
 
