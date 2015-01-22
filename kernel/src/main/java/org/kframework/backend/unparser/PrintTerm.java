@@ -1,15 +1,21 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.backend.unparser;
 
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Attributes;
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.ColorOptions;
 import org.kframework.transformation.Transformation;
+import org.kframework.utils.file.FileUtil;
 
 import com.google.inject.Inject;
 
-public class PrintTerm implements Transformation<ASTNode, String> {
+public class PrintTerm implements Transformation<ASTNode, InputStream> {
 
     private final ColorOptions colorOptions;
     private final OutputModes mode;
@@ -23,10 +29,15 @@ public class PrintTerm implements Transformation<ASTNode, String> {
     }
 
     @Override
-    public String run(ASTNode node, Attributes a) {
-        return new Unparser(a.typeSafeGet(Context.class),
-                colorOptions.color(), colorOptions.terminalColor(),
-                mode != OutputModes.NO_WRAP, false).print(node);
+    public InputStream run(ASTNode node, Attributes a) {
+        Pair<PipedInputStream, PipedOutputStream> pipe = FileUtil.pipeOutputToInput();
+        new Thread(() ->
+        {
+            new Unparser(a.typeSafeGet(Context.class),
+                    colorOptions.color(), colorOptions.terminalColor(),
+                    mode != OutputModes.NO_WRAP, false).print(pipe.getRight(), node);
+        }).start();
+        return pipe.getLeft();
     }
 
     @Override
