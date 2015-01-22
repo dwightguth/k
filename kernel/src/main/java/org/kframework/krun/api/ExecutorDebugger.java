@@ -21,7 +21,6 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.krun.GenericKRunState;
 import org.kframework.krun.GenericTransition;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.Transition.TransitionType;
 import org.kframework.krun.tools.Debugger;
@@ -51,7 +50,7 @@ public class ExecutorDebugger implements Debugger {
             Context context,
             TermLoader loader,
             KExceptionManager kem,
-            KRunState.Counter counter) throws KRunExecutionException {
+            KRunState.Counter counter) {
         this.context = context;
         this.executor = executor;
         this.loader = loader;
@@ -60,7 +59,7 @@ public class ExecutorDebugger implements Debugger {
     }
 
     @Override
-    public void start(Term initialConfiguration) throws KRunExecutionException {
+    public void start(Term initialConfiguration) {
         try {
             ASTNode pattern = loader.parsePattern(
                     KRunOptions.DEFAULT_PATTERN,
@@ -79,7 +78,7 @@ public class ExecutorDebugger implements Debugger {
         graph.addVertex(initialState);
         states = new DualHashBidiMap<Integer, KRunState>();
         putState(initialState);
-        KRunState reduced = executor.step(initialConfiguration, 0, false).getFinalState();
+        KRunState reduced = executor.run(initialConfiguration, 0, false).getFinalState();
         //reduce may return same node as initial node
         //so we add it just if it is different from the initial node
         if(putState(reduced)){
@@ -127,14 +126,14 @@ public class ExecutorDebugger implements Debugger {
         return state;
     }
 
-    private void steppingLoop(Integer steps) throws KRunExecutionException {
+    private void steppingLoop(Integer steps) {
         if (currentState == null) {
             throw new IllegalStateException("Cannot step without a current state to step from. "
                     + "If you previously used the search command you must"
                     + "first select a solution with the select command before executing steps of rewrites!");
         }
         for (int i = 0; steps == null || i < steps; i++) {
-            KRunState nextStep = executor.step(getState(currentState).getRawResult(), 1, false).getFinalState();
+            KRunState nextStep = executor.run(getState(currentState).getRawResult(), 1, false).getFinalState();
             Entry<Integer, KRunState> prevValue = containsValue(nextStep);
             if (prevValue!=null) {
                 nextStep = prevValue.getValue();
@@ -157,15 +156,15 @@ public class ExecutorDebugger implements Debugger {
         }
     }
 
-    public void step(int steps) throws KRunExecutionException {
+    public void step(int steps) {
         steppingLoop(steps);
     }
 
-    public void resume() throws KRunExecutionException {
+    public void resume() {
         steppingLoop(null);
     }
 
-    public SearchResults stepAll(int steps) throws KRunExecutionException {
+    public SearchResults stepAll(int steps) {
         if (currentState == null) {
             throw new IllegalStateException("Cannot step without a current state to step from. "
                     + "If you previously used the search command you must"

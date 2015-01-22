@@ -25,6 +25,7 @@ import org.kframework.utils.inject.Spec;
 import com.beust.jcommander.JCommander;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
@@ -67,11 +68,11 @@ public class JavaSymbolicKRunModule extends AbstractModule {
 
             MapBinder<String, Prover> proverBinder = MapBinder.newMapBinder(
                     binder(), String.class, Prover.class);
-            proverBinder.addBinding("java").to(JavaSymbolicProver.class);
+            proverBinder.addBinding("java").to(SymbolicRewriter.class);
 
             MapBinder<String, Executor> executorBinder = MapBinder.newMapBinder(
                     binder(), String.class, Executor.class);
-            executorBinder.addBinding("java").to(JavaSymbolicExecutor.class);
+            executorBinder.addBinding("java").to(AbstractRewriter.class);
         }
 
         @Provides @Singleton
@@ -81,6 +82,17 @@ public class JavaSymbolicKRunModule extends AbstractModule {
             def.setContext(context);
             def.setKem(kem);
             return def;
+        }
+
+        @Provides
+        AbstractRewriter rewriter(
+                Provider<PatternMatchRewriter> pm,
+                Provider<SymbolicRewriter> symbolic,
+                JavaExecutionOptions options) {
+            if (options.patternMatching) {
+                return pm.get();
+            }
+            return symbolic.get();
         }
     }
 

@@ -14,6 +14,7 @@ import org.kframework.backend.java.indexing.RuleIndex;
 import org.kframework.backend.java.kil.CellCollection;
 import org.kframework.backend.java.kil.DataStructures;
 import org.kframework.backend.java.kil.Definition;
+import org.kframework.backend.java.kil.GlobalContext;
 import org.kframework.backend.java.kil.Rule;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
@@ -21,17 +22,22 @@ import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.rewritemachine.KAbstractRewriteMachine;
 import org.kframework.backend.java.strategies.TransitionCompositeStrategy;
 import org.kframework.backend.java.util.Coverage;
+import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.backend.java.util.Profiler;
+import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.krun.KRunOptions;
+import org.kframework.krun.api.KRunGraph;
+import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchType;
+import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-public class PatternMatchRewriter {
+public class PatternMatchRewriter extends AbstractRewriter {
 
     private final boolean ENABLE_DEBUG_MODE = false;
 
@@ -41,6 +47,8 @@ public class PatternMatchRewriter {
 
     private final KRunOptions options;
     private final JavaExecutionOptions javaOptions;
+    private final Context context;
+    private final KRunState.Counter counter;
 
     private boolean transition;
 
@@ -54,14 +62,25 @@ public class PatternMatchRewriter {
             Definition definition,
             KRunOptions options,
             KompileOptions kompileOptions,
-            JavaExecutionOptions javaOptions) {
+            JavaExecutionOptions javaOptions,
+            Context context,
+            KRunState.Counter counter,
+            KILtoBackendJavaKILTransformer kilTransformer,
+            GlobalContext globalContext) {
+        super(kilTransformer, context, counter, globalContext);
+        this.context = context;
+        this.counter = counter;
         this.options = options;
         ruleIndex = definition.getIndex();
         this.strategy = new TransitionCompositeStrategy(kompileOptions.transition);
         this.javaOptions = javaOptions;
     }
 
-    public Term rewrite(Term subject, int bound, TermContext termContext) {
+    @Override
+    public KRunState rewrite(Term subject, int bound, boolean computeGraph, TermContext termContext) {
+        if (computeGraph) {
+            throw KExceptionManager.criticalError("Cannot compute search graph with --pattern-matching yet.");
+        }
         stopwatch.start();
 
         /* first break any possible sharing of mutable terms introduced by macro
@@ -106,7 +125,7 @@ public class PatternMatchRewriter {
             Profiler.printResult();
         }
 
-        return subject;
+        return new JavaKRunState(subject, context, counter);
     }
 
     private List<Rule> getRules(List<CellCollection.Cell> indexingCells) {
@@ -312,10 +331,9 @@ public class PatternMatchRewriter {
         return false;
     }
 
+    @Override
     public List<Map<Variable,Term>> search(
             Term initialTerm,
-            Term targetTerm,
-            List<Rule> rules,
             Rule pattern,
             int bound,
             int depth,
@@ -405,6 +423,11 @@ public class PatternMatchRewriter {
         }
 
         return searchResults;
+    }
+
+    @Override
+    protected KRunGraph getExecutionGraph() {
+        return null;
     }
 
 }

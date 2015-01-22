@@ -2,6 +2,7 @@
 package org.kframework.backend.java.symbolic;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.kframework.backend.java.indexing.RuleIndex;
 import org.kframework.backend.java.kil.CellLabel;
 import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Definition;
+import org.kframework.backend.java.kil.GlobalContext;
 import org.kframework.backend.java.kil.KSequence;
 import org.kframework.backend.java.kil.Rule;
 import org.kframework.backend.java.kil.Term;
@@ -24,11 +26,16 @@ import org.kframework.backend.java.strategies.TransitionCompositeStrategy;
 import org.kframework.backend.java.util.Coverage;
 import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.backend.java.util.JavaTransition;
+import org.kframework.kil.Attribute;
+import org.kframework.kil.Module;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
+import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunGraph;
+import org.kframework.krun.api.KRunProofResult;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchType;
+import org.kframework.krun.tools.Prover;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 
 import com.google.common.base.Stopwatch;
@@ -44,29 +51,44 @@ import com.google.inject.Inject;
  * @author AndreiS
  *
  */
-public class SymbolicRewriter {
+public class SymbolicRewriter extends AbstractRewriter implements Prover {
 
     private final Definition definition;
     private final JavaExecutionOptions javaOptions;
+    private final KRunOptions krunOptions;
     private final TransitionCompositeStrategy strategy;
+    private final KILtoBackendJavaKILTransformer kilTransformer;
+    private final GlobalContext globalContext;
+    private final KRunState.Counter counter;
     private final Stopwatch stopwatch = Stopwatch.createUnstarted();
-    private int step;
     private final Stopwatch ruleStopwatch = Stopwatch.createUnstarted();
     private final List<ConstrainedTerm> results = Lists.newArrayList();
     private final List<Rule> appliedRules = Lists.newArrayList();
     private final List<Map<Variable, Term>> substitutions = Lists.newArrayList();
+    private final RuleIndex ruleIndex;
+
+    private int step;
     private KRunGraph executionGraph = null;
     private boolean transition;
-    private RuleIndex ruleIndex;
-    private KRunState.Counter counter;
 
     @Inject
-    public SymbolicRewriter(Definition definition, KompileOptions kompileOptions, JavaExecutionOptions javaOptions,
-                            KRunState.Counter counter) {
+    public SymbolicRewriter(
+            Definition definition,
+            KompileOptions kompileOptions,
+            KRunOptions krunOptions,
+            JavaExecutionOptions javaOptions,
+            KILtoBackendJavaKILTransformer kilTransformer,
+            Context context,
+            KRunState.Counter counter,
+            GlobalContext globalContext) {
+        super(kilTransformer, context, counter, globalContext);
         this.definition = definition;
         this.javaOptions = javaOptions;
-        ruleIndex = definition.getIndex();
+        this.krunOptions = krunOptions;
         this.counter = counter;
+        this.globalContext = globalContext;
+        this.kilTransformer = kilTransformer;
+        ruleIndex = definition.getIndex();
         this.strategy = new TransitionCompositeStrategy(kompileOptions.transition);
     }
 
@@ -74,7 +96,10 @@ public class SymbolicRewriter {
         return executionGraph;
     }
 
-    public KRunState rewrite(ConstrainedTerm constrainedTerm, int bound, boolean computeGraph) {
+    @Override
+    public KRunState rewrite(Term term, int bound, boolean computeGraph, TermContext termContext) {
+        SymbolicConstraint constraint = new SymbolicConstraint(termContext);
+        ConstrainedTerm constrainedTerm = new ConstrainedTerm(term, constraint);
         stopwatch.start();
         Context context = definition.context();
         KRunState initialState = null;
@@ -105,7 +130,7 @@ public class SymbolicRewriter {
         }
 
         stopwatch.stop();
-        if (definition.context().krunOptions.experimental.statistics) {
+        if (krunOptions.experimental.statistics) {
             System.err.println("[" + step + ", " + stopwatch + "]");
         }
 
@@ -187,8 +212,8 @@ public class SymbolicRewriter {
                             results.add(result);
                             appliedRules.add(rule);
                             substitutions.add(unifConstraint.substitution());
-                            Coverage.print(definition.context().krunOptions.experimental.coverage, subject);
-                            Coverage.print(definition.context().krunOptions.experimental.coverage, rule);
+                            Coverage.print(krunOptions.experimental.coverage, subject);
+                            Coverage.print(krunOptions.experimental.coverage, rule);
                             if (results.size() == successorBound) {
                                 return;
                             }
@@ -340,10 +365,9 @@ public class SymbolicRewriter {
 
      * @return a list of substitution mappings for results that matched the pattern
      */
+    @Override
     public List<Map<Variable,Term>> search(
             Term initialTerm,
-            Term targetTerm,
-            List<Rule> rules,
             Rule pattern,
             int bound,
             int depth,
@@ -433,7 +457,7 @@ public class SymbolicRewriter {
         }
 
         stopwatch.stop();
-        if (definition.context().krunOptions.experimental.statistics) {
+        if (krunOptions.experimental.statistics) {
             System.err.println("[" + visited.size() + "states, " + step + "steps, " + stopwatch + "]");
         }
 
@@ -550,6 +574,43 @@ public class SymbolicRewriter {
         }
 
         return proofResults;
+    }
+
+    @Override
+    public KRunProofResult<Set<org.kframework.kil.Term>> prove(Module module) {
+        TermContext termContext = TermContext.of(globalContext);
+        List<Rule> rules = new ArrayList<Rule>();
+        for (org.kframework.kil.ModuleItem moduleItem : module.getItems()) {
+            if (!(moduleItem instanceof org.kframework.kil.Rule)) {
+                continue;
+            }
+
+            Rule rule = kilTransformer.transformAndEval((org.kframework.kil.Rule) moduleItem);
+            Rule freshRule = rule.getFreshRule(termContext);
+            rules.add(freshRule);
+        }
+
+        List<ConstrainedTerm> proofResults = new ArrayList<>();
+        for (org.kframework.kil.ModuleItem moduleItem : module.getItems()) {
+            if (!(moduleItem instanceof org.kframework.kil.Rule) || moduleItem.containsAttribute(Attribute.TRUSTED_KEY)) {
+                continue;
+            }
+
+            Rule rule = kilTransformer.transformAndEval((org.kframework.kil.Rule) moduleItem);
+            SymbolicConstraint initialConstraint = new SymbolicConstraint(termContext);
+            initialConstraint.addAll(rule.requires());
+            ConstrainedTerm initialTerm = new ConstrainedTerm(rule.leftHandSide(), initialConstraint);
+            SymbolicConstraint targetConstraint = new SymbolicConstraint(termContext);
+            targetConstraint.addAll(rule.ensures());
+            ConstrainedTerm targetTerm = new ConstrainedTerm(rule.rightHandSide(), targetConstraint);
+
+            proofResults.addAll(proveRule(initialTerm, targetTerm, rules));
+        }
+
+        System.err.println(proofResults.isEmpty());
+        System.err.println(proofResults);
+
+        return new KRunProofResult<>(proofResults.isEmpty(), Collections.<org.kframework.kil.Term>emptySet());
     }
 
 }

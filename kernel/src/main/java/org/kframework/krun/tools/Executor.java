@@ -18,7 +18,6 @@ import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunResult;
 import org.kframework.krun.api.KRunState;
@@ -40,15 +39,18 @@ public interface Executor {
 
 
     /**
-    Execute a term in normal execution mode until it cannot rewrite any further
+    Execute a term in normal execution mode until it cannot rewrite any further, or until a
+    specified execution bound.
     @param cfg The term to rewrite
+    @param depth null to rewrite indefinitely, or an integer bound to rewrite to a maximum
+    number of steps.
     @param computeGraph Specified as true if the graph of execution needs to be calculated.
     @return An object containing both metadata about krun's execution, information about
     the exit state of the execution, and the graph if computeGraph was true.
     @exception KRunExecutionException Thrown if the backend fails to successfully execute the
     term
     */
-    public abstract RewriteRelation run(Term cfg, boolean computeGraph) throws KRunExecutionException;
+    public abstract RewriteRelation run(Term cfg, Integer depth, boolean computeGraph);
 
     /**
     Perform a breadth-first search of the transition system starting at a particular term.
@@ -66,24 +68,7 @@ public interface Executor {
     @return An object containing both metadata about krun's execution, and information about
     the results of the search
     */
-    public abstract SearchResults search(Integer bound, Integer depth, SearchType searchType, Rule pattern, Term cfg, RuleCompilerSteps compilationInfo) throws KRunExecutionException;
-
-    /**
-    Execute a term in normal-execution mode for a specified number of steps
-    @param cfg The K term to rewrite
-    @param steps The maximum number of transitions to execute for (zero if you want to rewrite
-    @param computeGraph If true, all the states and transitions involved in the execution are
-    returned in the result.
-    only until the first transition)
-    @exception KRunExecutionException Thrown if the backend fails to successfully execute the
-    term
-    @exception UnsupportedOperationException The backend implementing this interface does not
-    support bounded stepping
-    @return An object containing both metadata about krun's execution, information about
-    the resulting term after executing the specified number of steps (or fewer if no further
-    rewrites are possible), and the execution graph if computeGraph was true.
-    */
-    public abstract RewriteRelation step(Term cfg, int steps, boolean computeGraph) throws KRunExecutionException;
+    public abstract SearchResults search(Integer bound, Integer depth, SearchType searchType, Rule pattern, Term cfg, RuleCompilerSteps compilationInfo);
 
     public static class Tool implements Transformation<Void, KRunResult> {
 
@@ -117,14 +102,10 @@ public interface Executor {
         public KRunResult run(Void v, Attributes a) {
             a.add(Context.class, context);
             a.add(Boolean.class, PrintSearchResult.IS_DEFAULT_PATTERN, options.pattern == null);
-            try {
-                if (options.search()) {
-                    return search();
-                } else {
-                    return execute(a);
-                }
-            } catch (KRunExecutionException e) {
-                throw KExceptionManager.criticalError(e.getMessage(), e);
+            if (options.search()) {
+                return search();
+            } else {
+                return execute(a);
             }
         }
 
@@ -144,7 +125,7 @@ public interface Executor {
             }
         }
 
-        public SearchResults search() throws ParseFailedException, KRunExecutionException {
+        public SearchResults search() throws ParseFailedException {
             ASTNode pattern = pattern(options.pattern);
             SearchPattern searchPattern = new SearchPattern(pattern);
             SearchResults result;
@@ -159,13 +140,13 @@ public interface Executor {
             return result;
         }
 
-        public KRunResult execute(Attributes a) throws ParseFailedException, KRunExecutionException {
+        public KRunResult execute(Attributes a) throws ParseFailedException {
             KRunState result;
             if (options.depth != null) {
-                result = executor.step(initialConfiguration.get(), options.depth, false).getFinalState();
+                result = executor.run(initialConfiguration.get(), options.depth, false).getFinalState();
                 sw.printIntermediate("Bounded execution total");
             } else {
-                result = executor.run(initialConfiguration.get(), false).getFinalState();
+                result = executor.run(initialConfiguration.get(), null, false).getFinalState();
                 sw.printIntermediate("Normal execution total");
             }
             ASTNode pattern = pattern(options.pattern);
@@ -181,7 +162,7 @@ public interface Executor {
             return result;
         }
 
-        private int getExitCode(Term res) throws KRunExecutionException {
+        private int getExitCode(Term res) {
             ASTNode exitCodePattern = pattern(options.exitCodePattern);
             SearchPattern searchPattern = new SearchPattern(exitCodePattern);
             SearchResults results = executor.search(1, 1, SearchType.FINAL, searchPattern.patternRule, res, searchPattern.steps);

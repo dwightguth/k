@@ -6,7 +6,6 @@ import org.kframework.kil.Sort;
 import org.kframework.kil.Sources;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunGraph;
 import org.kframework.krun.api.KRunProofResult;
@@ -14,7 +13,6 @@ import org.kframework.krun.api.KRunResult;
 import org.kframework.parser.ProgramLoader;
 import org.kframework.transformation.Transformation;
 import org.kframework.utils.Stopwatch;
-import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.inject.Main;
 
@@ -35,7 +33,7 @@ public interface LtlModelChecker {
     @return An object containing both metadata about krun's execution, and a graph containing
     the LTL counterexample if model-checking failed (null if it succeeded)
     */
-    public abstract KRunProofResult<KRunGraph> modelCheck(Term formula, Term cfg) throws KRunExecutionException;
+    public abstract KRunProofResult<KRunGraph> modelCheck(Term formula, Term cfg);
 
     public static class Tool implements Transformation<Void, KRunResult> {
 
@@ -68,17 +66,13 @@ public interface LtlModelChecker {
         @Override
         public KRunProofResult<KRunGraph> run(Void v, Attributes a) {
             a.add(Context.class, context);
-            try {
-                Term formula = (Term) loader.loadPgmAst(ltlmc(), Sources.fromCommandLine("parameters"),
-                        Sort.of("LtlFormula"), context);
-                KRunProofResult<KRunGraph> result = modelChecker.modelCheck(
-                                formula,
-                                initialConfiguration.get());
-                sw.printIntermediate("Model checking total");
-                return result;
-            } catch (KRunExecutionException e) {
-                throw KExceptionManager.criticalError(e.getMessage(), e);
-            }
+            Term formula = (Term) loader.loadPgmAst(ltlmc(), Sources.fromCommandLine("parameters"),
+                    Sort.of("LtlFormula"), context);
+            KRunProofResult<KRunGraph> result = modelChecker.modelCheck(
+                            formula,
+                            initialConfiguration.get());
+            sw.printIntermediate("Model checking total");
+            return result;
         }
 
         public String ltlmc() {
