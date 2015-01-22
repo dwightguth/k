@@ -19,6 +19,10 @@ public final class JavaExecutionOptions {
         + "execution in the java backend if function definitions are not deterministic.")
     public boolean deterministicFunctions = false;
 
+    @Parameter(names="--total-functions", description="Throw error during execution in the "
+            + "java backend if function definitions are not total.")
+    public boolean totalFunctions = false;
+
     @Parameter(names="--pattern-matching", description="Use pattern-matching rather than "
         + "unification to drive rewriting in the Java backend.")
     public boolean patternMatching = false;

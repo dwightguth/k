@@ -137,16 +137,63 @@ public class GenerateRHSInstructions extends BottomUpVisitor {
         rhsSchedule.add(RHSInstruction.PUSH(hole));
     }
 
+    private enum BooleanOp { AND, OR }
+
     @Override
     public void visit(KItem node) {
         if (node.isGround() && node.isNormal()) {
             rhsSchedule.add(RHSInstruction.PUSH(node));
         } else {
-            node.kList().accept(this);
-            node.kLabel().accept(this);
-            rhsSchedule.add(RHSInstruction.CONSTRUCT(
-                    new Constructor(ConstructorType.KITEM)));
-            rhsSchedule.add(RHSInstruction.EVAL);
+            BooleanOp booleanOp = booleanOp(node);
+            if (booleanOp != null) {
+                int startPc;
+                KList klist = (KList) node.kList();
+                klist.get(0).accept(this);
+                startPc = rhsSchedule.size();
+                rhsSchedule.add(null); //placeholder for branch
+                klist.get(1).accept(this);
+                rhsSchedule.add(RHSInstruction.CONSTRUCT(new Constructor(
+                        ConstructorType.KLIST, 2)));
+                node.kLabel().accept(this);
+                rhsSchedule.add(RHSInstruction.CONSTRUCT(
+                        new Constructor(ConstructorType.KITEM)));
+                rhsSchedule.add(RHSInstruction.EVAL);
+                int endPc = rhsSchedule.size();
+                if (booleanOp == BooleanOp.AND) {
+                    rhsSchedule.set(startPc, RHSInstruction.BRANCH_FALSE(endPc - startPc - 1));
+                } else {
+                    rhsSchedule.set(startPc, RHSInstruction.BRANCH_TRUE(endPc - startPc - 1));
+                }
+            } else {
+                node.kList().accept(this);
+                node.kLabel().accept(this);
+                rhsSchedule.add(RHSInstruction.CONSTRUCT(
+                        new Constructor(ConstructorType.KITEM)));
+                rhsSchedule.add(RHSInstruction.EVAL);
+            }
+        }
+    }
+
+    private BooleanOp booleanOp(KItem node) {
+        if (!(node.kLabel() instanceof KLabelConstant))
+            return null;
+        if (!(node.kList() instanceof KList))
+            return null;
+        KLabelConstant klabel = (KLabelConstant) node.kLabel();
+        KList klist = (KList) node.kList();
+        switch (klabel.label()) {
+        case "'_andBool_":
+        case "'_andThenBool_":
+            if (klist.hasFrame() || klist.concreteSize() != 2)
+                return null;
+            return BooleanOp.AND;
+        case "'_orBool_":
+        case "'_orElseBool_":
+            if (klist.hasFrame() || klist.concreteSize() != 2)
+                return null;
+            return BooleanOp.OR;
+        default:
+            return null;
         }
     }
 

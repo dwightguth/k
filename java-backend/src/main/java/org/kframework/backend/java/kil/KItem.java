@@ -21,6 +21,7 @@ import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.*;
 import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
+import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 
@@ -315,7 +316,8 @@ public final class KItem extends Term {
                         evaluateFunction(kItem, copyOnShareSubstAndEval, context) :
                             kItem.applyAnywhereRules(copyOnShareSubstAndEval, context);
                 if (result instanceof KItem && ((KItem) result).isEvaluable(context) && result.isGround()) {
-                    if (tool != Tool.KOMPILE) {
+                    // we do this check because this warning message can be very large and cause OOM
+                    if ((javaOptions.totalFunctions || options.warnings.includesExceptionType(ExceptionType.WARNING)) && tool != Tool.KOMPILE) {
                         StringBuilder sb = new StringBuilder();
                         sb.append("Unable to resolve function symbol:\n\t\t");
                         sb.append(result);
@@ -328,7 +330,11 @@ public final class KItem extends Term {
                                 sb.append('\n');
                             }
                         }
-                        throw KExceptionManager.criticalError(sb.toString(), kItem);
+                        if (javaOptions.totalFunctions) {
+                            throw KExceptionManager.criticalError(sb.toString(), kItem);
+                        } else {
+                            kem.registerCriticalWarning(sb.toString(), kItem);
+                        }
                     }
                     if (RuleAuditing.isAuditBegun()) {
                         System.err.println("Function failed to evaluate: returned " + result);

@@ -12,15 +12,16 @@ import org.kframework.backend.java.kil.Variable;
 public final class RHSInstruction implements Serializable {
 
     public enum Type {
-        PUSH, CONSTRUCT, SUBST, EVAL, PROJECT
+        PUSH, CONSTRUCT, SUBST, EVAL, PROJECT, BRANCH_TRUE, BRANCH_FALSE
     }
 
-    public static final RHSInstruction EVAL = new RHSInstruction(Type.EVAL, null, null);
-    public static final RHSInstruction PROJECT = new RHSInstruction(Type.PROJECT, null, null);
+    public static final RHSInstruction EVAL = new RHSInstruction(Type.EVAL, null, null, 0);
+    public static final RHSInstruction PROJECT = new RHSInstruction(Type.PROJECT, null, null, 0);
 
     private final Type type;
     private final Constructor constructor;
     private final Term term;
+    private final int offset;
 
     public static class Constructor implements Serializable {
         private final ConstructorType type;
@@ -125,20 +126,30 @@ public final class RHSInstruction implements Serializable {
     }
 
     public static RHSInstruction CONSTRUCT(Constructor constructor) {
-        return new RHSInstruction(Type.CONSTRUCT, null, constructor);
+        return new RHSInstruction(Type.CONSTRUCT, null, constructor, 0);
     }
 
     public static RHSInstruction PUSH(Term term) {
-        return new RHSInstruction(Type.PUSH, term, null);
+        return new RHSInstruction(Type.PUSH, term, null, 0);
     }
 
     public static RHSInstruction SUBST(Variable var) {
-        return new RHSInstruction(Type.SUBST, var, null);
+        return new RHSInstruction(Type.SUBST, var, null, 0);
     }
-    private RHSInstruction(Type type, Term term, Constructor constructor) {
+
+    public static RHSInstruction BRANCH_TRUE(int offset) {
+        return new RHSInstruction(Type.BRANCH_TRUE, null, null, offset);
+    }
+
+    public static RHSInstruction BRANCH_FALSE(int offset) {
+        return new RHSInstruction(Type.BRANCH_FALSE, null, null, offset);
+    }
+
+    private RHSInstruction(Type type, Term term, Constructor constructor, int offset) {
         this.type = type;
         this.term = term;
         this.constructor = constructor;
+        this.offset = offset;
     }
 
     public Type type() {
@@ -151,6 +162,10 @@ public final class RHSInstruction implements Serializable {
 
     public Constructor constructor() {
         return constructor;
+    }
+
+    public int offset() {
+        return offset;
     }
 
     @Override

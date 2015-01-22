@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections4.ListUtils;
+import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.kil.BuiltinList;
 import org.kframework.backend.java.kil.BuiltinMap;
 import org.kframework.backend.java.kil.BuiltinSet;
@@ -142,7 +143,8 @@ public class KAbstractRewriteMachine {
         }
 
         Deque<Term> stack = new LinkedList<>();
-        for (RHSInstruction instruction : rhsInstructions) {
+        for (int pc = 0; pc < rhsInstructions.size(); pc++) {
+            RHSInstruction instruction = rhsInstructions.get(pc);
             switch (instruction.type()) {
             case PUSH:
                 Term t = instruction.term();
@@ -251,6 +253,18 @@ public class KAbstractRewriteMachine {
             case PROJECT:
                 KItemProjection projection = (KItemProjection) stack.pop();
                 stack.push(projection.evaluateProjection());
+                break;
+            case BRANCH_TRUE:
+                Term condition = stack.peek();
+                if (condition.equals(BoolToken.TRUE)) {
+                    pc += instruction.offset();
+                }
+                break;
+            case BRANCH_FALSE:
+                Term condition2 = stack.peek();
+                if (condition2.equals(BoolToken.FALSE)) {
+                    pc += instruction.offset();
+                }
                 break;
             }
         }
