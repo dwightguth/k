@@ -44,8 +44,8 @@ public class BinaryOutputMode implements Transformation<KRunResult, InputStream>
 
         Pair<PipedInputStream, PipedOutputStream> pipe = FileUtil.pipeOutputToInput();
         new Thread(() -> {
-            try (PipedOutputStream out = pipe.getRight()) {
-                loader.saveOrDie(new Base64OutputStream(pipe.getRight()), o);
+            try (Base64OutputStream out = new Base64OutputStream(pipe.getRight())) {
+                loader.saveOrDie(out, o);
             } catch (IOException e) {
                 throw KExceptionManager.criticalError("Error writing binary output to output stream.");
             }
