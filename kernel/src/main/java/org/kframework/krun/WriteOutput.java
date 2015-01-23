@@ -46,6 +46,7 @@ public class WriteOutput implements Transformation<InputStream, Void> {
                 out.write(firstByte);
                 IOUtils.copy(output, out);
                 out.write('\n');
+                out.flush();
             } finally {
                 // Not using try-with-resources because we don't want to close System.out
                 if (out != null) {
