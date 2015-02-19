@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.kframework.backend.java.builtins.BoolToken;
@@ -27,9 +26,11 @@ import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.backend.java.util.JavaTransition;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
+import org.kframework.krun.GenericTransition;
 import org.kframework.krun.api.KRunGraph;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchType;
+import org.kframework.krun.api.Transition;
 import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
 
 import com.google.common.base.Stopwatch;
@@ -75,10 +76,10 @@ public class SymbolicRewriter {
         return executionGraph;
     }
 
-    public KRunState rewrite(ConstrainedTerm constrainedTerm, Context context, int bound, boolean computeGraph) {
+    public KRunState rewrite(ConstrainedTerm constrainedTerm, Context context, int bound, int sampleGraph) {
         stopwatch.start();
         KRunState initialState = null;
-        if (computeGraph) {
+        if (sampleGraph > 0) {
             executionGraph = new KRunGraph();
             initialState = new JavaKRunState(constrainedTerm.term(), context, counter);
             executionGraph.addVertex(initialState);
@@ -89,11 +90,16 @@ public class SymbolicRewriter {
             ConstrainedTerm result = getTransition(0);
             KRunState finalState = null;
             if (result != null) {
-                if (computeGraph) {
+                if (sampleGraph > 0 && step % sampleGraph == 0) {
                     finalState = new JavaKRunState(result.term(), context, counter);
-                    JavaTransition javaTransition = new JavaTransition(
+                    Transition transition;
+                    if (sampleGraph == 1) {
+                        transition = new JavaTransition(
                             getRule(0), getSubstitution(0), context);
-                    executionGraph.addEdge(javaTransition, initialState, finalState);
+                    } else {
+                        transition = GenericTransition.unlabelled();
+                    }
+                    executionGraph.addEdge(transition, initialState, finalState);
                     initialState = finalState;
                 }
                 constrainedTerm = result;

@@ -13,7 +13,6 @@ import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.compile.utils.RuleCompilerSteps;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.SubstitutionFilter;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.RewriteRelation;
@@ -63,18 +62,18 @@ public class JavaSymbolicExecutor implements Executor {
     }
 
     @Override
-    public RewriteRelation run(org.kframework.kil.Term cfg, boolean computeGraph) throws KRunExecutionException {
-        return javaRewriteEngineRun(cfg, -1, computeGraph);
+    public RewriteRelation run(org.kframework.kil.Term cfg, Integer depth, Integer sampleGraph) {
+        return javaRewriteEngineRun(cfg, depth == null ? -1 : depth, sampleGraph == null ? -1 : sampleGraph);
     }
 
 
-    private RewriteRelation javaRewriteEngineRun(org.kframework.kil.Term cfg, int bound, boolean computeGraph) {
+    private RewriteRelation javaRewriteEngineRun(org.kframework.kil.Term cfg, int bound, int sampleGraph) {
         Term term = kilTransformer.transformAndEval(cfg);
         TermContext termContext = TermContext.of(globalContext);
         termContext.setTopTerm(term);
 
         if (javaOptions.patternMatching) {
-            if (computeGraph) {
+            if (sampleGraph > 0) {
                 KExceptionManager.criticalError("Compute Graph with Pattern Matching Not Implemented Yet");
             }
             ConstrainedTerm rewriteResult = new ConstrainedTerm(getPatternMatchRewriter().rewrite(term, bound, termContext), termContext);
@@ -87,7 +86,7 @@ public class JavaSymbolicExecutor implements Executor {
                 new ConstrainedTerm(term, ConjunctiveFormula.of(termContext)),
                 context,
                 bound,
-                computeGraph);
+                sampleGraph);
         return new RewriteRelation(finalState, rewriter.getExecutionGraph());
     }
 
@@ -98,7 +97,7 @@ public class JavaSymbolicExecutor implements Executor {
             SearchType searchType,
             org.kframework.kil.Rule pattern,
             org.kframework.kil.Term cfg,
-            RuleCompilerSteps compilationInfo) throws KRunExecutionException {
+            RuleCompilerSteps compilationInfo) {
 
         List<Rule> claims = Collections.emptyList();
         if (bound == null) {
@@ -156,12 +155,6 @@ public class JavaSymbolicExecutor implements Executor {
                 null);
 
         return retval;
-    }
-
-    @Override
-    public RewriteRelation step(org.kframework.kil.Term cfg, int steps, boolean computeGraph)
-            throws KRunExecutionException {
-        return javaRewriteEngineRun(cfg, steps, computeGraph);
     }
 
     public SymbolicRewriter getSymbolicRewriter() {

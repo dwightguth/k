@@ -74,7 +74,7 @@ public class ExecutorDebugger implements Debugger {
         } catch (CompilerStepDone e) {
             e.printStackTrace();
         }
-        KRunState reduced = executor.step(initialConfiguration, 0, false).getFinalState();
+        KRunState reduced = executor.run(initialConfiguration, 0, 1).getFinalState();
         graph = new KRunGraph();
         states = new DualHashBidiMap<Integer, KRunState>();
         putState(reduced);
@@ -117,7 +117,6 @@ public class ExecutorDebugger implements Debugger {
         return state;
     }
 
-
     public void step(int steps) throws KRunExecutionException {
         if (currentState == null) {
             throw new IllegalStateException("Cannot step without a current state to step from. "
@@ -125,11 +124,7 @@ public class ExecutorDebugger implements Debugger {
                     + "first select a solution with the select command before executing steps of rewrites!");
         }
         RewriteRelation finalRelation;
-        if (steps >= 0) {
-            finalRelation = executor.step(getState(currentState).getRawResult(), steps, true);
-        } else {
-            finalRelation = executor.run(getState(currentState).getRawResult(), true);
-        }
+        finalRelation = executor.run(getState(currentState).getRawResult(), steps >= 0 ? steps : null, 1);
         KRunGraph currentGraph = finalRelation.getExecutionGraph().get();
         //merge the new graph into the current graph
         mergeSearchGraph(currentGraph);
