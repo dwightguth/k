@@ -24,12 +24,10 @@ import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.krun.KRunDebuggerOptions;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.api.KRunGraph;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchResults;
 import org.kframework.krun.api.Transition;
-import org.kframework.krun.api.UnsupportedBackendOptionException;
 import org.kframework.transformation.Transformation;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -95,7 +93,7 @@ public interface Debugger {
     @param steps The maximum number of transitions to follow through (0 to stop before first
     transition)
     */
-    public abstract void step(int steps) throws KRunExecutionException;
+    public abstract void step(int steps);
 
     /**
     Explore the complete search graph from the currently selected state forward a specified number
@@ -104,12 +102,12 @@ public interface Debugger {
     @return A set of all new states discovered by the stepper after searching the specified number
     of steps.
     */
-    public abstract SearchResults stepAll(int steps) throws KRunExecutionException;
+    public abstract SearchResults stepAll(int steps);
 
     /**
     Explore the search graph one step at a time until rewriting terminates.
     */
-    public abstract void resume() throws KRunExecutionException;
+    public abstract void resume();
 
     /**
     Read a string and append it to the buffer for stdin.
@@ -120,7 +118,7 @@ public interface Debugger {
     /**
      * Start debugging from a particular term
      */
-    public abstract void start(Term initialConfiguration) throws KRunExecutionException;
+    public abstract void start(Term initialConfiguration);
 
     public static class Tool implements Transformation<Void, Void> {
 
@@ -204,17 +202,10 @@ public interface Debugger {
             completors.add(new ArgumentCompletor(argCompletor));
             reader.addCompletor(new MultiCompletor(completors));
 
-            try {
-                debugger.start(initialConfiguration.get());
-                System.out.println("After running one step of execution the result is:\n");
-                System.out.println(statePrinter.run(debugger.getState(debugger.getCurrentState()), a));
-            } catch (UnsupportedBackendOptionException e) {
-                throw KExceptionManager.criticalError("Backend \""
-                        + kompileOptions.backend
-                        + "\" does not support option " + e.getMessage(), e);
-            } catch (KRunExecutionException e) {
-                throw KExceptionManager.criticalError(e.getMessage(), e);
-            }
+            debugger.start(initialConfiguration.get());
+            System.out.println("After running one step of execution the result is:\n");
+            System.out.println(statePrinter.run(debugger.getState(debugger.getCurrentState()), a));
+
             while (true) {
                 System.out.println();
                 String input;
@@ -322,8 +313,6 @@ public interface Debugger {
                     jc.usage();
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     System.err.println(e.getMessage());
-                } catch (KRunExecutionException e) {
-                    System.err.println("Error executing krun: " + e.getMessage());
                 }
             }
         }

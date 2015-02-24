@@ -21,7 +21,6 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.krun.GenericKRunState;
 import org.kframework.krun.GenericTransition;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.Transition.TransitionType;
 import org.kframework.krun.tools.Debugger;
@@ -51,7 +50,7 @@ public class ExecutorDebugger implements Debugger {
             Context context,
             TermLoader loader,
             KExceptionManager kem,
-            KRunState.Counter counter) throws KRunExecutionException {
+            KRunState.Counter counter) {
         this.context = context;
         this.executor = executor;
         this.loader = loader;
@@ -60,7 +59,7 @@ public class ExecutorDebugger implements Debugger {
     }
 
     @Override
-    public void start(Term initialConfiguration) throws KRunExecutionException {
+    public void start(Term initialConfiguration) {
         try {
             ASTNode pattern = loader.parsePattern(
                     KRunOptions.DEFAULT_PATTERN,
@@ -117,7 +116,7 @@ public class ExecutorDebugger implements Debugger {
         return state;
     }
 
-    public void step(int steps) throws KRunExecutionException {
+    public void step(int steps) {
         if (currentState == null) {
             throw new IllegalStateException("Cannot step without a current state to step from. "
                     + "If you previously used the search command you must"
@@ -137,11 +136,11 @@ public class ExecutorDebugger implements Debugger {
         }
     }
 
-    public void resume() throws KRunExecutionException {
+    public void resume() {
         step(-1);
     }
 
-    public SearchResults stepAll(int steps) throws KRunExecutionException {
+    public SearchResults stepAll(int steps) {
         if (currentState == null) {
             throw new IllegalStateException("Cannot step without a current state to step from. "
                     + "If you previously used the search command you must"

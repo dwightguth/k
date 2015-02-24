@@ -18,7 +18,6 @@ import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunResult;
 import org.kframework.krun.api.KRunState;
@@ -30,7 +29,6 @@ import org.kframework.parser.TermLoader;
 import org.kframework.transformation.Transformation;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KExceptionManager;
-import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.inject.Main;
 
 import java.util.HashSet;
@@ -96,14 +94,10 @@ public interface Executor {
         public KRunResult run(Void v, Attributes a) {
             a.add(Context.class, context);
             a.add(Boolean.class, PrintSearchResult.IS_DEFAULT_PATTERN, options.pattern == null);
-            try {
-                if (options.search()) {
-                    return search();
-                } else {
-                    return execute(a);
-                }
-            } catch (KRunExecutionException e) {
-                throw KExceptionManager.criticalError(e.getMessage(), e);
+            if (options.search()) {
+                return search();
+            } else {
+                return execute(a);
             }
         }
 
@@ -123,7 +117,7 @@ public interface Executor {
             }
         }
 
-        public SearchResults search() throws ParseFailedException, KRunExecutionException {
+        public SearchResults search() {
             ASTNode pattern = pattern(options.pattern);
             SearchPattern searchPattern = new SearchPattern(pattern);
             SearchResults result;
@@ -138,7 +132,7 @@ public interface Executor {
             return result;
         }
 
-        public KRunResult execute(Attributes a) throws ParseFailedException, KRunExecutionException {
+        public KRunResult execute(Attributes a) {
             KRunState result;
             result = executor.run(initialConfiguration.get(), options.depth, null).getFinalState();
             sw.printIntermediate("Execution total");
@@ -155,7 +149,7 @@ public interface Executor {
             return result;
         }
 
-        private int getExitCode(Term res) throws KRunExecutionException {
+        private int getExitCode(Term res) {
             ASTNode exitCodePattern = pattern(options.exitCodePattern);
             SearchPattern searchPattern = new SearchPattern(exitCodePattern);
             SearchResults results = executor.search(1, 1, SearchType.FINAL, searchPattern.patternRule, res, searchPattern.steps);
@@ -177,7 +171,7 @@ public interface Executor {
             return vars.iterator().next();
         }
 
-        public ASTNode pattern(String pattern) throws ParseFailedException {
+        public ASTNode pattern(String pattern) {
             if (pattern == null && !options.search()) {
                 //user did not specify a pattern and it's not a search, so
                 //we should return null to indicate no pattern is needed

@@ -19,7 +19,6 @@ import org.kframework.kil.Attribute;
 import org.kframework.kil.Module;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
-import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.api.KRunProofResult;
 import org.kframework.krun.tools.Prover;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -50,7 +49,7 @@ public class JavaSymbolicProver implements Prover {
     }
 
     @Override
-    public KRunProofResult<Set<org.kframework.kil.Term>> prove(Module module) throws KRunExecutionException {
+    public KRunProofResult<Set<org.kframework.kil.Term>> prove(Module module) {
         TermContext termContext = TermContext.of(globalContext);
         List<Rule> rules = new ArrayList<Rule>();
         for (org.kframework.kil.ModuleItem moduleItem : module.getItems()) {
@@ -87,7 +86,7 @@ public class JavaSymbolicProver implements Prover {
     }
 
     @Override
-    public Module preprocess(Module module, Term cfg) throws KRunExecutionException {
+    public Module preprocess(Module module, Term cfg) {
         Map<Term, Term> substitution = null;
         if (cfg != null) {
             cfg = executor.run(cfg, null, null).getFinalState().getRawResult();
