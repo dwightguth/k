@@ -114,11 +114,11 @@ public class Profiler {
                 ReentrantStopwatch stopwatch = iter.next();
                 System.err.printf("%s = %s%n", stopwatch.name, stopwatch.toString());
             }
-            System.err.println("Top 10 most expensive rules:");
+            System.err.println("Top 20 most expensive rules:");
             sorted = new TreeSet<>(new ReverseComparator<>());
             sorted.addAll(RULE_PROFILING_TIMERS.values());
             iter = sorted.iterator();
-            for (int i = 0; i < 10 && iter.hasNext(); i++) {
+            for (int i = 0; i < 20 && iter.hasNext(); i++) {
                 ReentrantStopwatch stopwatch = iter.next();
                 System.err.printf("%s = %s%n", stopwatch.name, stopwatch.toString());
             }
