@@ -131,9 +131,5 @@ public class KompileOptions implements Serializable {
 
         @Parameter(names="--legacy-kast", description="Compile with settings based on the old KAST structure")
         public boolean legacyKast = false;
-
-        @Parameter(names="--indexed-cells", description="Cells in configuration to index for faster rewriting",
-                listConverter=StringListConverter.class)
-        public List<String> indexedCells = Collections.singletonList("k");
     }
 }

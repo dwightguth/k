@@ -3,7 +3,6 @@ package org.kframework.backend.java.indexing;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
@@ -24,20 +23,19 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.symbolic.RuleAuditing;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.loader.Constants;
-import org.kframework.kompile.KompileOptions;
 import org.kframework.utils.inject.RequestScoped;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The indexing scheme currently used in the Java Backend
@@ -60,17 +58,7 @@ public class IndexingTable implements Serializable {
         public final IndexingPair TOP_INDEXING_PAIR = new IndexingPair(TOP_INDEX, TOP_INDEX);
         public final BottomIndex BOTTOM_INDEX = new BottomIndex();
         public final IndexingPair BOTTOM_INDEXING_PAIR = new IndexingPair(BOTTOM_INDEX, BOTTOM_INDEX);
-        public final List<CellLabel> indexedCells;
-
-        @Inject
-        public Data(KompileOptions options) {
-            this(options.experimental.indexedCells.stream()
-                    .map(s -> CellLabel.of(s)).collect(Collectors.toList()));
-        }
-
-        public Data(List<CellLabel> indexedCells) {
-            this.indexedCells = ImmutableList.copyOf(indexedCells);
-        }
+        public final List<CellLabel> indexedCells = Collections.singletonList(CellLabel.K);
     }
 
     @Inject

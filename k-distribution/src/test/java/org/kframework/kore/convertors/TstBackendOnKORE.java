@@ -7,7 +7,6 @@ import org.kframework.backend.java.builtins.IntToken;
 import org.kframework.backend.java.builtins.UninterpretedToken;
 import org.kframework.backend.java.indexing.IndexingTable;
 import org.kframework.backend.java.kil.BuiltinMap;
-import org.kframework.backend.java.kil.CellLabel;
 import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.GlobalContext;
@@ -31,7 +30,6 @@ import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import scala.collection.JavaConversions;
 
@@ -73,7 +71,7 @@ public class TstBackendOnKORE extends BaseTest {
                 .forEach(definition::addKLabel);
         definition.addKoreRules(module, termContext);
 
-        definition.setIndex(new IndexingTable(() -> definition, new IndexingTable.Data(Collections.singletonList(CellLabel.of("k")))));
+        definition.setIndex(new IndexingTable(() -> definition, new IndexingTable.Data()));
 
         SymbolicRewriter rewriter = new SymbolicRewriter(definition, new KompileOptions(), new JavaExecutionOptions(), new KRunState.Counter());
         KSequence.Builder builder1 = KSequence.builder();

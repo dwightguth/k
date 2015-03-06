@@ -227,7 +227,7 @@ public class Definition extends JavaSymbolicObject {
                 new KRunOptions());
         context = null;
 
-        this.indexingData = new IndexingTable.Data(Collections.singletonList(CellLabel.of("k")));
+        this.indexingData = new IndexingTable.Data();
     }
 
     public void addKoreRules(Module module, TermContext termContext) {
