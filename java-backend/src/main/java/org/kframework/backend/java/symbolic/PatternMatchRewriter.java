@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.kframework.backend.java.indexing.IndexingCellsCollector;
-import org.kframework.backend.java.indexing.RuleIndex;
+import org.kframework.backend.java.indexing.IndexingTable;
 import org.kframework.backend.java.kil.CellCollection;
 import org.kframework.backend.java.kil.DataStructures;
 import org.kframework.backend.java.kil.Definition;
@@ -47,7 +47,7 @@ public class PatternMatchRewriter {
     private final TransitionCompositeStrategy strategy;
     private int step;
     private final List<Term> results = new ArrayList<>();
-    private RuleIndex ruleIndex;
+    private IndexingTable ruleIndex;
 
     @Inject
     public PatternMatchRewriter(
@@ -147,7 +147,7 @@ public class PatternMatchRewriter {
     }
 
     private void computeIndexingCells(Term subject, TermContext termContext) {
-        indexingCells = IndexingCellsCollector.getIndexingCells(subject, termContext.definition());
+        indexingCells = IndexingCellsCollector.getIndexingCells(subject, termContext.definition(), termContext.definition().indexingData.indexedCells);
     }
 
     private final void computeSearchRewriteStep(Term subject, int successorBound, TermContext termContext) {
