@@ -557,7 +557,6 @@ public class KItem extends Term implements KItemRepresentation {
         /* TODO(YilongL): make KLabelConstant dependent on Definition and store
          * anywhere rules in KLabelConstant */
         for (Rule rule : definition.anywhereRules().get(kLabelConstant)) {
-            Profiler.startTimer(Profiler.getTimerForRule(rule));
             try {
                 if (rule == RuleAuditing.getAuditingRule()) {
                     RuleAuditing.beginAudit();
@@ -580,7 +579,6 @@ public class KItem extends Term implements KItemRepresentation {
                     return rightHandSide;
                 }
             } finally {
-                Profiler.stopTimer(Profiler.getTimerForRule(rule));
                 if (RuleAuditing.isAuditBegun()) {
                     if (RuleAuditing.getAuditingRule() == rule) {
                         RuleAuditing.endAudit();

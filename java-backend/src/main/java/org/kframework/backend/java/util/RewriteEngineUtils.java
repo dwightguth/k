@@ -58,6 +58,7 @@ public class RewriteEngineUtils {
             Substitution<Variable, Term> substitution,
             TermContext context) {
         /* handle fresh variables, data structure lookups, and side conditions */
+        Profiler.startTimer(Profiler.getTimerForRule(rule));
 
         Substitution<Variable, Term> crntSubst = substitution;
         /* add bindings for fresh variables used in the rule */
@@ -151,6 +152,7 @@ public class RewriteEngineUtils {
             }
         }
         Profiler.stopTimer(Profiler.EVALUATE_REQUIRES_TIMER);
+        Profiler.stopTimer(Profiler.getTimerForRule(rule));
 
         return crntSubst;
     }

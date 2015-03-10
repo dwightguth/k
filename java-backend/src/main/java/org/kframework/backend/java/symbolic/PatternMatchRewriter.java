@@ -207,7 +207,6 @@ public class PatternMatchRewriter {
                 ArrayList<Rule> rules = new ArrayList<Rule>(strategy.next());
     //            System.out.println("rules.size: "+rules.size());
                 for (Rule rule : rules) {
-                    Profiler.startTimer(Profiler.getTimerForRule(rule));
                     try {
                         if (rule == RuleAuditing.getAuditingRule()) {
                             RuleAuditing.beginAudit();
@@ -278,7 +277,6 @@ public class PatternMatchRewriter {
                         e.exception.addTraceFrame("while evaluating rule at " + rule.getSource() + rule.getLocation());
                         throw e;
                     } finally {
-                        Profiler.stopTimer(Profiler.getTimerForRule(rule));
                         if (RuleAuditing.isAuditBegun()) {
                             if (RuleAuditing.getAuditingRule() == rule) {
                                 RuleAuditing.endAudit();
