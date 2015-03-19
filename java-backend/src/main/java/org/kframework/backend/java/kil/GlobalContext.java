@@ -5,7 +5,9 @@ package org.kframework.backend.java.kil;
 import org.kframework.backend.java.kil.KItem.KItemOperations;
 import org.kframework.backend.java.symbolic.Equality.EqualityOperations;
 import org.kframework.backend.java.symbolic.SMTOperations;
+import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.io.FileSystem;
+import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
 import org.kframework.utils.inject.RequestScoped;
 
@@ -18,6 +20,8 @@ public class GlobalContext implements Serializable {
     private Definition def;
     public final transient FileSystem fs;
     public final transient Tool tool;
+    public final transient GlobalOptions globalOptions;
+    public final transient KRunOptions krunOptions;
     @Deprecated
     public final transient EqualityOperations equalityOps;
     @Deprecated
@@ -31,12 +35,16 @@ public class GlobalContext implements Serializable {
             EqualityOperations equalityOps,
             SMTOperations constraintOps,
             KItemOperations kItemOps,
-            Tool tool) {
+            Tool tool,
+            GlobalOptions globalOptions,
+            KRunOptions krunOptions) {
         this.fs = fs;
         this.equalityOps = equalityOps;
         this.constraintOps = constraintOps;
         this.kItemOps = kItemOps;
         this.tool = tool;
+        this.globalOptions = globalOptions;
+        this.krunOptions = krunOptions;
     }
 
     public void setDefinition(Definition def) {

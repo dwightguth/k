@@ -90,7 +90,7 @@ public class SymbolicRewriter {
         }
 
         stopwatch.stop();
-        if (definition.kRunOptions().experimental.statistics) {
+        if (constrainedTerm.termContext().krunOptions().experimental.statistics) {
             System.err.println("[" + step + ", " + stopwatch + "]");
         }
 
@@ -170,8 +170,8 @@ public class SymbolicRewriter {
                             results.add(result);
                             appliedRules.add(rule);
                             substitutions.add(unificationConstraint.substitution());
-                            Coverage.print(definition.kRunOptions().experimental.coverage, subject);
-                            Coverage.print(definition.kRunOptions().experimental.coverage, rule);
+                            Coverage.print(result.termContext().krunOptions().experimental.coverage, subject);
+                            Coverage.print(result.termContext().krunOptions().experimental.coverage, rule);
                             if (results.size() == successorBound) {
                                 return;
                             }
@@ -437,7 +437,7 @@ public class SymbolicRewriter {
         }
 
         stopwatch.stop();
-        if (definition.kRunOptions().experimental.statistics) {
+        if (context.krunOptions().experimental.statistics) {
             System.err.println("[" + visited.size() + "states, " + step + "steps, " + stopwatch + "]");
         }
 

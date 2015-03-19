@@ -18,8 +18,6 @@ import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
 import org.kframework.kore.KRewrite;
 import org.kframework.kore.convertors.KOREtoKIL;
-import org.kframework.krun.KRunOptions;
-import org.kframework.main.GlobalOptions;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.io.Serializable;
@@ -63,8 +61,6 @@ public class Definition extends JavaSymbolicObject {
         public final ImmutableMap<String, Attributes> kLabelAttributes;
         public final Map<org.kframework.kil.Sort, String> freshFunctionNames;
         public final ConfigurationStructureMap configurationStructureMap;
-        public transient GlobalOptions globalOptions;
-        public transient KRunOptions kRunOptions;
 
         private DefinitionData(
                 Subsorts subsorts,
@@ -73,9 +69,7 @@ public class Definition extends JavaSymbolicObject {
                 SetMultimap<String, SortSignature> signatures,
                 ImmutableMap<String, Attributes> kLabelAttributes,
                 Map<org.kframework.kil.Sort, String> freshFunctionNames,
-                ConfigurationStructureMap configurationStructureMap,
-                GlobalOptions globalOptions,
-                KRunOptions kRunOptions) {
+                ConfigurationStructureMap configurationStructureMap) {
             this.subsorts = subsorts;
             this.builtinSorts = builtinSorts;
             this.dataStructureSorts = dataStructureSorts;
@@ -83,8 +77,6 @@ public class Definition extends JavaSymbolicObject {
             this.kLabelAttributes = kLabelAttributes;
             this.freshFunctionNames = freshFunctionNames;
             this.configurationStructureMap = configurationStructureMap;
-            this.globalOptions = globalOptions;
-            this.kRunOptions = kRunOptions;
         }
     }
 
@@ -182,9 +174,7 @@ public class Definition extends JavaSymbolicObject {
                 signaturesBuilder.build(),
                 attributesBuilder.build(),
                 context.freshFunctionNames,
-                context.getConfigurationStructureMap(),
-                context.globalOptions,
-                context.krunOptions);
+                context.getConfigurationStructureMap());
         this.context = context;
     }
 
@@ -222,9 +212,7 @@ public class Definition extends JavaSymbolicObject {
                 signaturesBuilder.build(),
                 attributesBuilder.build(),
                 null,
-                null,
-                new GlobalOptions(),
-                new KRunOptions());
+                null);
         context = null;
 
         this.indexingData = new IndexingTable.Data();
@@ -331,22 +319,6 @@ public class Definition extends JavaSymbolicObject {
 
     public void setContext(Context context) {
         this.context = context;
-    }
-
-    public GlobalOptions globalOptions() {
-        return definitionData.globalOptions;
-    }
-
-    public void setGlobalOptions(GlobalOptions globalOptions) {
-        this.definitionData.globalOptions = globalOptions;
-    }
-
-    public KRunOptions kRunOptions() {
-        return definitionData.kRunOptions;
-    }
-
-    public void setKRunOptions(KRunOptions kRunOptions) {
-        this.definitionData.kRunOptions = kRunOptions;
     }
 
     public void setKem(KExceptionManager kem) {

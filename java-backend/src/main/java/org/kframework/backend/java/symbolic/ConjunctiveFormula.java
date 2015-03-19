@@ -1,7 +1,6 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
-import com.google.common.base.Stopwatch;
 import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.kil.Bottom;
 import org.kframework.backend.java.kil.BuiltinMap;
@@ -178,12 +177,11 @@ public class ConjunctiveFormula extends Term implements CollectionInternalRepres
                 context);
     }
 
-    @SuppressWarnings("unchecked")
     public ConjunctiveFormula add(Object term) {
         if (term instanceof ConjunctiveFormula) {
             return add((ConjunctiveFormula) term);
         } else if (term instanceof Substitution) {
-            return add((Substitution) term);
+            return add((Substitution<?, ?>) term);
         } else if (term instanceof Equality) {
             return add((Equality) term);
         } else if (term instanceof DisjunctiveFormula) {
@@ -482,7 +480,7 @@ public class ConjunctiveFormula extends Term implements CollectionInternalRepres
                 continue;
             }
 
-            if (context.definition().globalOptions().debug) {
+            if (context.globalOptions().debug) {
                 System.err.println("Attempting to prove: \n\t" + left + "\n  implies \n\t" + right);
             }
 
@@ -490,7 +488,7 @@ public class ConjunctiveFormula extends Term implements CollectionInternalRepres
             right = left.simplifyConstraint(right);
             right = right.orientSubstitution(rightOnlyVariables);
             if (right.isTrue() || (right.equalities().isEmpty() && rightOnlyVariables.containsAll(right.substitution().keySet()))) {
-                if (context.definition().globalOptions().debug) {
+                if (context.globalOptions().debug) {
                     System.err.println("Implication proved by simplification");
                 }
                 continue;
@@ -502,7 +500,7 @@ public class ConjunctiveFormula extends Term implements CollectionInternalRepres
                 KItem ite = ifThenElseFinder.result.get(0);
                 // TODO (AndreiS): handle KList variables
                 Term condition = ((KList) ite.kList()).get(0);
-                if (context.definition().globalOptions().debug) {
+                if (context.globalOptions().debug) {
                     System.err.println("Split on " + condition);
                 }
                 implications.add(Pair.of(left.add(condition, BoolToken.TRUE).simplify(), right));
@@ -511,12 +509,12 @@ public class ConjunctiveFormula extends Term implements CollectionInternalRepres
             }
 
             if (!impliesSMT(left,right, rightOnlyVariables)) {
-                if (context.definition().globalOptions().debug) {
+                if (context.globalOptions().debug) {
                     System.err.println("Failure!");
                 }
                 return false;
             } else {
-                if (context.definition().globalOptions().debug) {
+                if (context.globalOptions().debug) {
                     System.err.println("Proved!");
                 }
             }

@@ -41,6 +41,7 @@ public class JavaSymbolicKRunModule extends AbstractModule {
         bind(JavaExecutionOptions.class).in(RequestScoped.class);
         bind(Boolean.class).annotatedWith(FreshRules.class).toInstance(false);
 
+
         Multibinder<Object> optionsBinder = Multibinder.newSetBinder(binder(), Object.class, Options.class);
         optionsBinder.addBinding().to(JavaExecutionOptions.class);
         Multibinder<Class<?>> experimentalOptionsBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, Options.class);
@@ -80,8 +81,6 @@ public class JavaSymbolicKRunModule extends AbstractModule {
             Definition def = loader.loadOrDie(Definition.class,
                     files.resolveKompiled(JavaSymbolicBackend.DEFINITION_FILENAME));
             def.setContext(context);
-            def.setGlobalOptions(context.globalOptions);
-            def.setKRunOptions(context.krunOptions);
             def.setKem(kem);
             sw.printIntermediate("Deserialize internal definition representation");
             return def;

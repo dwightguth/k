@@ -6,7 +6,9 @@ import java.math.BigInteger;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.kil.ASTNode;
+import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.io.FileSystem;
+import org.kframework.main.GlobalOptions;
 
 /**
  * An object containing context specific to a particular configuration.
@@ -75,5 +77,13 @@ public class TermContext extends JavaSymbolicObject {
     @Override
     public void accept(Visitor visitor) {
         throw new UnsupportedOperationException();
+    }
+
+    public GlobalOptions globalOptions() {
+        return global.globalOptions;
+    }
+
+    public KRunOptions krunOptions() {
+        return global.krunOptions;
     }
 }

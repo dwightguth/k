@@ -20,7 +20,6 @@ import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.RewriteEngineUtils;
-import org.kframework.kil.loader.Context;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.util.ArrayDeque;
@@ -93,8 +92,8 @@ public class NonACPatternMatcher {
         if (match()) {
             // TODO(AndreiS): this ad-hoc evaluation is converting from the KLabel/KList format
             // (used during associative matching) back to builtin representation
-            if (termContext.definition().kRunOptions() != null
-                    && termContext.definition().kRunOptions().experimental.prove != null) {
+            if (termContext.krunOptions() != null
+                    && termContext.krunOptions().experimental.prove != null) {
                 substitution = substitution.evaluate(termContext);
             }
             return substitution;
