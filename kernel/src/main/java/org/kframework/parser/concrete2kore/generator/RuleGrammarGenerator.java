@@ -4,15 +4,14 @@ package org.kframework.parser.concrete2kore.generator;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
 import org.kframework.definition.Definition;
+import org.kframework.definition.Module;
 import org.kframework.definition.Production;
 import org.kframework.definition.ProductionItem;
 import org.kframework.definition.RegexTerminal;
+import org.kframework.definition.Sentence;
 import org.kframework.definition.Terminal;
 import org.kframework.kore.Sort;
-import org.kframework.definition.Module;
-import org.kframework.definition.Sentence;
 import org.kframework.parser.concrete2kore.ParseInModule;
-import scala.Function1;
 import scala.collection.immutable.Seq;
 
 import java.util.HashMap;
@@ -22,8 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.kframework.Collections.*;
-import static org.kframework.kore.KORE.*;
 import static org.kframework.definition.Constructors.*;
+import static org.kframework.kore.KORE.Sort;
 
 /**
  * Generator for rule and ground parsers.

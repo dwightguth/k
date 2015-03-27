@@ -3,12 +3,9 @@ package org.kframework.parser.generator;
 
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Configuration;
-import org.kframework.kil.Definition;
-import org.kframework.kil.Location;
 import org.kframework.kil.Module;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.StringSentence;
-import org.kframework.kil.Term;
 import org.kframework.kil.loader.CollectStartSymbolPgmVisitor;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;

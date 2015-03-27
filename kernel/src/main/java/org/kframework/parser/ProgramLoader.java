@@ -4,6 +4,7 @@ package org.kframework.parser;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.kframework.attributes.Source;
 import org.kframework.compile.transformers.AddEmptyLists;
 import org.kframework.compile.transformers.FlattenTerms;
 import org.kframework.compile.transformers.RemoveBrackets;
@@ -14,7 +15,6 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Definition;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.Sort;
-import org.kframework.kil.Source;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
@@ -142,7 +142,7 @@ public class ProgramLoader {
             Module synMod = new KILtoKORE(context, true, false).apply(def).getModule(def.getMainSyntaxModule()).get();
             ParseInModule parser = RuleGrammarGenerator.getProgramsGrammar(synMod);
             Tuple2<Either<Set<ParseFailedException>, org.kframework.parser.Term>, Set<ParseFailedException>> parsed
-                    = parser.parseString(FileUtil.read(content), startSymbol.getName());
+                    = parser.parseString(FileUtil.read(content), startSymbol.getName(), source);
             if (parsed._1().isLeft()) {
                 for (ParseFailedException k : parsed._1().left().get())
                     kem.addKException(k.getKException());

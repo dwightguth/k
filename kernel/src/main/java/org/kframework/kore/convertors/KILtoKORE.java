@@ -138,7 +138,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
     @SuppressWarnings("unchecked")
     public Set<org.kframework.definition.Sentence> apply(ModuleItem i) {
-        if (i instanceof Syntax || i instanceof PriorityExtended) {
+        if (i instanceof Syntax || i instanceof PriorityExtended || i instanceof Configuration) {
             return (Set<org.kframework.definition.Sentence>) apply((ASTNode) i);
         } else if (i instanceof Restrictions) {
             return Sets.newHashSet();
@@ -165,13 +165,21 @@ public class KILtoKORE extends KILTransformation<Object> {
                 inner.convertAttributes(m));
     }
 
-    public org.kframework.definition.Configuration apply(Configuration kilConfiguration) {
-        if (syntactic)
-            return Configuration(KApply(KLabel("'configuration")), KToken(Sorts.Bool(), "true"),
-                    inner.convertAttributes(kilConfiguration));
-        Cell body = (Cell) kilConfiguration.getBody();
-        return Configuration(inner.apply(body), inner.applyOrTrue(kilConfiguration.getEnsures()),
-                inner.convertAttributes(kilConfiguration));
+    public Set<org.kframework.definition.Sentence> apply(Configuration kilConfiguration) {
+        KApply body = inner.apply((Cell) kilConfiguration.getBody());
+        K ensures = inner.applyOrTrue(kilConfiguration.getEnsures());
+        Att attributes = inner.convertAttributes(kilConfiguration);
+        return generateConfigProductionsFromDeclaration(body, ensures, attributes);
+    }
+
+    private Set<org.kframework.definition.Sentence> generateConfigProductionsFromDeclaration(
+            KApply body, K ensures, Att attributes) {
+        String multiplicity = attributes.<String>getOptional("multiplicity").orElse("1");
+        switch (multiplicity) {
+        case "1":
+            break;
+        }
+        return Sets.newHashSet();
     }
 
     public Rule apply(org.kframework.kil.Rule r) {
@@ -405,11 +413,11 @@ public class KILtoKORE extends KILTransformation<Object> {
                     attrsWithKilProductionId.add("#klabel", dropQuote(p.getKLabel())));
 
             // lst ::= elem
-            prod2 = Production(sort, Seq(NonTerminal(elementSort)), attrsWithKilProductionId);
+            prod2 = Production(sort, Seq(NonTerminal(elementSort)), attrsWithKilProductionId.remove("strict"));
 
             // lst ::= .UserList
             prod3 = Production(sort, Seq(Terminal("." + sort.toString())),
-                    attrsWithKilProductionId.add("#klabel", dropQuote(p.getTerminatorKLabel())));
+                    attrsWithKilProductionId.remove("strict").add("#klabel", dropQuote(p.getTerminatorKLabel())));
 
             res.add(prod1);
             res.add(prod2);

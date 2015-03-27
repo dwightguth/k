@@ -1,10 +1,9 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.krun;
 
+import org.kframework.attributes.Source;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.Sort;
-import org.kframework.kil.Source;
-import org.kframework.kil.Sources;
 import org.kframework.kil.Term;
 import org.kframework.parser.ParserType;
 import org.kframework.parser.ProgramLoader;
@@ -119,13 +118,13 @@ public class RunProcess {
             startSymbol = context.startSymbolPgm();
         }
         Reader content = new StringReader(value);
-        Source source = Sources.fromCommandLine("parameters");
+        Source source = Source.apply("<parameters>");
 
         switch (parser) {
             case "kast":
                 if (!isNotFile) {
                     content = context.files.readFromWorkingDirectory(value);
-                    source = Sources.fromFile(context.files.resolveWorkingDirectory(value));
+                    source = Source.apply(context.files.resolveWorkingDirectory(value).getAbsolutePath());
                 }
             case "kast -e":
                 term = loader.processPgm(content, source, startSymbol, context, ParserType.PROGRAM);
@@ -133,7 +132,7 @@ public class RunProcess {
             case "kast --parser ground":
                 if (!isNotFile) {
                     content = context.files.readFromWorkingDirectory(value);
-                    source = Sources.fromFile(context.files.resolveWorkingDirectory(value));
+                    source = Source.apply(context.files.resolveWorkingDirectory(value).getAbsolutePath());
                 }
             case "kast --parser ground -e":
                 term = loader.processPgm(content, source, startSymbol, context, ParserType.GROUND);
@@ -141,14 +140,14 @@ public class RunProcess {
             case "kast --parser rules":
                 if (!isNotFile) {
                     content = context.files.readFromWorkingDirectory(value);
-                    source = Sources.fromFile(context.files.resolveWorkingDirectory(value));
+                    source = Source.apply(context.files.resolveWorkingDirectory(value).getAbsolutePath());
                 }
                 term = loader.processPgm(content, source, startSymbol, context, ParserType.RULES);
                 break;
             case "kast --parser binary":
                 if (!isNotFile) {
                     content = context.files.readFromWorkingDirectory(value);
-                    source = Sources.fromFile(context.files.resolveWorkingDirectory(value));
+                    source = Source.apply(context.files.resolveWorkingDirectory(value).getAbsolutePath());
                 }
                 term = loader.processPgm(content, source, startSymbol, context, ParserType.BINARY);
                 break;

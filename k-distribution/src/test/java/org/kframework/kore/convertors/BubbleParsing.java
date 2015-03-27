@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.kframework.definition.DefinitionTransformer;
-import org.kframework.kil.Sources;
 import org.kframework.kore.K;
 import org.kframework.definition.Bubble;
 import org.kframework.definition.Module;
@@ -85,7 +83,7 @@ public class BubbleParsing {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        def.setItems(Outer.parse(Sources.generatedBy(BubbleParsing.class), definitionText, null));
+        def.setItems(Outer.parse(Source.apply(file.toString()), definitionText, null));
         def.setMainModule("KAST");
         def.setMainSyntaxModule("KAST");
         return def;

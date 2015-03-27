@@ -8,15 +8,13 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
 import org.kframework.kil.ASTNode;
-import org.kframework.kil.Configuration;
-import org.kframework.kil.Location;
 import org.kframework.kil.Module;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sentence;
-import org.kframework.kil.Source;
 import org.kframework.kil.StringSentence;
-import org.kframework.kil.Term;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;

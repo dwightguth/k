@@ -15,6 +15,7 @@ case class Down(imports: Set[String]) extends (K => Any) {
   import org.kframework.builtin.Sorts.KString
   import org.kframework.builtin.Sorts.String
   import org.kframework.builtin.Sorts.Int
+  import org.kframework.builtin.Sorts.File
 
   val AttVal = Sort("AttributeValue")
 
@@ -22,6 +23,7 @@ case class Down(imports: Set[String]) extends (K => Any) {
     case KToken(`KString`, v) => v
     case KToken(`String`, v) => v
     case KToken(`Int`, v) => v.toInt
+    case KToken(`File`, v) => new java.io.File(v)
     case KToken(`AttVal`, v) => v
     //    case KApply(KLabel("List"), ks, att) => ks.delegate map apply
     //    case KApply(KLabel("Seq"), ks, att) => ks.delegate map apply

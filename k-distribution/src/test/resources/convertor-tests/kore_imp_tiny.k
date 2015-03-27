@@ -9,7 +9,6 @@ endmodule
 
 module TEST
   import BASIC-K
-  import STRICTNESS
   import BOOL
   import LOGIC
   import INT
