@@ -564,8 +564,8 @@ public class Parser {
          * @param prd      The production of the token. 'null' if intermediate token
          * @return 'true' iff the mappings in this function changed.
          */
-        boolean addToken(Function that, String string, Production prd) {
-            final Constant token =  Constant.apply(string, prd, Optional.empty());
+        boolean addToken(Function that, String string) {
+            final Constant token =  Constant.apply(string, null);
             return addAux(that, new com.google.common.base.Function<Set<KList>, Set<KList>>() {
                 public Set<KList> apply(Set<KList> set) {
                     Set<KList> result = new HashSet<>();
@@ -729,7 +729,7 @@ public class Parser {
         for (StateCall.Key key : s.stateCalls.keySet()) {
             if (key.state instanceof RegExState && key.stateBegin == current) {
                 tokens.add(new ImmutablePair<>(
-                    ((RegExState) key.state).prd, ((RegExState) key.state).pattern));
+                    null, ((RegExState) key.state).pattern));
             }
         }
         return new ParseError(current, s.lines[current], s.columns[current], tokens);
@@ -790,8 +790,7 @@ public class Parser {
         } else if (stateReturn.key.stateCall.key.state instanceof PrimitiveState) {
             return stateReturn.function.addToken(stateReturn.key.stateCall.function,
                 s.input.subSequence(stateReturn.key.stateCall.key.stateBegin,
-                    stateReturn.key.stateEnd).toString(),
-                ((PrimitiveState) stateReturn.key.stateCall.key.state).prd);
+                    stateReturn.key.stateEnd).toString());
         } else if (stateReturn.key.stateCall.key.state instanceof RuleState) {
             int startPosition = stateReturn.key.stateCall.key.ntCall.key.ntBegin;
             int endPosition = stateReturn.key.stateEnd;

@@ -705,7 +705,7 @@ public class ParserTest {
         // (|-----([\+-]?\d+)------|)
         NonTerminal intNt = new NonTerminal("Int");
         Production intProd09 = prod(Sort("Int"), RegexTerminal("[0-9]"));
-        PrimitiveState ints = new RegExState("Int-State", intNt, Pattern.compile("[\\+-]?\\d+"), intProd09);
+        PrimitiveState ints = new RegExState("Int-State", intNt, Pattern.compile("[\\+-]?\\d+"));
         intNt.entryState.next.add(ints);
         ints.next.add(intNt.exitState);
 
