@@ -42,6 +42,11 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
       .groupBy(_.klabel.get)
       .map { case (l, ps) => (l, ps) }
 
+  val productionsForSort: Map[Sort, Set[Production]] =
+    productions
+      .groupBy(_.sort)
+      .map { case (l, ps) => (l, ps) }
+
   val sortFor: Map[KLabel, Sort] = productionsFor mapValues { _.head.sort }
 
   def isSort(klabel: KLabel, s: Sort) = subsorts.<(sortFor(klabel), s)

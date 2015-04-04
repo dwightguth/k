@@ -6,16 +6,16 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
 import org.kframework.definition.Production;
+import org.kframework.parser.Alphabet;
 import org.kframework.parser.Ambiguity;
-import org.kframework.parser.Constant;
 import org.kframework.parser.KList;
 import org.kframework.parser.Term;
+import org.kframework.parser.Terminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.EntryState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.ExitState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NextableState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminalState;
-import org.kframework.parser.concrete2kore.kernel.Grammar.PrimitiveState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RegExState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.State;
@@ -107,7 +107,7 @@ public class Parser {
         /** The {@link Function} storing the AST parsed so far */
         final Function function = Function.empty();
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateCall> {
+        private static class Key {
             /** The {@link NonTerminalCall} containing this StateCall */
             final NonTerminalCall ntCall;
             /** The start position of this StateCall */
@@ -190,7 +190,7 @@ public class Parser {
                 this.key.stateCall.key.state.compareTo(that.key.stateCall.key.state);
         }
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateReturn> {
+        private static class Key {
             /** The {@link StateCall} that this StateReturn finishes */
             public final StateCall stateCall;
             /** The end position of the parse */
@@ -308,7 +308,7 @@ public class Parser {
         final Set<StateReturn> reactivations = new HashSet<>();
         /** The {@link Context}s from which this NonTerminalCall is called */
         final Context context = new Context();
-        private static class Key implements AutoVivifyingBiMap.Create<NonTerminalCall> {
+        private static class Key {
             /** The {@link NonTerminal} being called */
             public final NonTerminal nt;
             /** The start position for parsing the {@link NonTerminal} */
@@ -371,9 +371,9 @@ public class Parser {
         // TODO: extract Location class into it's own file
         final int[] lines;
         final int[] columns;
-        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>();
+        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>(NonTerminalCall.Key::create);
+        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>(StateCall.Key::create);
+        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>(StateReturn.Key::create);
 
         public ParseState(CharSequence input, int startLine, int startColumn) {
             /**
@@ -563,8 +563,7 @@ public class Parser {
          * @param prd      The production of the token. 'null' if intermediate token
          * @return 'true' iff the mappings in this function changed.
          */
-        boolean addToken(Function that, String string, Production prd) {
-            final Constant token =  Constant.apply(string, prd);
+        boolean addToken(Function that, String string, Terminal token) {
             return addAux(that, new com.google.common.base.Function<Set<KList>, Set<KList>>() {
                 public Set<KList> apply(Set<KList> set) {
                     Set<KList> result = new HashSet<>();
@@ -589,7 +588,7 @@ public class Parser {
          * @param exit    The function to append on 'call'
          * @return 'true' iff the mapping in this function changed
          */
-        boolean addNTCall(Function call, final Function exit) {
+        boolean addNTCall(Function call, final Function exit, Alphabet symbol) {
             return addAux(call, new com.google.common.base.Function<Set<KList>, Set<KList>>() {
                 public Set<KList> apply(Set<KList> set) {
                     Set<KList> result = new HashSet<>();
@@ -604,7 +603,7 @@ public class Parser {
                         // if we found some, make an amb node and append them to the KList
                         if (!matches.isEmpty()) {
                             KList newKList = KList.apply(context);
-                            newKList.add(Ambiguity.apply(new HashSet<Term>(matches)));
+                            newKList.add(Ambiguity.apply(new HashSet<Term>(matches), symbol));
                             result.add(newKList);
                         }
                     }
@@ -696,14 +695,14 @@ public class Parser {
             this.workListStep(stateReturn);
         }
 
-        Ambiguity result = Ambiguity.apply(new HashSet<Term>());
+        Ambiguity result = Ambiguity.apply(new HashSet<Term>(), new org.kframework.parser.NonTerminal(nt.name));
         for(StateReturn stateReturn : s.ntCalls.get(new NonTerminalCall.Key(nt,position)).exitStateReturns) {
             if (stateReturn.key.stateEnd == s.input.length()) {
-                result.items().add(KList.apply(Ambiguity.apply((Set<Term>)(Object)stateReturn.function.applyToNull())));
+                result.items().add(KList.apply(Ambiguity.apply((Set<Term>)(Object)stateReturn.function.applyToNull(), new org.kframework.parser.NonTerminal(nt.name))));
             }
         }
 
-        if(result.equals(Ambiguity.apply())) {
+        if(result.items().size() == 0) {
             CharSequence content = s.input;
             ParseError perror = getErrors();
 
@@ -730,14 +729,14 @@ public class Parser {
     public ParseError getErrors() {
         int current = 0;
         for (StateCall.Key key : s.stateCalls.keySet()) {
-            if (key.state instanceof PrimitiveState)
+            if (key.state instanceof RegExState)
                 current = Math.max(current, key.stateBegin);
         }
         Set<Pair<Production, Pattern>> tokens = new HashSet<>();
         for (StateCall.Key key : s.stateCalls.keySet()) {
             if (key.state instanceof RegExState && key.stateBegin == current) {
                 tokens.add(new ImmutablePair<>(
-                    ((RegExState) key.state).prd, ((RegExState) key.state).pattern));
+                    null, ((RegExState) key.state).pattern));
             }
         }
         return new ParseError(source, current, s.lines[current], s.columns[current], tokens);
@@ -797,11 +796,11 @@ public class Parser {
             return stateReturn.function.add(stateReturn.key.stateCall.function);
         } else if (stateReturn.key.stateCall.key.state instanceof ExitState) {
             return stateReturn.function.add(stateReturn.key.stateCall.function);
-        } else if (stateReturn.key.stateCall.key.state instanceof PrimitiveState) {
+        } else if (stateReturn.key.stateCall.key.state instanceof RegExState) {
             return stateReturn.function.addToken(stateReturn.key.stateCall.function,
                 s.input.subSequence(stateReturn.key.stateCall.key.stateBegin,
                     stateReturn.key.stateEnd).toString(),
-                ((PrimitiveState) stateReturn.key.stateCall.key.state).prd);
+                    (Terminal)((RegExState)stateReturn.key.stateCall.key.state).symbol);
         } else if (stateReturn.key.stateCall.key.state instanceof RuleState) {
             int startPosition = stateReturn.key.stateCall.key.ntCall.key.ntBegin;
             int endPosition = stateReturn.key.stateEnd;
@@ -821,7 +820,8 @@ public class Parser {
                             stateReturn.key.stateCall.key.stateBegin)),
                         stateReturn.key.stateEnd,
                         ((Grammar.NonTerminalState) stateReturn.key.stateCall.key.state).child.exitState)),
-                    stateReturn.key.stateEnd)).function);
+                    stateReturn.key.stateEnd)).function,
+                    ((NonTerminalState) stateReturn.key.stateCall.key.state).symbol);
         } else { throw unknownStateType(); }
     }
 
@@ -837,9 +837,9 @@ public class Parser {
             s.stateReturnWorkList.enqueue(
                 s.stateReturns.get(
                     new StateReturn.Key(stateCall, stateCall.key.stateBegin)));
-        } else if (nextState instanceof PrimitiveState) {
-            for (PrimitiveState.MatchResult matchResult :
-                    ((PrimitiveState)nextState).matches(s.input, stateCall.key.stateBegin)) {
+        } else if (nextState instanceof RegExState) {
+            for (RegExState.MatchResult matchResult :
+                    ((RegExState)nextState).matches(s.input, stateCall.key.stateBegin)) {
                 s.stateReturnWorkList.enqueue(
                     s.stateReturns.get(
                         new StateReturn.Key(stateCall, matchResult.matchEnd)));

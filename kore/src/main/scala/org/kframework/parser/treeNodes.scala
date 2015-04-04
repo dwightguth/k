@@ -19,19 +19,34 @@ trait ProductionReference extends Term {
   val production: Production
 }
 
+trait SymbolReference extends Term {
+  val symbol: Alphabet
+}
+
 trait HasChildren {
   def items: Iterable[Term]
   def replaceChildren(newChildren: Collection[Term]): Term
 }
 
-case class Constant private(value: String, production: Production) extends ProductionReference {
-  def shallowCopy(location: Location, source: Source) = Constant(value, production, location, source)
+trait Alphabet {
+  val isLayout: Boolean
+}
+case class NonTerminal(sort: String) extends Alphabet {
+  val isLayout = false
+}
+case class Terminal(regex: String, isLayout: Boolean) extends Term with SymbolReference with Alphabet {
+  val symbol = this
+  def shallowCopy(location: Location, source: Source) = Terminal(regex, isLayout, location, source)
+}
+
+case class Constant private(value: String, production: Production, symbol: Alphabet) extends ProductionReference with SymbolReference {
+  def shallowCopy(location: Location, source: Source) = Constant(value, production, symbol, location, source)
   override def toString = "#token(" + production.sort + ",\"" + StringEscapeUtils.escapeJava(value) + "\")"
 }
 
-case class TermCons private(items: List[Term], production: Production)
-  extends ProductionReference with HasChildren {
-  def shallowCopy(location: Location, source: Source) = TermCons(items, production, location, source)
+case class TermCons private(items: List[Term], production: Production, symbol: Alphabet)
+  extends ProductionReference with HasChildren with SymbolReference {
+  def shallowCopy(location: Location, source: Source) = TermCons(items, production, symbol, location, source)
 
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
@@ -53,9 +68,9 @@ case class TermCons private(items: List[Term], production: Production)
   }
 }
 
-case class Ambiguity(items: Set[Term])
-  extends Term with HasChildren {
-  def shallowCopy(location: Location, source: Source) = Ambiguity(items, location, source)
+case class Ambiguity(items: Set[Term], symbol: Alphabet)
+  extends Term with HasChildren with SymbolReference {
+  def shallowCopy(location: Location, source: Source) = Ambiguity(items, symbol, location, source)
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
     this
@@ -75,8 +90,8 @@ case class KList(items: List[Term])
 }
 
 object Constant {
-  def apply(value: String, production: Production, location: Location, source: Source):Constant = {
-    val res = Constant(value, production)
+  def apply(value: String, production: Production, symbol: Alphabet, location: Location, source: Source):Constant = {
+    val res = Constant(value, production, symbol)
     res.location = Optional.of(location)
     res.source = Optional.of(source)
     res
@@ -84,8 +99,8 @@ object Constant {
 }
 
 object TermCons {
-  def apply(items: List[Term], production: Production, location: Location, source: Source):TermCons = {
-    val res = TermCons(items, production)
+  def apply(items: List[Term], production: Production, symbol: Alphabet, location: Location, source: Source):TermCons = {
+    val res = TermCons(items, production, symbol)
     res.location = Optional.of(location)
     res.source = Optional.of(source)
     res
@@ -104,9 +119,18 @@ object KList {
 }
 
 object Ambiguity {
-  @annotation.varargs def apply(items: Term*): Ambiguity = Ambiguity(items.toSet.asJava)
-  def apply(items: Set[Term], location: Location, source: Source):Ambiguity = {
-    val res = Ambiguity(items)
+  @annotation.varargs def apply(symbol: Alphabet, items: Term*): Ambiguity = Ambiguity(items.toSet.asJava, symbol)
+  def apply(items: Set[Term], symbol: Alphabet, location: Location, source: Source):Ambiguity = {
+    val res = Ambiguity(items, symbol)
+    res.location = Optional.of(location)
+    res.source = Optional.of(source)
+    res
+  }
+}
+
+object Terminal {
+  def apply(regex: String, isLayout: Boolean, location: Location, source: Source):Terminal = {
+    val res = Terminal(regex, isLayout)
     res.location = Optional.of(location)
     res.source = Optional.of(source)
     res

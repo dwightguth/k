@@ -5,6 +5,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
 import java.util.Set;
+import java.util.function.Function;
 
 /** A BiMap in which values are automatically added to the map
  * if one doesn't already exist. In other words, it is a BiMap
@@ -12,18 +13,12 @@ import java.util.Set;
  * @param <K>    The type of the key
  * @param <V>    The type of the value
  */
-public class AutoVivifyingBiMap<K extends AutoVivifyingBiMap.Create<V>,V> {
-    /**
-     * An interface that K must implement so AutoVivifyingBiMap knows
-     * how to crate a V for a given K
-     * @param <C>
-     */
-    public interface Create<C> {
-        /**
-         * Creates a default C
-         * @return The newly created C
-         */
-        C create();
+public class AutoVivifyingBiMap<K, V> {
+
+    private  Function<K, V> create;
+
+    public AutoVivifyingBiMap(Function<K, V> create) {
+        this.create = create;
     }
 
     private BiMap<K, V> map = HashBiMap.create();
@@ -44,7 +39,7 @@ public class AutoVivifyingBiMap<K extends AutoVivifyingBiMap.Create<V>,V> {
     public V get(K key) {
         V value = map.get(key);
         if (value == null) {
-            value = key.create();
+            value = create.apply(key);
             map.put(key, value);
         }
         return value;
@@ -55,4 +50,6 @@ public class AutoVivifyingBiMap<K extends AutoVivifyingBiMap.Create<V>,V> {
      * @return The set of keys that have already been autovivified
      */
     public Set<K> keySet() { return map.keySet(); }
+
+    public Set<V> values() { return map.values(); }
 }

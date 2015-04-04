@@ -66,7 +66,7 @@ public class ParseInModule implements Serializable {
             return Tuple2.apply(Left.apply(Collections.singleton(e)), Collections.emptySet());
         }
 
-        if (parsed.equals(Ambiguity.apply())) {
+        if (parsed instanceof Ambiguity && ((Ambiguity) parsed).items().size() == 0) {
             Parser.ParseError errors = parser.getErrors();
             throw new AssertionError("There are parsing errors: " + errors.toString());
         }

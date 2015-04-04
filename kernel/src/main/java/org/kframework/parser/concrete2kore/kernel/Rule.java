@@ -1,19 +1,26 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import com.beust.jcommander.internal.Lists;
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
+import org.kframework.definition.Production;
+import org.kframework.parser.Alphabet;
+import org.kframework.parser.Constant;
+import org.kframework.parser.KList;
+import org.kframework.parser.SymbolReference;
+import org.kframework.parser.Term;
+import org.kframework.parser.TermCons;
+import org.kframework.parser.Terminal;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import com.beust.jcommander.internal.Lists;
-import org.kframework.attributes.Source;
-import org.kframework.attributes.Location;
-import org.kframework.definition.Production;
-import org.kframework.parser.*;
+import java.util.stream.Collectors;
 
 /**
  * An action that transforms an AST into another AST
@@ -74,34 +81,66 @@ public abstract class Rule implements Serializable {
     /**
      * Wraps the current KList with the given KLabel
      */
-    public static class WrapLabelRule extends KListRule {
-        private final Production label;
-        public final Pattern rejectPattern;
-        public WrapLabelRule(Production label, Pattern rejectPattern) {
-            assert label != null;
-            this.label = label;
-            this.rejectPattern = rejectPattern;
+    public static class WrapLabelRule extends ContextFreeRule {
+
+        private final Map<List<Alphabet>, List<Production>> productionMap;
+        private final Map<Production, Pattern> rejectPatterns;
+
+        public WrapLabelRule(Map<List<Alphabet>, List<Production>> productionMap, Map<Production, Pattern> rejectPatterns) {
+            this.productionMap = productionMap;
+            this.rejectPatterns = rejectPatterns;
         }
-        public WrapLabelRule(Production label) {
-            assert label != null;
-            this.label = label;
-            rejectPattern = null;
-        }
-        protected KList apply(KList klist, MetaData metaData) {
-            Term term;
+
+        @Override
+        public Set<KList> apply(Set<KList> set, MetaData metaData) {
+            Set<KList> parses = new HashSet<>();
             Location loc = new Location(metaData.start.line, metaData.start.column, metaData.end.line, metaData.end.column);
-            Source source = metaData.source;
-            if (label.att().contains("token")) {
-                String value = metaData.input.subSequence(metaData.start.position, metaData.end.position).toString();
-                if (rejectPattern != null && rejectPattern.matcher(value).matches()) {
-                    return null;
+          Source source = metaData.source;
+          for (KList parse  : set) {
+                List<Term> children = parse.items().stream().map(i -> (SymbolReference)i).filter(i -> !i.symbol().isLayout()).collect(Collectors.toList());
+                List<Alphabet> word = children.stream().map(i -> (SymbolReference) i).map(i -> i.symbol()).collect(Collectors.toList());
+                for (Production p : productionMap.get(word)) {
+                    if (p.att().contains("token")) {
+                        String value = metaData.input.subSequence(metaData.start.position, metaData.end.position).toString();
+                        Pattern rejectPattern = rejectPatterns.get(p);
+                        if (rejectPattern != null && rejectPattern.matcher(value).matches()) {
+                        } else {
+                            parses.add(KList.apply(Constant.apply(value, p, new org.kframework.parser.NonTerminal(p.sort().name()), loc, source)));
+                        }
+                    }  else {
+                        parses.add(KList.apply(TermCons.apply(children.stream().filter(i -> !(i instanceof Terminal)).collect(Collectors.toList()), p, new org.kframework.parser.NonTerminal(p.sort().name()), loc, source)));
+                    }
                 }
-                term = Constant.apply(value, label, loc, source);
-            } else {
-                term = TermCons.apply(klist.items(), label, loc, source);
             }
-            return new KList(Lists.newArrayList(term));
+            return parses;
         }
+//        private final Production label;
+//        public final Pattern rejectPattern;
+//        public WrapLabelRule(Production label, Pattern rejectPattern) {
+//            assert label != null;
+//            this.label = label;
+//            this.rejectPattern = rejectPattern;
+//        }
+//        public WrapLabelRule(Production label) {
+//            assert label != null;
+//            this.label = label;
+//            rejectPattern = null;
+//        }
+//        protected KList apply(KList klist, MetaData metaData) {
+//            Term term;
+//            Location loc = new Location(metaData.start.line, metaData.start.column, metaData.end.line, metaData.end.column);
+//            Source source = metaData.source;
+//            if (label.att().contains("token")) {
+//                String value = metaData.input.subSequence(metaData.start.position, metaData.end.position).toString();
+//                if (rejectPattern != null && rejectPattern.matcher(value).matches()) {
+//                    return null;
+//                }
+//                term = Constant.apply(value, label, loc, source);
+//            } else {
+//                term = TermCons.apply(klist.items(), label, loc, source);
+//            }
+//            return new KList(Lists.newArrayList(term));
+//        }
     }
 
     /**

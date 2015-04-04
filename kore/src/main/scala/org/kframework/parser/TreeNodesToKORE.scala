@@ -14,9 +14,9 @@ object TreeNodesToKORE {
   import org.kframework.kore.KORE._
 
   def apply(t: Term): K = t match {
-    case c@Constant(s, p) => KToken(p.sort, s, locationToAtt(c.location.get(), c.source.get()))
-    case t@TermCons(items, p) => KApply(p.klabel.get, KList(items.asScala map apply asJava), locationToAtt(t.location.get(), t.source.get()))
-    case Ambiguity(items) => KApply(KLabel("AMB"), KList(items.asScala.toList map apply asJava), Att())
+    case c@Constant(s, p, _) => KToken(p.sort, s, locationToAtt(c.location.get(), c.source.get()))
+    case t@TermCons(items, p, _) => KApply(p.klabel.get, KList(items.asScala map apply asJava), locationToAtt(t.location.get(), t.source.get()))
+    case Ambiguity(items, _) => KApply(KLabel("AMB"), KList(items.asScala.toList map apply asJava), Att())
   }
 
   def down(t: K): K = t match {

@@ -1,6 +1,12 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import org.kframework.parser.Alphabet;
+import org.kframework.parser.Terminal;
+import org.kframework.utils.algorithms.SCCTarjan;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,13 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.kframework.definition.Production;
-import org.kframework.parser.concrete2kore.kernel.Rule.DeleteRule;
-import org.kframework.utils.algorithms.SCCTarjan;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 
 
 /**
@@ -121,8 +120,8 @@ public class Grammar implements Serializable {
         // create a whitespace PrimitiveState after every every terminal that can match a character
         for (NonTerminal nonTerminal : getAllNonTerminals()) {
             for (State s : nonTerminal.getReachableStates()) {
-                if (s instanceof PrimitiveState) {
-                    PrimitiveState ps = ((PrimitiveState) s);
+                if (s instanceof RegExState) {
+                    RegExState ps = ((RegExState) s);
                     addWhitespace(ps);
                 }
             }
@@ -138,7 +137,8 @@ public class Grammar implements Serializable {
     static final String multiLine = "(/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)";
     static final String singleLine = "(//.*)";
     static final String whites = "([ \n\r\t])";
-    static final Pattern pattern = Pattern.compile("("+ multiLine +"|"+ singleLine +"|"+ whites +")*");
+    static final String patternString = "("+ multiLine +"|"+ singleLine +"|"+ whites +")*";
+    static final Pattern pattern = Pattern.compile(patternString);
 
     /**
      * Add a pair of whitespace-remove whitespace rule to the given state.
@@ -153,10 +153,9 @@ public class Grammar implements Serializable {
         while (start.next.iterator().hasNext() && start.next.iterator().next() instanceof RuleState) {
             start = (NextableState) start.next.iterator().next();
         }
-        PrimitiveState whitespace = new RegExState(
-            "whitespace", start.nt, pattern, null);
+        RegExState whitespace = new RegExState("whitespace", start.nt, patternString, new Terminal(patternString, true));
         RuleState deleteToken = new RuleState(
-            "whitespace-D", start.nt, new DeleteRule(1, true));
+            "whitespace-D", start.nt, new Rule.DeleteRule(1, true));
         whitespace.next.add(deleteToken);
         deleteToken.next.addAll(start.next);
         start.next.clear();
@@ -461,6 +460,15 @@ public class Grammar implements Serializable {
         }
     }
 
+    public abstract static class ConsumesInputState extends NextableState {
+        public final Alphabet symbol;
+
+        ConsumesInputState(String name, NonTerminal nt, boolean intermediary, Alphabet symbol) {
+            super(name, nt, intermediary);
+            this.symbol = symbol;
+        }
+    }
+
     /**
      * The first state of a NonTerminal. Only one per NonTerminal.
      */
@@ -473,16 +481,15 @@ public class Grammar implements Serializable {
      * parsing from a particular spot. This is specific to the non-terminals in the right hand side
      * of BNF productions.
      */
-    public static class NonTerminalState extends NextableState {
+    public static class NonTerminalState extends ConsumesInputState {
         /** The NonTerminal referenced by this NonTerminalState */
         public final NonTerminal child;
         /** Specifies if this state should be treated as a lookahead parse */
         public final boolean isLookahead;
 
         public NonTerminalState(
-                String name, NonTerminal nt,
-                NonTerminal child, boolean isLookahead) {
-            super(name, nt, true);
+                String name, NonTerminal nt, NonTerminal child, boolean isLookahead, Alphabet symbol) {
+            super(name, nt, true, symbol);
             assert child != null;
             nt.intermediaryStates.add(this);
             this.child = child;
@@ -504,29 +511,25 @@ public class Grammar implements Serializable {
     }
 
     /**
-     * PrimitiveState is the only State that matches on characters and consumes them.
-     * The content of the matched string is stored into a KApp of a #token.
-     * TODO: revisit this description once we get the new KORE
+     * Uses java regular expression (@link Matcher} class to consume characters in the
+     * char sequence.
      */
-    public abstract static class PrimitiveState extends NextableState {
-        /** The production of the Constant. Used as a reference for trace back */
-        public final Production prd;
+    public static class RegExState extends ConsumesInputState {
+        /** The java regular expression pattern. */
+        public final Pattern pattern;
+        /** The set of terminals (keywords) that shouldn't be parsed as this regular expression. */
+
+        public RegExState(String name, NonTerminal nt, String regex, Alphabet symbol) {
+            super(name, nt, true, symbol);
+            assert regex != null;
+            this.pattern = Pattern.compile(regex);
+        }
+
         public static class MatchResult {
             final public int matchEnd;
             public MatchResult(int matchEnd) {
                 this.matchEnd = matchEnd;
             }
-        }
-
-        /*
-         *  Returns a set of matches at the given position in the given string.
-         *  If there are no matches, the returned set will be empty.
-         */
-        abstract Set<MatchResult> matches(CharSequence text, int startPosition);
-
-        public PrimitiveState(String name, NonTerminal nt, Production prd) {
-            super(name, nt, true);
-            this.prd = prd;
         }
 
         /**
@@ -537,31 +540,6 @@ public class Grammar implements Serializable {
             Set<MatchResult> matchResults = this.matches("", 0);
             return matchResults.size() != 0;
         }
-    }
-
-    /**
-     * Uses java regular expression (@link Matcher} class to consume characters in the
-     * char sequence.
-     */
-    public static class RegExState extends PrimitiveState {
-        /** The java regular expression pattern. */
-        public final Pattern pattern;
-        /** The set of terminals (keywords) that shouldn't be parsed as this regular expression. */
-        public final Set<String> rejects;
-
-        public RegExState(String name, NonTerminal nt, Pattern pattern, Production prd) {
-            super(name, nt, prd);
-            assert pattern != null;
-            this.pattern = pattern;
-            this.rejects = new HashSet<>();
-        }
-
-        public RegExState(String name, NonTerminal nt, Pattern pattern, Production prd, Set<String> rejects) {
-            super(name, nt, prd);
-            assert pattern != null;
-            this.pattern = pattern;
-            this.rejects = rejects;
-        }
 
         // Position is an 'int' offset into the text because CharSequence uses 'int'
         Set<MatchResult> matches(CharSequence text, int startPosition) {
@@ -571,9 +549,7 @@ public class Grammar implements Serializable {
             matcher.useTransparentBounds(true);
             Set<MatchResult> results = new HashSet<>();
             if (matcher.lookingAt()) {
-                // reject keywords
-                if (!rejects.contains(matcher.group()))
-                    results.add(new MatchResult(matcher.end()));
+                results.add(new MatchResult(matcher.end()));
             }
             return results;
         }

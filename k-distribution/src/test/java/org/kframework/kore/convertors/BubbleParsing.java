@@ -2,35 +2,35 @@
 
 package org.kframework.kore.convertors;
 
-import static org.kframework.Collections.immutable;
-import static org.kframework.Collections.stream;
-import static org.kframework.definition.Constructors.Module;
-import static org.kframework.definition.Constructors.Rule;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.kframework.Collections;
+import org.kframework.attributes.Source;
+import org.kframework.definition.Bubble;
+import org.kframework.definition.Definition;
+import org.kframework.definition.Module;
+import org.kframework.definition.Sentence;
+import org.kframework.kore.K;
+import org.kframework.parser.Ambiguity;
+import org.kframework.parser.Term;
+import org.kframework.parser.TreeNodesToKORE;
+import org.kframework.parser.concrete2kore.disambiguation.RemoveBracketVisitor;
+import org.kframework.parser.concrete2kore.disambiguation.TreeCleanerVisitor;
+import org.kframework.parser.concrete2kore.kernel.Grammar;
+import org.kframework.parser.concrete2kore.kernel.KSyntax2GrammarStatesFilter;
+import org.kframework.parser.concrete2kore.kernel.Parser;
+import org.kframework.parser.concrete2kore.kernel.Parser.ParseError;
+import org.kframework.parser.outer.Outer;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import org.kframework.Collections;
-import org.kframework.attributes.Source;
-import org.kframework.kore.K;
-import org.kframework.definition.Bubble;
-import org.kframework.definition.Module;
-import org.kframework.definition.Definition;
-import org.kframework.definition.Sentence;
-import org.kframework.parser.Ambiguity;
-import org.kframework.parser.Term;
-import org.kframework.parser.TreeNodesToKORE;
-import org.kframework.parser.concrete2kore.disambiguation.RemoveBracketVisitor;
-import org.kframework.parser.concrete2kore.kernel.Grammar;
-import org.kframework.parser.concrete2kore.kernel.KSyntax2GrammarStatesFilter;
-import org.kframework.parser.concrete2kore.kernel.Parser;
-import org.kframework.parser.concrete2kore.kernel.Parser.ParseError;
-import org.kframework.parser.concrete2kore.disambiguation.TreeCleanerVisitor;
-import org.kframework.parser.outer.Outer;
+import static org.kframework.Collections.immutable;
+import static org.kframework.Collections.stream;
+import static org.kframework.definition.Constructors.Module;
+import static org.kframework.definition.Constructors.Rule;
 
 /**
  * Takes a KORE module with bubble and returns a new KORE module with all
@@ -102,7 +102,7 @@ public class BubbleParsing {
                 Parser parser = new Parser(bubble.contents());
                 Term parsed = parser.parse(startNonterminal, 0);
 
-                if(parsed.equals(Ambiguity.apply())) {
+                if(parsed instanceof Ambiguity && ((Ambiguity)parsed).items().size() == 0) {
                     ParseError errors = parser.getErrors();
                 }
 
