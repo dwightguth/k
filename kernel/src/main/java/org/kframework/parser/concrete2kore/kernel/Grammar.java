@@ -3,8 +3,12 @@ package org.kframework.parser.concrete2kore.kernel;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import jregex.Matcher;
+import jregex.Pattern;
+import jregex.PatternSyntaxException;
 import org.kframework.parser.concrete2kore.kernel.Rule.DeleteRule;
 import org.kframework.utils.algorithms.SCCTarjan;
+import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,8 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -135,8 +137,8 @@ public class Grammar implements Serializable {
 
     static final String multiLine = "(/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)";
     static final String singleLine = "(//.*)";
-    static final String whites = "([ \n\r\t])";
-    static final Pattern pattern = Pattern.compile("("+ multiLine +"|"+ singleLine +"|"+ whites +")*");
+    static final String whites = "([ \\n\\r\\t])";
+    static final String pattern = "("+ multiLine +"|"+ singleLine +"|"+ whites +")*";
 
     /**
      * Add a pair of whitespace-remove whitespace rule to the given state.
@@ -530,7 +532,7 @@ public class Grammar implements Serializable {
          *  Returns a set of matches at the given position in the given string.
          *  If there are no matches, the returned set will be empty.
          */
-        abstract Set<MatchResult> matches(CharSequence text, int startPosition);
+        abstract Set<MatchResult> matches(String text, int startPosition);
 
         public PrimitiveState(String name, NonTerminal nt) {
             super(name, nt, true);
@@ -556,31 +558,29 @@ public class Grammar implements Serializable {
         /** The set of terminals (keywords) that shouldn't be parsed as this regular expression. */
         public final Set<String> rejects;
 
-        public RegExState(String name, NonTerminal nt, Pattern pattern) {
-            super(name, nt);
-            assert pattern != null;
-            this.pattern = pattern;
-            this.rejects = new HashSet<>();
+        public RegExState(String name, NonTerminal nt, String pattern) {
+            this(name, nt, pattern, new HashSet<>());
         }
 
-        public RegExState(String name, NonTerminal nt, Pattern pattern, Set<String> rejects) {
+        public RegExState(String name, NonTerminal nt, String pattern, Set<String> rejects) {
             super(name, nt);
             assert pattern != null && rejects != null;
-            this.pattern = pattern;
+            try {
+                this.pattern = new Pattern("(" + pattern + ")(.|\\n)*");
+            } catch (PatternSyntaxException e) {
+                throw KExceptionManager.criticalError("Failed to convert regular expression: " + pattern
+                        + "\nRefer to http://jregex.sourceforge.net/", e);
+            }
             this.rejects = rejects;
         }
 
         // Position is an 'int' offset into the text because CharSequence uses 'int'
-        Set<MatchResult> matches(CharSequence text, int startPosition) {
-            Matcher matcher = pattern.matcher(text);
-            matcher.region(startPosition, text.length());
-            matcher.useAnchoringBounds(false);
-            matcher.useTransparentBounds(true);
+        Set<MatchResult> matches(String text, int startPosition) {
+            Matcher matcher = pattern.matcher();
+            matcher.setTarget(text, startPosition, text.length());
             Set<MatchResult> results = new HashSet<>();
-            if (matcher.lookingAt()) {
-                // reject keywords
-                if (!rejects.contains(matcher.group()))
-                    results.add(new MatchResult(matcher.end()));
+            if (matcher.matches()) {
+                results.add(new MatchResult(matcher.end(1) + startPosition));
             }
             return results;
         }

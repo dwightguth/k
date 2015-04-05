@@ -70,6 +70,11 @@
       <version>1.10</version>
     </dependency>
     <dependency>
+      <groupId>net.sourceforge.jregex</groupId>
+      <artifactId>jregex</artifactId>
+      <version>1.2_01</version>
+    </dependency>
+    <dependency>
       <groupId>org.kframework.dependencies</groupId>
       <artifactId>jcommander</artifactId>
       <version>1.35-custom</version>

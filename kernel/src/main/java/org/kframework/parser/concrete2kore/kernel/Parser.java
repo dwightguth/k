@@ -1,6 +1,7 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import jregex.Pattern;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.attributes.Location;
@@ -32,7 +33,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -196,7 +196,7 @@ public class Parser {
             /** The end position of the parse */
             public final int stateEnd;
             public Key(StateCall stateCall, int stateEnd) {
-                assert stateCall != null;
+                assert stateCall != null && stateEnd >= 0;
                 // if we are a lookahead, then force the the state end to be equal to the state begin
                 if (stateCall.key.state instanceof NonTerminalState &&
                     ((NonTerminalState)stateCall.key.state).isLookahead) {
@@ -363,7 +363,7 @@ public class Parser {
      */
     private static class ParseState {
         // the input string which needs parsing
-        final CharSequence input;
+        final String input;
         // a priority queue containing the return states to be processed
         final StateReturnWorkList stateReturnWorkList = new StateReturnWorkList();
         // a preprocessed correspondence from index to line and column in the input string
@@ -384,7 +384,7 @@ public class Parser {
              * http://www.unicode.org/standard/reports/tr13/tr13-5.html
              * http://www.unicode.org/reports/tr18/#Line_Boundaries
              */
-            this.input = input;
+            this.input = input.toString();
             lines = new int[input.length()+1];
             columns = new int[input.length()+1];
             int l = startLine;

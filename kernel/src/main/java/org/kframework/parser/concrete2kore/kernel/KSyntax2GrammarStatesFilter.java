@@ -1,6 +1,8 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import com.google.common.collect.ImmutableList;
+import jregex.Pattern;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.definition.Module;
 import org.kframework.definition.Production;
@@ -14,7 +16,6 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Rule.AddLocationRule;
 import org.kframework.parser.concrete2kore.kernel.Rule.WrapLabelRule;
-import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.iterable;
@@ -64,12 +63,21 @@ public class KSyntax2GrammarStatesFilter {
         return s.toString();
     }
 
+    private static final ImmutableList<String> META_CHARS = ImmutableList.of("\\", "`", ".", "*", "+", "?", "{", "}", "[", "]", "(", ")", "|", "^", "$", "'");
+
+    private static String quotePattern(String literal) {
+        for (String metaChar : META_CHARS) {
+            literal = literal.replace(metaChar, "\\" + metaChar);
+        }
+        return literal;
+    }
+
     private static void collectRejects(Production prd, Set<String> rejects) {
         for (ProductionItem prdItem : iterable(prd.items())) {
             String pattern = "";
             if (prdItem instanceof Terminal) {
                 if (!((Terminal) prdItem).value().equals("")) {
-                    pattern = Pattern.quote(((Terminal) prdItem).value());
+                    pattern = quotePattern(((Terminal) prdItem).value());
                     rejects.add(pattern);
                 }
             } else if (prdItem instanceof RegexTerminal) {
@@ -105,7 +113,7 @@ public class KSyntax2GrammarStatesFilter {
                 if (prdItem instanceof Terminal) {
                     Terminal terminal = (Terminal) prdItem;
                     Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + "-T", nt,
-                            Pattern.compile(terminal.value(), Pattern.LITERAL));
+                            quotePattern(terminal.value()));
                     previous.next.add(pstate);
                     RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1, true));
                     pstate.next.add(del);
@@ -118,15 +126,7 @@ public class KSyntax2GrammarStatesFilter {
                     previous = nts;
                 } else if (prdItem instanceof RegexTerminal) {
                     RegexTerminal lx = (RegexTerminal) prdItem;
-                    Pattern p;
-                    try {
-                        p = Pattern.compile(lx.regex());
-                    } catch (PatternSyntaxException ex) {
-                        p = Pattern.compile("NoMatch");
-                        String msg = "Lexical pattern not compatible with the new parser.";
-                        throw KExceptionManager.compilerError(msg, ex); // TODO: add location
-                    }
-                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort.name() + "-T", nt, p);
+                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort.name() + "-T", nt, lx.regex());
                     RuleState del = new RuleState("DelRegexTerminalRS", nt, new Rule.DeleteRule(1, true));
                     previous.next.add(pstate);
                     pstate.next.add(del);
@@ -149,11 +149,11 @@ public class KSyntax2GrammarStatesFilter {
                     if (prd.att().contains("token")) {
                         // TODO: calculate reject list
                         if (prd.att().contains(Constants.AUTOREJECT) && prd.att().contains(Constants.REJECT2))
-                            pattern = Pattern.compile("(" + prd.att().get(Constants.REJECT2).get().toString() + ")|(" + rejectPattern + ")");
+                            pattern = new Pattern("(" + prd.att().get(Constants.REJECT2).get().toString() + ")|(" + rejectPattern + ")");
                         else if (prd.att().contains(Constants.AUTOREJECT))
-                            pattern = Pattern.compile(rejectPattern);
+                            pattern = new Pattern(rejectPattern);
                         else if (prd.att().contains(Constants.REJECT2))
-                            pattern = Pattern.compile(prd.att().get(Constants.REJECT2).get().toString());
+                            pattern = new Pattern(prd.att().get(Constants.REJECT2).get().toString());
                     }
                     RuleState labelRule = new RuleState("AddLabelRS", nt, new WrapLabelRule(prd, pattern));
                     previous.next.add(labelRule);

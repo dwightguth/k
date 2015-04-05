@@ -1,19 +1,21 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import com.beust.jcommander.internal.Lists;
+import jregex.Pattern;
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
+import org.kframework.definition.Production;
+import org.kframework.parser.Constant;
+import org.kframework.parser.KList;
+import org.kframework.parser.Term;
+import org.kframework.parser.TermCons;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
-
-import com.beust.jcommander.internal.Lists;
-import org.kframework.attributes.Source;
-import org.kframework.attributes.Location;
-import org.kframework.definition.Production;
-import org.kframework.parser.*;
 
 /**
  * An action that transforms an AST into another AST
