@@ -107,7 +107,7 @@ public class Parser {
         /** The {@link Function} storing the AST parsed so far */
         final Function function = Function.empty();
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateCall> {
+        private static class Key {
             /** The {@link NonTerminalCall} containing this StateCall */
             final NonTerminalCall ntCall;
             /** The start position of this StateCall */
@@ -190,7 +190,7 @@ public class Parser {
                 this.key.stateCall.key.state.compareTo(that.key.stateCall.key.state);
         }
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateReturn> {
+        private static class Key {
             /** The {@link StateCall} that this StateReturn finishes */
             public final StateCall stateCall;
             /** The end position of the parse */
@@ -308,7 +308,7 @@ public class Parser {
         final Set<StateReturn> reactivations = new HashSet<>();
         /** The {@link Context}s from which this NonTerminalCall is called */
         final Context context = new Context();
-        private static class Key implements AutoVivifyingBiMap.Create<NonTerminalCall> {
+        private static class Key {
             /** The {@link NonTerminal} being called */
             public final NonTerminal nt;
             /** The start position for parsing the {@link NonTerminal} */
@@ -371,9 +371,9 @@ public class Parser {
         // TODO: extract Location class into it's own file
         final int[] lines;
         final int[] columns;
-        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>();
+        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>(NonTerminalCall.Key::create);
+        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>(StateCall.Key::create);
+        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>(StateReturn.Key::create);
 
         public ParseState(CharSequence input, int startLine, int startColumn) {
             /**

@@ -24,6 +24,15 @@ trait HasChildren {
   def replaceChildren(newChildren: Collection[Term]): Term
 }
 
+trait Alphabet {
+  val isLayout: Boolean
+}
+case class NonTerminal(sort: String) extends Alphabet {
+  val isLayout = false
+}
+case class Terminal(regex: String, isLayout: Boolean) extends Alphabet {
+}
+
 case class Constant private(value: String, production: Production) extends ProductionReference {
   def shallowCopy(location: Location, source: Source) = Constant(value, production, location, source)
   override def toString = "#token(" + production.sort + ",\"" + StringEscapeUtils.escapeJava(value) + "\")"
