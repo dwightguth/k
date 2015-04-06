@@ -30,10 +30,10 @@ public class CorrectCastPriorityVisitor extends SetsTransformerWithErrors<ParseF
                     || tc.production().klabel().get().name().equals("#OuterCast"))) {
             // match only on the outermost elements
                 Either<java.util.Set<ParseFailedException>, Term> rez =
-                        new PriorityVisitor2(tc).apply(tc.items().get(0));
+                        new PriorityVisitor2(tc).apply(tc.get(0));
                 if (rez.isLeft())
                     return rez;
-                tc.items().set(0, rez.right().get());
+                tc = tc.with(0, rez.right().get());
         }
         return super.apply(tc);
     }

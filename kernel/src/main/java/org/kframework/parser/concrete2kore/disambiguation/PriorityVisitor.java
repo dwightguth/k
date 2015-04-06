@@ -40,18 +40,18 @@ public class PriorityVisitor extends SetsTransformerWithErrors<ParseFailedExcept
             // match only on the outermost elements
             if (tc.production().items().apply(0) instanceof NonTerminal) {
                 Either<java.util.Set<ParseFailedException>, Term> rez =
-                        new PriorityVisitor2(tc, PriorityVisitor2.Side.LEFT, priorities, leftAssoc, rightAssoc).apply(tc.items().get(0));
+                        new PriorityVisitor2(tc, PriorityVisitor2.Side.LEFT, priorities, leftAssoc, rightAssoc).apply(tc.get(0));
                 if (rez.isLeft())
                     return rez;
-                tc.items().set(0, rez.right().get());
+                tc = tc.with(0, rez.right().get());
             }
             if (tc.production().items().apply(tc.production().items().size() - 1) instanceof NonTerminal) {
                 int last = tc.items().size() - 1;
                 Either<java.util.Set<ParseFailedException>, Term> rez =
-                        new PriorityVisitor2(tc, PriorityVisitor2.Side.RIGHT, priorities, leftAssoc, rightAssoc).apply(tc.items().get(last));
+                        new PriorityVisitor2(tc, PriorityVisitor2.Side.RIGHT, priorities, leftAssoc, rightAssoc).apply(tc.get(last));
                 if (rez.isLeft())
                     return rez;
-                tc.items().set(last, rez.right().get());
+                tc = tc.with(last, rez.right().get());
             }
         }
         return super.apply(tc);

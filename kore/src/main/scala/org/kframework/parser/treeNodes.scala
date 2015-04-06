@@ -6,13 +6,13 @@ import org.kframework.attributes.{Source, Location}
 import org.kframework.definition.Production
 import java.util._
 import java.lang.Iterable
+import org.pcollections.{ConsPStack, PStack}
 import collection.JavaConverters._
 import org.apache.commons.lang3.StringEscapeUtils
 
 trait Term {
   var location: Optional[Location] = Optional.empty()
   var source: Optional[Source] = Optional.empty()
-  def shallowCopy(l: Location, s: Source): Term
 }
 
 trait ProductionReference extends Term {
@@ -25,37 +25,23 @@ trait HasChildren {
 }
 
 case class Constant private(value: String, production: Production) extends ProductionReference {
-  def shallowCopy(location: Location, source: Source) = Constant(value, production, location, source)
   override def toString = "#token(" + production.sort + ",\"" + StringEscapeUtils.escapeJava(value) + "\")"
 }
 
-case class TermCons private(items: List[Term], production: Production)
+// note that items is reversed because it is more efficient to generate it this way during parsing
+case class TermCons private(items: PStack[Term], production: Production)
   extends ProductionReference with HasChildren {
-  def shallowCopy(location: Location, source: Source) = TermCons(items, production, location, source)
+  def get(i: Int) = items.get(items.size() - 1 - i)
+  def `with`(i: Int, e: Term) = TermCons(items.`with`(items.size() - 1 - i, e), production, location, source)
 
-  def replaceChildren(newChildren: Collection[Term]) = {
-    items.clear(); items.addAll(newChildren);
-    this
-  }
+  def replaceChildren(newChildren: Collection[Term]) = TermCons(ConsPStack.from(newChildren), production, location, source)
   override def toString() = production.klabel.getOrElse("NOKLABEL") + "(" + (items.asScala mkString ",") + ")"
 
-  var cachedHashCode: Option[Int] = None
-
-  def invalidateHashCode() {
-    cachedHashCode = None
-  }
-
-  override def hashCode = cachedHashCode match {
-    case None =>
-      cachedHashCode  = Some(items.asScala.map(_.hashCode).fold(production.hashCode * 37)( 31 * _ + _))
-      cachedHashCode.get
-    case Some(hc) => hc
-  }
+  override lazy val hashCode: Int = scala.runtime.ScalaRunTime._hashCode(TermCons.this);
 }
 
 case class Ambiguity(items: Set[Term])
   extends Term with HasChildren {
-  def shallowCopy(location: Location, source: Source) = Ambiguity(items, location, source)
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
     this
@@ -63,15 +49,19 @@ case class Ambiguity(items: Set[Term])
   override def toString() = "amb(" + (items.asScala mkString ",") + ")"
 }
 
-case class KList(items: List[Term])
+case class KList(items: PStack[Term])
   extends Term with HasChildren {
-  def add(t: Term) { items.add(t) }
-  def shallowCopy(l: Location, source: Source) = KList(items, l, source)
-  def replaceChildren(newChildren: Collection[Term]) = {
-    items.clear(); items.addAll(newChildren);
-    this
+  def add(t: Term) = KList(items.plus(t), location, source)
+  def remove(n: Int) = {
+    var newItems = items;
+    for (_ <- 1 to n) {
+      newItems = items.minus(0)
+    }
+    KList(newItems, location, source)
   }
+  def replaceChildren(newChildren: Collection[Term]) = KList(ConsPStack.from(newChildren), location, source)
   override def toString() = "[" + (items.asScala mkString ",") + "]"
+  override lazy val hashCode: Int = scala.runtime.ScalaRunTime._hashCode(KList.this);
 }
 
 object Constant {
@@ -84,21 +74,22 @@ object Constant {
 }
 
 object TermCons {
-  def apply(items: List[Term], production: Production, location: Location, source: Source):TermCons = {
+  def apply(items: PStack[Term], production: Production, location: Optional[Location], source: Optional[Source]):TermCons = {
     val res = TermCons(items, production)
-    res.location = Optional.of(location)
-    res.source = Optional.of(source)
+    res.location = location
+    res.source = source
     res
   }
+
+  def apply(items: PStack[Term], production: Production, location: Location, source: Source):TermCons = TermCons(items, production, Optional.of(location), Optional.of(source))
 }
 
 object KList {
-  @annotation.varargs def apply(ts: Term*): KList = KList(new ArrayList(ts.asJava))
-  def apply(toCopy: KList): KList = KList(new ArrayList(toCopy.items)) // change when making the classes mutable
-  def apply(items: List[Term], location: Location, source: Source):KList = {
+  def apply(toCopy: KList): KList = KList(toCopy.items, toCopy.location, toCopy.source) // change when making the classes mutable
+  def apply(items: PStack[Term], location: Optional[Location], source: Optional[Source]):KList = {
     val res = KList(items)
-    res.location = Optional.of(location)
-    res.source = Optional.of(source)
+    res.location = location
+    res.source = source
     res
   }
 }
