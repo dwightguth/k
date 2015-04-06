@@ -255,6 +255,19 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
         }
     }
 
+    private static Sort getSortOfCast(TermCons tc) {
+        switch (tc.production().klabel().get().name()) {
+        case "#SyntacticCast":
+        case "#SemanticCast":
+        case "#OuterCast":
+            return tc.production().sort();
+        case "#InnerCast":
+            return ((NonTerminal)tc.production().items().apply(0)).sort();
+        default:
+            throw new AssertionError("Unexpected cast type");
+        }
+    }
+
     private class CollectVariables extends SetsGeneralTransformer<ParseFailedException, VarInfo> {
         public Tuple2<Either<java.util.Set<ParseFailedException>, Term>, java.util.Set<VarInfo>> apply(TermCons tc) {
             // TODO: (Radu) if this is cast, take the sort from annotations?
@@ -263,12 +276,12 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                     && (tc.production().klabel().get().name().equals("#SyntacticCast")
                     || tc.production().klabel().get().name().equals("#SemanticCast")
                     || tc.production().klabel().get().name().equals("#InnerCast"))) {
-                Term t = tc.items().get(0);
-                collector = new CollectVariables2(Sort(tc.production().att().<String>get("sort").get()), VarType.USER).apply(t)._2();
+                Term t = tc.get(0);
+                collector = new CollectVariables2(getSortOfCast(tc), VarType.USER).apply(t)._2();
             } else {
                 for (int i = 0, j = 0; i < tc.production().items().size(); i++) {
                     if (tc.production().items().apply(i) instanceof NonTerminal) {
-                        Term t = tc.items().get(j);
+                        Term t = tc.get(j);
                         Set<VarInfo> vars = new CollectVariables2(((NonTerminal) tc.production().items().apply(i)).sort(), VarType.CONTEXT).apply(t)._2();
                         collector = mergeWarnings(collector, vars);
                         j++;
@@ -317,20 +330,20 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                     && (tc.production().klabel().get().name().equals("#SyntacticCast")
                     || tc.production().klabel().get().name().equals("#SemanticCast")
                     || tc.production().klabel().get().name().equals("#InnerCast"))) {
-                Term t = tc.items().get(0);
-                Either<Set<ParseFailedException>, Term> rez = new ApplyTypeCheck2(Sort(tc.production().att().<String>get("sort").get())).apply(t);
+                Term t = tc.get(0);
+                Either<Set<ParseFailedException>, Term> rez = new ApplyTypeCheck2(getSortOfCast(tc)).apply(t);
                 if (rez.isLeft())
                     return rez;
-                tc.items().set(0, rez.right().get());
+                tc = tc.with(0, rez.right().get());
             } else {
                 for (int i = 0, j = 0; i < tc.production().items().size(); i++) {
                     if (tc.production().items().apply(i) instanceof NonTerminal) {
-                        Term t = tc.items().get(j);
+                        Term t = tc.get(j);
                         Sort s = ((NonTerminal) tc.production().items().apply(i)).sort();
                         Either<Set<ParseFailedException>, Term> rez = new ApplyTypeCheck2(s).apply(t);
                         if (rez.isLeft())
                             return rez;
-                        tc.items().set(j, rez.right().get());
+                        tc = tc.with(j, rez.right().get());
                         j++;
                     }
                 }
@@ -417,12 +430,12 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                     && (tc.production().klabel().get().name().equals("#SyntacticCast")
                     || tc.production().klabel().get().name().equals("#SemanticCast")
                     || tc.production().klabel().get().name().equals("#InnerCast"))) {
-                Term t = tc.items().get(0);
-                new CollectUndeclaredVariables2(Sort(tc.production().att().<String>get("sort").get())).apply(t);
+                Term t = tc.get(0);
+                new CollectUndeclaredVariables2(getSortOfCast(tc)).apply(t);
             } else {
                 for (int i = 0, j = 0; i < tc.production().items().size(); i++) {
                     if (tc.production().items().apply(i) instanceof NonTerminal) {
-                        Term t = tc.items().get(j);
+                        Term t = tc.get(j);
                         new CollectUndeclaredVariables2(((NonTerminal) tc.production().items().apply(i)).sort()).apply(t);
                         j++;
                     }

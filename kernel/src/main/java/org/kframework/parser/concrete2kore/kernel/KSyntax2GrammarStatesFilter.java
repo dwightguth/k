@@ -9,7 +9,6 @@ import org.kframework.definition.Terminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NextableState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
-import org.kframework.parser.concrete2kore.kernel.Rule.AddLocationRule;
 import org.kframework.parser.concrete2kore.kernel.Rule.WrapLabelRule;
 import org.kframework.parser.generator.CollectTerminalsVisitor;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -106,7 +105,7 @@ public class KSyntax2GrammarStatesFilter {
                     Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + "-T", nt,
                             Pattern.compile(terminal.value(), Pattern.LITERAL));
                     previous.next.add(pstate);
-                    RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1, true));
+                    RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1));
                     pstate.next.add(del);
                     previous = del;
                 } else if (prdItem instanceof org.kframework.definition.NonTerminal) {
@@ -126,7 +125,7 @@ public class KSyntax2GrammarStatesFilter {
                         throw KExceptionManager.compilerError(msg, ex); // TODO: add location
                     }
                     Grammar.PrimitiveState pstate = new Grammar.RegExState(sort.name() + "-T", nt, p);
-                    RuleState del = new RuleState("DelRegexTerminalRS", nt, new Rule.DeleteRule(1, true));
+                    RuleState del = new RuleState("DelRegexTerminalRS", nt, new Rule.DeleteRule(1));
                     previous.next.add(pstate);
                     pstate.next.add(del);
                     previous = del;
@@ -157,10 +156,6 @@ public class KSyntax2GrammarStatesFilter {
                     RuleState labelRule = new RuleState("AddLabelRS", nt, new WrapLabelRule(prd, pattern));
                     previous.next.add(labelRule);
                     previous = labelRule;
-
-                    RuleState locRule = new RuleState(prd.sort() + "-R", nt, new AddLocationRule());
-                    previous.next.add(locRule);
-                    previous = locRule;
 
                     previous.next.add(nt.exitState);
 

@@ -1,5 +1,7 @@
 package org.kframework.parser
 
+import java.util
+
 import org.kframework.attributes._
 import org.kframework.builtin.Sorts
 import org.kframework.kore
@@ -14,9 +16,9 @@ object TreeNodesToKORE {
   import org.kframework.kore.KORE._
 
   def apply(t: Term): K = t match {
-    case Constant(s, p, l) => KToken(p.sort, s, locationToAtt(l.get()))
-    case TermCons(items, p, l) => KApply(p.klabel.get, KList(items.asScala map apply asJava), locationToAtt(l.get()))
-    case Ambiguity(items, l) => KApply(KLabel("AMB"), KList(items.asScala.toList map apply asJava), Att())
+    case c@Constant(s, p) => KToken(p.sort, s, locationToAtt(c.location.get(), c.source.get()))
+    case t@TermCons(items, p) => KApply(p.klabel.get, KList(new util.ArrayList(items).asScala.reverse map apply asJava), locationToAtt(t.location.get(), t.source.get()))
+    case Ambiguity(items) => KApply(KLabel("AMB"), KList(items.asScala.toList map apply asJava), Att())
   }
 
   def down(t: K): K = t match {
