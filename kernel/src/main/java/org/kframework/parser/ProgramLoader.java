@@ -21,7 +21,6 @@ import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.ResolveVariableAttribute;
 import org.kframework.kore.convertors.KILtoKORE;
 import org.kframework.kore.convertors.KOREtoKIL;
-import org.kframework.main.GlobalOptions;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
 import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
 import org.kframework.parser.concrete.disambiguate.PreferAvoidFilter;
@@ -52,7 +51,6 @@ public class ProgramLoader {
     private final BinaryLoader loader;
     private final Stopwatch sw;
     private final KExceptionManager kem;
-    private final GlobalOptions globalOptions;
     private final TermLoader termLoader;
 
     @Inject
@@ -60,12 +58,10 @@ public class ProgramLoader {
             BinaryLoader loader,
             Stopwatch sw,
             KExceptionManager kem,
-            GlobalOptions globalOptions,
             TermLoader termLoader) {
         this.loader = loader;
         this.sw = sw;
         this.kem = kem;
-        this.globalOptions = globalOptions;
         this.termLoader = termLoader;
     }
 
@@ -139,8 +135,9 @@ public class ProgramLoader {
             }
         } else if (whatParser == ParserType.NEWPROGRAM) {
             Definition def = loader.loadOrDie(Definition.class, context.files.resolveKompiled("definition-concrete.bin"));
-            Module synMod = new KILtoKORE(context, true, false).apply(def).getModule(def.getMainSyntaxModule()).get();
-            ParseInModule parser = RuleGrammarGenerator.getProgramsGrammar(synMod);
+            org.kframework.definition.Definition koreDef = new KILtoKORE(context, true, false).apply(def);
+            Module synMod = koreDef.getModule(def.getMainSyntaxModule()).get();
+            ParseInModule parser = new RuleGrammarGenerator(koreDef).getProgramsGrammar(synMod);
             Tuple2<Either<Set<ParseFailedException>, org.kframework.parser.Term>, Set<ParseFailedException>> parsed
                     = parser.parseString(FileUtil.read(content), startSymbol.getName(), source);
             if (parsed._1().isLeft()) {

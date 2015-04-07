@@ -1,54 +1,31 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore;
 
-import com.beust.jcommander.internal.Lists;
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.kframework.definition.Definition;
 import org.kframework.attributes.Source;
 import org.kframework.definition.Module;
+import org.kframework.kompile.Kompile;
 import org.kframework.main.GlobalOptions;
 import org.kframework.main.GlobalOptions.Warnings;
 import org.kframework.parser.Term;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
-import org.kframework.utils.file.JarInfo;
 import scala.Tuple2;
 import scala.util.Either;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Set;
 
-import static org.kframework.Collections.*;
-import static org.kframework.definition.Constructors.*;
-
 public class RuleGrammarTest {
-    private File definitionFile = null;
     private final static String startSymbol = "RuleContent";
     private RuleGrammarGenerator gen;
-    public static final File BUILTIN_DIRECTORY = JarInfo.getKIncludeDir().resolve("builtin").toFile();
 
     @Before
     public void setUp() throws  Exception{
-        definitionFile = new File(BUILTIN_DIRECTORY.toString() + "/kast.k");
-
-        String definitionText;
-        try {
-            definitionText = FileUtils.readFileToString(definitionFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        java.util.Set<Module> modules =
-                ParserUtils.loadModules(definitionText,
-                        Source.apply(definitionFile.getAbsolutePath()),
-                        definitionFile.getParentFile(),
-                        Lists.newArrayList(BUILTIN_DIRECTORY));
-
-        gen = new RuleGrammarGenerator(modules);
+        Kompile kompile = new Kompile(FileUtil.testFileUtil());
+        gen = kompile.makeRuleGrammarGenerator();
     }
 
     private void parseRule(String input, String def, int warnings, boolean expectedError) {
@@ -66,7 +43,7 @@ public class RuleGrammarTest {
     }
 
     private void printout(Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rule, int warnings, boolean expectedError) {
-        if (false) { // true to print detailed results
+        if (true) { // true to print detailed results
             KExceptionManager kem = new KExceptionManager(new GlobalOptions(true, Warnings.ALL, true));
             if (rule._1().isLeft()) {
                 for (ParseFailedException x : rule._1().left().get()) {
@@ -85,11 +62,6 @@ public class RuleGrammarTest {
             Assert.assertTrue("Expected error here: ", rule._1().isLeft());
         else
             Assert.assertTrue("Expected no errors here: ", rule._1().isRight());
-    }
-
-    @Test
-    public void test1() {
-        Assert.assertNotNull(definitionFile);
     }
 
     // test proper associativity for rewrite, ~> and cast
@@ -264,5 +236,17 @@ public class RuleGrammarTest {
         parseRule("A: K", def, 2, false);
         parseRule("A:Stmt ?F : Stmt", def, 2, false);
         parseRule("A:Stmt ? F : Stmt", def, 2, false);
+    }
+
+    //test whitespace
+    @Test
+    public void test15() {
+        String def = "" +
+                "module TEST " +
+                "syntax Exp ::= Divide(K, K) [klabel('Divide)] " +
+                "syntax Exp ::= K \"/\" K [klabel('Div)] " +
+                "syntax K " +
+                "endmodule";
+        parseRule("Divide(K1:K, K2:K) => K1:K / K2:K", def, 0, false);
     }
 }

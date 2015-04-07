@@ -1,6 +1,7 @@
 package org.kframework.tinyimplementation
 
 import org.kframework.definition._
+import org.kframework.definition.Constructors.Terminal
 import org.kframework.kore._
 import org.kframework.meta.{Down, Up}
 

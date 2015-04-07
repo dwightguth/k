@@ -1,8 +1,6 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.generator;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
 import org.kframework.definition.Definition;
@@ -14,19 +12,16 @@ import org.kframework.definition.Sentence;
 import org.kframework.definition.Terminal;
 import org.kframework.kore.Sort;
 import org.kframework.parser.concrete2kore.ParseInModule;
-import org.kframework.utils.StringUtil;
 import scala.collection.immutable.List;
 import scala.collection.immutable.Seq;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static org.kframework.Collections.*;
-import static org.kframework.definition.Constructors.*;
+import static org.kframework.definition.Constructors.Att;
+import static org.kframework.definition.Constructors.NonTerminal;
+import static org.kframework.definition.Constructors.Production;
+import static org.kframework.definition.Constructors.Terminal;
 import static org.kframework.kore.KORE.Sort;
 
 /**
@@ -56,12 +51,14 @@ public class RuleGrammarGenerator {
         kSorts.add(KItem);
         kSorts.add(Sort("RuleContent"));
         kSorts.add(Sort("KVariable"));
+        kSorts.add(Sort("KString"));
     }
     /// modules that have a meaning:
     public static final String RULE_CELLS = "RULE-CELLS";
     public static final String CONFIG_CELLS = "CONFIG-CELLS";
     public static final String K = "K";
-    public static final String CAST_AUTO_GEN = "CAST-AUTO-GEN";
+    public static final String AUTO_CASTS = "AUTO-CASTS";
+    public static final String K_SORT_LATTICE = "K-SORT-LATTICE";
 
     public RuleGrammarGenerator(Set<Module> baseK) {
         this.baseK = new HashMap<>();
@@ -95,13 +92,9 @@ public class RuleGrammarGenerator {
     public ParseInModule getCombinedGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
-        if (mod.importedModules().contains(baseK.getModule(CAST_AUTO_GEN).get())) { // create the diamond
+        if (mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
                 if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-                    // Sort ::= KBott
-                    prods.add(Production(srt, Seq(NonTerminal(KBott)), Att()));
-                    // K ::= Sort
-                    prods.add(Production(KTop, Seq(NonTerminal(srt)), Att()));
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(KBott, KTop, srt));
                 }
@@ -110,6 +103,16 @@ public class RuleGrammarGenerator {
             prods.addAll(makeCasts(KList, KList, KList));
             prods.addAll(makeCasts(KBott, KTop, KItem));
             prods.addAll(makeCasts(KBott, KTop, KTop));
+        }
+        if (mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) { // create the diamond
+            for (Sort srt : iterable(mod.definedSorts())) {
+                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                    // Sort ::= KBott
+                    prods.add(Production(srt, Seq(NonTerminal(KBott)), Att()));
+                    // K ::= Sort
+                    prods.add(Production(KTop, Seq(NonTerminal(srt)), Att()));
+                }
+            }
         }
         if (mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
             scala.collection.immutable.Set<Sentence> prods2 = stream(mod.sentences()).map(s -> {
@@ -131,30 +134,12 @@ public class RuleGrammarGenerator {
         prods.stream().filter(sent -> sent instanceof Production).forEach(p -> stream(((Production) p).items()).forEach(i -> {
             if (i instanceof Terminal) terminals.add(((Terminal) i).value());
         }));
-        // Most of the problems with ensuring greedy match of tokens comes from __ productions combined
-        // with variables. Find the variable declarations inside the definition and look for prefix terminals
-        String varid = "(?<![A-Za-z0-9_\\$!\\?])(\\$|!|\\?)?([A-Z][A-Za-z0-9']*|_)";
-        Optional<Sentence> varIdProd = prods.stream().filter(sent -> {
-                    if (sent instanceof Production) {
-                        Production p = (Production) sent;
-                        if (p.sort().name().equals("KVariable")
-                                && p.items().size() == 1
-                                && p.items().head() instanceof RegexTerminal
-                                && p.att().contains("token"))
-                            return true;
-                    }
-                    return false;
-                }
-        ).findFirst();
-        if (varIdProd.isPresent())
-            varid = ((RegexTerminal)((Production) varIdProd.get()).items().head()).regex();
-        Pattern pattern = Pattern.compile(varid);
 
         prods = mutable(prods.stream().map(s -> {
             if (s instanceof Production) {
                 Production p = (Production) s;
                 if (p.sort().name().startsWith("#")) return p; // don't do anything for such productions since they are advanced features
-                // rewrite productions to contain follow restrictions for prefix terminals
+                // rewrite productions to contin follow restrictions for prefix terminals
                 // example _==_ and _==K_ can produce ambiguities. Rewrite the first into _(==(?![K])_
                 // this also takes care of casting and productions that have ":"
                 List<ProductionItem> items = stream(p.items()).map(pi -> {
@@ -164,15 +149,20 @@ public class RuleGrammarGenerator {
                         for (String biggerString : terminals) {
                             if (!t.value().equals(biggerString) && biggerString.startsWith(t.value())) {
                                 String ending = biggerString.substring(t.value().length());
-                                if (pattern.matcher(ending).matches() || terminals.contains(ending))
-                                    follow.add(ending.substring(0, 1));
+                                follow.add(ending);
                             }
                         }
                         // add follow restrictions for the characters that might produce ambiguities
                         if (!follow.isEmpty()) {
-                            StringBuilder sb = new StringBuilder();
-                            follow.stream().forEach(ch -> sb.append(StringUtils.isAlphanumeric(ch) ? ch : "\\" + ch));
-                            return RegexTerminal(Pattern.quote(t.value()) + "(?![" + sb.toString() + "])");
+                            String restriction = follow.stream().map(str -> {
+                                StringBuilder sb = new StringBuilder();
+                                for (char c : str.toCharArray()) {
+                                    sb.append('\\');
+                                    sb.append(c);
+                                }
+                                return sb.toString();
+                            }).reduce((s1, s2) -> "(" + s1 + ")|(" + s2 + ")").get();
+                            return Terminal(t.value(), restriction);
                         }
                     }
                     return pi;
@@ -194,13 +184,13 @@ public class RuleGrammarGenerator {
         Set<Sentence> prods = new HashSet<>();
         Att attrs1 = Att().add("sort", castSort.name());
         prods.add(Production("#SyntacticCast", castSort, Seq(NonTerminal(castSort), Terminal("::" + castSort.name())), attrs1));
-        prods.add(Production("#SemanticCast",  castSort, Seq(NonTerminal(castSort), Terminal(":"  + castSort.name())), attrs1));
+        prods.add(Production("#SemanticCastTo" + castSort.name(),  castSort, Seq(NonTerminal(castSort), Terminal(":"  + castSort.name())), attrs1));
         prods.add(Production("#InnerCast",     outerSort, Seq(NonTerminal(castSort), Terminal("<:" + castSort.name())), attrs1));
         prods.add(Production("#OuterCast",     castSort, Seq(NonTerminal(innerSort), Terminal(":>" + castSort.name())), attrs1));
         return prods;
     }
 
-    public static ParseInModule getProgramsGrammar(Module mod) {
+    public ParseInModule getProgramsGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
         // if no start symbol has been defined in the configuration, then use K
@@ -212,6 +202,6 @@ public class RuleGrammarGenerator {
         }
 
         Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
-        return new ParseInModule(newM);
+        return getCombinedGrammar(newM);
     }
 }
