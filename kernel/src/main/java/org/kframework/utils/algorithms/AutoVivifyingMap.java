@@ -1,9 +1,7 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.utils.algorithms;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,9 +11,9 @@ import java.util.Set;
  * @param <K>    The type of the key
  * @param <V>    The type of the value
  */
-public class AutoVivifyingBiMap<K extends AutoVivifyingBiMap.Create<V>,V> {
+public class AutoVivifyingMap<K extends AutoVivifyingMap.Create<V>,V> {
     /**
-     * An interface that K must implement so AutoVivifyingBiMap knows
+     * An interface that K must implement so AutoVivifyingMap knows
      * how to crate a V for a given K
      * @param <C>
      */
@@ -27,7 +25,7 @@ public class AutoVivifyingBiMap<K extends AutoVivifyingBiMap.Create<V>,V> {
         C create();
     }
 
-    private BiMap<K, V> map = HashBiMap.create();
+    private Map<K, V> map = new HashMap<>();
 
     /** Retrieves the V associated with a given K.
      * Creates a new one if one doesn't exist yet.

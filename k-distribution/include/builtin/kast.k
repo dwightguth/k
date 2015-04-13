@@ -113,6 +113,8 @@ module AUTO-CASTS
 endmodule
 
 module DEFAULT-CONFIGURATION
+  imports BASIC-K
+
   configuration <k> $PGM:K </k>
 endmodule
 

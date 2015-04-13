@@ -15,6 +15,7 @@ import org.kframework.parser.concrete2kore.ParseInModule;
 import scala.collection.immutable.List;
 import scala.collection.immutable.Seq;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.kframework.Collections.*;
@@ -35,7 +36,7 @@ import static org.kframework.kore.KORE.Sort;
  */
 public class RuleGrammarGenerator {
 
-    private final Map<String, Module> baseK;
+    private final Definition baseK;
     private static final Sort KBott = Sort("KBott");
     private static final Sort KTop = Sort("K");
     private static final Sort KLabel = Sort("KLabel");
@@ -60,9 +61,8 @@ public class RuleGrammarGenerator {
     public static final String AUTO_CASTS = "AUTO-CASTS";
     public static final String K_SORT_LATTICE = "K-SORT-LATTICE";
 
-    public RuleGrammarGenerator(Set<Module> baseK) {
-        this.baseK = new HashMap<>();
-        renameKItem2Bottom(baseK).stream().forEach(m -> this.baseK.put(m.name(), m));
+    public RuleGrammarGenerator(Definition baseK) {
+        this.baseK = baseK;
     }
 
     private Set<Module> renameKItem2Bottom(Set<Module> def) {

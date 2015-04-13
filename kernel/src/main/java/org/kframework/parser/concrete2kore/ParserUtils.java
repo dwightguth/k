@@ -160,13 +160,13 @@ public class ParserUtils {
         return new HashSet<>(koreModules.values());
     }
 
-    public static org.kframework.definition.Definition loadDefinition(
+    public org.kframework.definition.Definition loadDefinition(
             String mainModuleName,
             String syntaxModuleName,
             String definitionText,
             Source source,
             File currentDirectory,
-            List<File> lookupDirectories) throws IOException {
+            List<File> lookupDirectories) {
         Set<Module> modules = loadModules(definitionText, source, currentDirectory, lookupDirectories);
         Module mainModule = modules.stream().filter(m -> m.name().equals(mainModuleName)).findFirst().get();
         Module syntaxModule = modules.stream().filter(m -> m.name().equals(syntaxModuleName)).findFirst().get();

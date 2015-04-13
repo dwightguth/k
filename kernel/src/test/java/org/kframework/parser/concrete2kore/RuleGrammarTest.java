@@ -1,10 +1,12 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore;
 
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.kframework.attributes.Source;
+import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
 import org.kframework.kompile.Kompile;
 import org.kframework.main.GlobalOptions;
@@ -13,9 +15,11 @@ import org.kframework.parser.Term;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
+import org.kframework.utils.file.FileUtil;
 import scala.Tuple2;
 import scala.util.Either;
 
+import java.io.File;
 import java.util.Set;
 
 public class RuleGrammarTest {
@@ -24,8 +28,23 @@ public class RuleGrammarTest {
 
     @Before
     public void setUp() throws  Exception{
-        Kompile kompile = new Kompile(FileUtil.testFileUtil());
-        gen = kompile.makeRuleGrammarGenerator();
+        gen = makeRuleGrammarGenerator();
+    }
+
+    public RuleGrammarGenerator makeRuleGrammarGenerator() {
+        String definitionText;
+        FileUtil files = FileUtil.testFileUtil();
+        ParserUtils parser = new ParserUtils(files);
+        File definitionFile = new File(Kompile.BUILTIN_DIRECTORY.toString() + "/kast.k");
+        definitionText = files.loadFromWorkingDirectory(definitionFile.getPath());
+
+        Definition baseK =
+                parser.loadDefinition("K", "K", definitionText,
+                        Source.apply(definitionFile.getAbsolutePath()),
+                        definitionFile.getParentFile(),
+                        Lists.newArrayList(Kompile.BUILTIN_DIRECTORY));
+
+        return new RuleGrammarGenerator(baseK);
     }
 
     private void parseRule(String input, String def, int warnings, boolean expectedError) {
@@ -249,4 +268,5 @@ public class RuleGrammarTest {
                 "endmodule";
         parseRule("Divide(K1:K, K2:K) => K1:K / K2:K", def, 0, false);
     }
+
 }

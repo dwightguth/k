@@ -23,7 +23,7 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.State;
 import org.kframework.parser.concrete2kore.kernel.Rule.ContextFreeRule;
 import org.kframework.parser.concrete2kore.kernel.Rule.ContextSensitiveRule;
-import org.kframework.utils.algorithms.AutoVivifyingBiMap;
+import org.kframework.utils.algorithms.AutoVivifyingMap;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
@@ -48,8 +48,8 @@ import java.util.regex.Pattern;
  * {@link StateCall} and {@link StateReturn} records. These tables are stored
  * in ParseState and are keyed by {@link NonTerminalCall.Key},
  * {@link StateCall.Key} and {@link StateReturn.Key}. For any given Key, there is
- * a single value that can be looked up in an {@link AutoVivifyingBiMap}.
- * If no value exists for a given Key, then the {@link AutoVivifyingBiMap}
+ * a single value that can be looked up in an {@link AutoVivifyingMap}.
+ * If no value exists for a given Key, then the {@link AutoVivifyingMap}
  * will create one.
  *
  * In addition to these tables, a work queue of {@link StateReturn}s
@@ -109,7 +109,7 @@ public class Parser {
         /** The {@link Function} storing the AST parsed so far */
         final Function function = Function.empty();
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateCall> {
+        private static class Key implements AutoVivifyingMap.Create<StateCall> {
             /** The {@link NonTerminalCall} containing this StateCall */
             final NonTerminalCall ntCall;
             /** The start position of this StateCall */
@@ -202,7 +202,7 @@ public class Parser {
             return 0;
         }
 
-        private static class Key implements AutoVivifyingBiMap.Create<StateReturn> {
+        private static class Key implements AutoVivifyingMap.Create<StateReturn> {
             /** The {@link StateCall} that this StateReturn finishes */
             public final StateCall stateCall;
             /** The end position of the parse */
@@ -333,7 +333,7 @@ public class Parser {
         final Set<StateReturn> reactivations = new HashSet<>();
         /** The {@link Context}s from which this NonTerminalCall is called */
         final Context context = new Context();
-        private static class Key implements AutoVivifyingBiMap.Create<NonTerminalCall> {
+        private static class Key implements AutoVivifyingMap.Create<NonTerminalCall> {
             /** The {@link NonTerminal} being called */
             public final NonTerminal nt;
             /** The start position for parsing the {@link NonTerminal} */
@@ -420,9 +420,9 @@ public class Parser {
         // TODO: extract Location class into it's own file
         final int[] lines;
         final int[] columns;
-        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>();
+        AutoVivifyingMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingMap<>();
+        AutoVivifyingMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingMap<>();
+        AutoVivifyingMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingMap<>();
 
         public ParseState(CharSequence input, int startLine, int startColumn) {
             /**
