@@ -1,8 +1,10 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.generator;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
+import org.kframework.definition.Constructors$;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
 import org.kframework.definition.Production;
@@ -160,7 +162,7 @@ public class RuleGrammarGenerator {
                                 }
                                 return sb.toString();
                             }).reduce((s1, s2) -> "(" + s1 + ")|(" + s2 + ")").get();
-                            return Terminal(t.value(), restriction);
+                            return RegexTerminal.apply("#", "\"" + StringEscapeUtils.escapeJava(t.value()) + "\"", restriction);
                         }
                     }
                     return pi;

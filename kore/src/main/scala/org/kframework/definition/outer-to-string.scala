@@ -30,7 +30,7 @@ trait SyntaxSortToString {
 
 trait TerminalToString {
   self: Terminal =>
-  override def toString = "\"" + value + "\""
+  override def toString = "\"" + StringEscapeUtils.escapeJava(value) + "\""
 }
 
 trait NonTerminalToString {
@@ -41,7 +41,11 @@ trait NonTerminalToString {
 trait RegexTerminalToString {
   self: RegexTerminal =>
   override def toString = {
-    "r\"" + StringEscapeUtils.escapeJava(regex) + "\""
+    "r\"" + StringEscapeUtils.escapeJava(
+      (if ("#" == precedePattern) "" else "(?<!" + precedePattern + ")" ) +
+      regex +
+      (if ("#" == followPattern) "" else "(?!" + followPattern + ")" )
+    ) + "\""
   }
 }
 

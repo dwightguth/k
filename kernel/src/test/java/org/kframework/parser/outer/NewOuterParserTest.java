@@ -15,7 +15,7 @@ public class NewOuterParserTest {
 
     @Test
     public void testKOREOuter() throws Exception {
-        CharSequence theTextToParse = "module FOO syntax Exp ::= Exp [stag(as(d)f)] rule ab cd [rtag(.::KList)] endmodule";
+        String theTextToParse = "module FOO syntax Exp ::= Exp [stag(as(d)f)] rule ab cd [rtag(.::KList)] endmodule";
         String mainModule = "KORE";
         String startSymbol = "KDefinition";
         File definitionFile = new File(NewOuterParserTest.class.getResource

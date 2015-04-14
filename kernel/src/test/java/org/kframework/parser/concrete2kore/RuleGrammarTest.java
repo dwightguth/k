@@ -1,6 +1,9 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore;
 
+import dk.brics.automaton.BasicAutomata;
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.RunAutomaton;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -239,7 +242,7 @@ public class RuleGrammarTest {
         parseRule("A:Stmt ? F : Stmt", def, 2, false);
     }
 
-    //test whitespace
+    // test whitespace
     @Test
     public void test15() {
         String def = "" +
