@@ -23,18 +23,15 @@ module KAST
                        // something that doesn't collide with meta-variables
 
   syntax KList ::= K
-                 | ".KList"          [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
                  | ".::KList"        [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
                  | KList "," KList   [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
-                 | KList ",," KList  [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
 endmodule
 
 
 // To be used when parsing/pretty-printing ground configurations
 module KSEQ
   imports KAST
-  syntax KBott ::= ".K"      [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
-                 | ".::K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
+  syntax KBott ::= ".::K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
                  | K "~>" K  [klabel(#KSequence), left, assoc, unit(#EmptyK), hook(org.kframework.kore.KSequence)]
   syntax left #KSequence
   syntax KBott     ::= "`" K "`"    [bracket]
@@ -54,7 +51,6 @@ module KCELLS
 
   syntax Cell
   syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells), unit(#EmptyBag)]
-               | ".Bag"   [klabel(#EmptyBag)]
                | ".::Bag" [klabel(#EmptyBag)]
                | Cell
   syntax K ::= Bag
@@ -88,10 +84,8 @@ module REQUIRES-ENSURES
 
   syntax RuleContent ::= K                                 [klabel("#ruleNoConditions")]
                        | K "requires" K                    [klabel("#ruleRequires")]
-                       | K "when" K                        [klabel("#ruleRequires")]
                        | K "ensures"  K                    [klabel("#ruleEnsures")]
                        | K "requires" K "ensures" K        [klabel("#ruleRequiresEnsures")]
-                       | K "when" K "ensures" K            [klabel("#ruleRequiresEnsures")]
 endmodule
 
 module K-SORT-LATTICE
@@ -118,12 +112,25 @@ module DEFAULT-CONFIGURATION
   configuration <k> $PGM:K </k>
 endmodule
 
+module K-SYNTACTIC-SUGAR
+  syntax K ::= ".K"                  [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
+
+  syntax KList ::= ".KList"          [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
+                 | KList ",," KList  [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
+
+  syntax Bag ::= ".Bag"              [klabel(#EmptyBag)]
+
+  syntax RuleContent ::= K "when" K              [klabel("#ruleRequires")]
+                       | K "when" K "ensures" K  [klabel("#ruleRequiresEnsures")]
+endmodule
+
 // To be used to parse semantic rules
 module K
   imports KSEQ-SYMBOLIC
   imports REQUIRES-ENSURES
   imports K-SORT-LATTICE
   imports AUTO-CASTS
+  imports K-SYNTACTIC-SUGAR
   syntax KBott     ::= K "=>" K     [klabel(#KRewrite), hook(org.kframework.kore.KRewrite), non-assoc]
   syntax non-assoc #KRewrite
   syntax KBott     ::= "HOLE"         [klabel([])]
