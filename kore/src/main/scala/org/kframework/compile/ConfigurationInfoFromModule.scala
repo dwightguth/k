@@ -2,6 +2,7 @@ package org.kframework.compile
 
 import java.util
 
+import org.kframework.POSet
 import org.kframework.kore.ADT.{KList, KApply}
 
 import scala.collection.JavaConverters._
@@ -9,6 +10,7 @@ import scala.collection.JavaConverters._
 import org.kframework.compile.ConfigurationInfo.Multiplicity
 import org.kframework.definition.{Module, NonTerminal, Production}
 import org.kframework.kore.{ADT, K, KLabel, Sort}
+import org.kframework.TSort._
 
 object ConfigurationInfoFromModule
 
@@ -32,13 +34,16 @@ class ConfigurationInfoFromModule(val m: Module) extends ConfigurationInfo {
       case _ => List()
     }}.toSet
 
+  private val edgesPoset: POSet[Sort] = POSet(edges)
+
   private val topCells = cellSorts.filter (l => !edges.map(_._2).contains(l))
 
   if (topCells.size > 1)
     throw new AssertionError("Too many top cells:" + topCells)
 
   val topCell: Sort = topCells.head
-  val levels: Map[Sort, Int] = edges.foldLeft(Map(topCell -> 0)) {
+  private val sortedSorts: Seq[Sort] = tsort(edges).toSeq
+  val levels: Map[Sort, Int] = edges.toList.sortWith((l, r) => sortedSorts.indexOf(l._1) < sortedSorts.indexOf(r._1)).foldLeft(Map(topCell -> 0)) {
     case (m: Map[Sort, Int], (from: Sort, to: Sort)) =>
       m + (to -> (m(from) + 1))
   }

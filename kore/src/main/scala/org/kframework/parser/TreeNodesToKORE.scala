@@ -47,7 +47,7 @@ object TreeNodesToKORE {
       def removeQuotes(s: String) = s.drop(1).dropRight(1)
 
       KToken(Sort(removeQuotes(items(0).asInstanceOf[Constant].value)),
-        removeQuotes(items.tail.head.asInstanceOf[Constant].value))
+        removeQuotes(items.tail.head.asInstanceOf[Constant].value), t.att)
 
     case t@KApply(l, items) =>
       KApply(l, KList((items map down _).asJava), t.att)
