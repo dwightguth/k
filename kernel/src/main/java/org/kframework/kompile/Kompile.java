@@ -197,9 +197,9 @@ public class Kompile {
                     List<org.kframework.kore.K> items = configContents.klist().items();
                     switch (configContents.klabel().name()) {
                     case "#ruleNoConditions":
-                        return Configuration(items.get(0), _true, Att.apply());
+                        return Configuration(items.get(0), _true, ruleContents.att());
                     case "#ruleEnsures":
-                        return Configuration(items.get(0), items.get(1), Att.apply());
+                        return Configuration(items.get(0), items.get(1), ruleContents.att());
                     default:
                         throw new AssertionError("Wrong KLabel for rule content");
                     }
@@ -240,13 +240,13 @@ public class Kompile {
                     List<org.kframework.kore.K> items = ruleContents.klist().items();
                     switch (ruleContents.klabel().name()) {
                         case "#ruleNoConditions":
-                            return Rule(items.get(0), _true, _true);
+                            return Rule(items.get(0), _true, _true, ruleContents.att());
                         case "#ruleRequires":
-                            return Rule(items.get(0), items.get(1), _true);
+                            return Rule(items.get(0), items.get(1), _true, ruleContents.att());
                         case "#ruleEnsures":
-                            return Rule(items.get(0), _true, items.get(1));
+                            return Rule(items.get(0), _true, items.get(1), ruleContents.att());
                         case "#ruleRequiresEnsures":
-                            return Rule(items.get(0), items.get(1), items.get(2));
+                            return Rule(items.get(0), items.get(1), items.get(2), ruleContents.att());
                         default:
                             throw new AssertionError("Wrong KLabel for rule content");
                     }

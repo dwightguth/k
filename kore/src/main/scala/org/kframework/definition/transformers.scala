@@ -3,11 +3,21 @@
 package org.kframework.definition
 
 import org.kframework.definition
+import org.kframework.utils.errorsystem.KEMException
 
 object ModuleTransformer {
   def from(f: java.util.function.UnaryOperator[Module]): ModuleTransformer = ModuleTransformer(f(_))
   def fromSentenceTransformer(f: java.util.function.UnaryOperator[Sentence]): ModuleTransformer =
-    ModuleTransformer(m => Module(m.name, m.imports, m.localSentences map {f(_)}))
+    ModuleTransformer(m => Module(m.name, m.imports, m.localSentences map { s =>
+      try {
+        f(s)
+      } catch {
+        case e: KEMException =>
+          e.exception.addTraceFrame("while compiling sentence at " + s.att.get("org.kframework.attributes.Source").get
+            + ":" + s.att.get("org.kframework.attributes.Location").get)
+          throw e
+      }
+    }))
 
   def apply(f: Module => Module): ModuleTransformer = new ModuleTransformer(f)
 }

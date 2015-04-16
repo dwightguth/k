@@ -6,17 +6,25 @@ import com.google.common.collect.Iterables;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
 import org.kframework.definition.Context;
-import org.kframework.definition.Module;
-import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
-import org.kframework.kore.*;
+import org.kframework.kore.K;
+import org.kframework.kore.KApply;
+import org.kframework.kore.KLabel;
+import org.kframework.kore.KVariable;
+import org.kframework.kore.Sort;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
-import java.util.*;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.kframework.kore.KORE.*;
+import static org.kframework.kore.KORE.KApply;
+import static org.kframework.kore.KORE.KList;
 
 /**
  * Arrange cell contents and variables to match the klabels declared for cells.
@@ -119,8 +127,7 @@ public class SortCells {
             if (remainingCells.size() == 1) {
                 return var;
             }
-            assert false;
-            return null;
+            throw KExceptionManager.compilerError("Expected exactly one cell remaining at variable position. Found: " + remainingCells, var);
         }
 
         Map<Sort, K> getSplit(KVariable var) {
@@ -130,8 +137,7 @@ public class SortCells {
             if (remainingCells.size() == 1) {
                 return ImmutableMap.of(Iterables.getOnlyElement(remainingCells), var);
             }
-            assert false;
-            return null;
+            throw KExceptionManager.compilerError("Expected exactly zero or one cells remaining at variable position. Found: " + remainingCells, var);
         }
     }
 

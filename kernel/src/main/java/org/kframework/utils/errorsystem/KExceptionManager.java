@@ -249,31 +249,6 @@ public class KExceptionManager {
         }
     }
 
-    /**
-     * Thrown to indicate that the K Exception manager has terminated the application due to an error.
-     *
-     * @author dwightguth
-     */
-    public static class KEMException extends RuntimeException {
-        public final KException exception;
-
-        KEMException(KException e) {
-            super(e.toString(), e.getException());
-            this.exception = e;
-        }
-
-        @Override
-        public String getMessage() {
-            return exception.toString();
-        }
-
-        public void register(KExceptionManager kem) {
-            synchronized (kem.getExceptions()) {
-                kem.getExceptions().add(exception);
-            }
-        }
-    }
-
     public List<KException> getExceptions() {
         return exceptions;
     }
