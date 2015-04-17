@@ -18,8 +18,8 @@ class ConfigurationInfoFromModule(val m: Module) extends ConfigurationInfo {
 
   private val cellProductions: Map[Sort,Production] =
     m.productions.filter(_.att.contains("cell")).map(p => (p.sort, p)).toMap
-  private val cellBagProductions: Map[Sort,Production] =
-    m.productions.filter(_.att.contains("cellbag")).map(p => (p.sort, p)).toMap
+  private val cellBagProductions: Map[Sort,Set[Sort]] =
+    m.productions.filter(_.att.contains("cellbag")).map(p => (p.sort, getCellSortsOfCellBag(p.sort))).toMap
   private val cellSorts: Set[Sort] = cellProductions.keySet
   private val cellBagSorts: Set[Sort] = cellBagProductions.keySet
   val cellLabels: Map[Sort, KLabel] = cellProductions.mapValues(_.klabel.get)
@@ -30,9 +30,13 @@ class ConfigurationInfoFromModule(val m: Module) extends ConfigurationInfo {
   private val edges: Set[(Sort, Sort)] = cellProductions.toList.flatMap { case (s,p) =>
     p.items.flatMap{
       case NonTerminal(n) if cellSorts.contains(n) => List((s, n))
-      case NonTerminal(n) if cellBagSorts.contains(n) => m.definedSorts.filter(m.subsorts.directlyGreaterThan(n, _)).map(subsort => (s, subsort))
+      case NonTerminal(n) if cellBagSorts.contains(n) => getCellSortsOfCellBag(n).map(subsort => (s, subsort))
       case _ => List()
     }}.toSet
+
+  private def getCellSortsOfCellBag(n: Sort): Set[Sort] = {
+    m.definedSorts.filter(m.subsorts.directlyGreaterThan(n, _))
+  }
 
   private val edgesPoset: POSet[Sort] = POSet(edges)
 
@@ -62,7 +66,7 @@ class ConfigurationInfoFromModule(val m: Module) extends ConfigurationInfo {
 
   // todo: Cosmin: very, very approximate implementation -- will have to think about it
   override def getMultiplicity(k: Sort): Multiplicity =
-    if (m.productionsFor(cellLabels(k)).exists(_.att.contains("assoc")))
+    if (cellBagProductions.values.flatMap(a => a).toSet.contains(k))
       Multiplicity.STAR
     else
       Multiplicity.ONE

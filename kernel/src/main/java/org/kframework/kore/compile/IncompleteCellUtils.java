@@ -7,6 +7,7 @@ import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.kframework.kore.KORE.KApply;
@@ -45,7 +46,7 @@ public class IncompleteCellUtils {
     }
 
     public static List<K> flattenCells(K cells) {
-        return Assoc.flatten(KLabel("#cells"), cells, KLabel("#EmptyCells"));
+        return new ArrayList<>(Assoc.flatten(KLabel("#cells"), cells, KLabel("#EmptyCells")));
     }
 
     public static List<K> getChildren(KApply cell) {

@@ -3,21 +3,33 @@
 package org.kframework.kore.compile;
 
 import com.google.common.collect.Lists;
-
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
-import org.kframework.definition.*;
-import org.kframework.kore.*;
+import org.kframework.definition.Context;
+import org.kframework.definition.Rule;
+import org.kframework.definition.Sentence;
+import org.kframework.kore.K;
+import org.kframework.kore.KApply;
+import org.kframework.kore.KLabel;
+import org.kframework.kore.KRewrite;
+import org.kframework.kore.KSequence;
+import org.kframework.kore.KVariable;
 import org.kframework.utils.errorsystem.KExceptionManager;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.kframework.kore.KORE.*;
 
@@ -179,21 +191,20 @@ public class AddParentCells {
 
     Optional<KLabel> getParent(K k) {
         if (k instanceof KApply) {
-            if (((KApply) k).klabel().equals(KLabel("#cells"))) {
-                List<K> items = ((KApply) k).klist().items();
-                if (items.isEmpty()) {
-                    return Optional.empty();
-                }
-                Optional<KLabel> parent = getParent(items.get(0));
-                for (K item : items) {
-                    if (!parent.equals(getParent(item))) {
-                        throw KExceptionManager.criticalError("Can't mix cells with different parents levels under a rewrite");
-                    }
-                }
-                return parent;
-            } else {
+            List<K> items = IncompleteCellUtils.flattenCells(k);
+            if (items.size() == 1 && items.get(0) == k) {
                 return Optional.of(cfg.getParent(((KApply) k).klabel()));
             }
+            if (items.isEmpty()) {
+                return Optional.empty();
+            }
+            Optional<KLabel> parent = getParent(items.get(0));
+            for (K item : items) {
+                if (!parent.equals(getParent(item))) {
+                    throw KExceptionManager.criticalError("Can't mix cells with different parents levels under a rewrite");
+                }
+            }
+            return parent;
         } else {
             Optional<KLabel> leftParent = getParent(((KRewrite) k).left());
             Optional<KLabel> rightParent = getParent(((KRewrite) k).right());
