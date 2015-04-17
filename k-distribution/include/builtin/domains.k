@@ -9,7 +9,7 @@ module MAP
 
   /*@ Construct a new Map consisting of key/value pairs of two Maps (the keys of
    the two Maps are assumed disjoint) */
-  syntax Map ::= Map Map                        [left, function, hook(Map:__), klabel('_Map_)]
+  syntax Map ::= Map Map                        [left, function, assoc, comm, unit(.Map), hook(Map:__), klabel('_Map_)]
   /*@  Construct an empty Map */
   syntax Map ::= ".Map"                         [function, hook(Map:.Map)]
                // breaks klabel uniqueness
@@ -65,7 +65,7 @@ module SET
    of unique items). */
 
   /*@ Construct a new Set as the union of two different sets ($A \cup B$) */
-  syntax Set ::= Set Set                  [left, function, hook(Set:__), klabel('_Set_)]
+  syntax Set ::= Set Set                  [left, assoc, comm, unit(.Set), function, hook(Set:__), klabel('_Set_)]
   /*@ Construct an empty Set */
   syntax Set ::= ".Set"                   [function, hook(Set:.Set)]
                //| "."
@@ -134,7 +134,7 @@ module LIST
 
   /*@ Construct a new List as the concatenation of two Lists. This is similar to
    the append "@" operation in many functional programming languages. */
-  syntax List ::= List List               [left, function, hook(List:__), klabel('_List_), smtlib(smt_seq_concat)]
+  syntax List ::= List List               [left, assoc, unit(.List), function, hook(List:__), klabel('_List_), smtlib(smt_seq_concat)]
   /*@ Construct an empty List: */
   syntax List ::= ".List"                 [function, hook(List:.List), smtlib(smt_seq_nil)]
                 //| "."

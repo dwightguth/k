@@ -1,6 +1,6 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 require "kast.k"
-require "misc.k"
+require "domains.k"
 
 module TEST-PROGRAMS
   import TEST
@@ -9,13 +9,10 @@ endmodule
 
 module TEST
   import BASIC-K
-  import STRICTNESS
   import BOOL
-  import LOGIC
   import INT
   import EMPTY-ID
   import MAP
-  import K-RESULT
 
   syntax AExp ::= Int
   syntax AExp ::= Id
@@ -53,7 +50,7 @@ module TEST
 
   syntax KResult ::= Bool
   syntax KResult ::= Int
-  syntax KBool ::= "isStmt" "(" K ")"                   [klabel(isStmt), function]
+  syntax Bool ::= "isStmt" "(" K ")"                   [klabel(isStmt), function]
 
   rule while(BE) S => if(BE) { S while (BE) S } else {}
 
