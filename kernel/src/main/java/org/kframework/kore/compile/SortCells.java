@@ -25,6 +25,7 @@ import java.util.Set;
 
 import static org.kframework.kore.KORE.KApply;
 import static org.kframework.kore.KORE.KList;
+import static org.kframework.kore.KORE.KVariable;
 
 /**
  * Arrange cell contents and variables to match the klabels declared for cells.
@@ -96,7 +97,7 @@ public class SortCells {
     }
 
     // Information on uses of a particular variable
-    private static class VarInfo {
+    private class VarInfo {
         KVariable var;
         KLabel parentCell;
         Set<Sort> remainingCells;
@@ -137,8 +138,22 @@ public class SortCells {
             if (remainingCells.size() == 1) {
                 return ImmutableMap.of(Iterables.getOnlyElement(remainingCells), var);
             }
-            throw KExceptionManager.compilerError("Expected exactly zero or one cells remaining at variable position. Found: " + remainingCells, var);
+            Map<Sort, K> res = new HashMap<>();
+            for (Sort cell : remainingCells) {
+                res.put(cell, newDotVariable());
+            }
+            return res;
         }
+    }
+
+    private int counter = 0;
+    KVariable newDotVariable() {
+        KVariable newLabel;
+        do {
+            newLabel = KVariable("DotVar" + (counter++));
+        } while (variables.containsKey(newLabel));
+        variables.put(newLabel, new VarInfo());
+        return newLabel;
     }
 
     private Map<KVariable, VarInfo> variables = new HashMap<>();

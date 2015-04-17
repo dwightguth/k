@@ -53,12 +53,10 @@ module KCELLS
   imports KAST
 
   syntax Cell
-  syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells), unit(#EmptyBag)]
-               | ".Bag"   [klabel(#EmptyBag)]
-               | ".::Bag" [klabel(#EmptyBag)]
+  syntax Cells ::= Cells Cells  [left, assoc, klabel(#cells), unit(#EmptyCells)]
+               | ".Cells"   [klabel(#EmptyCells)]
+               | ".::Cells" [klabel(#EmptyCells)]
                | Cell
-  syntax K ::= Bag
-  syntax Bag ::= KBott
 endmodule
 
 module RULE-CELLS
@@ -84,8 +82,8 @@ endmodule
 
 
 module REQUIRES-ENSURES
-  imports BASIC-K
 
+  imports BASIC-K
   syntax RuleContent ::= K                                 [klabel("#ruleNoConditions")]
                        | K "requires" K                    [klabel("#ruleRequires")]
                        | K "when" K                        [klabel("#ruleRequires")]

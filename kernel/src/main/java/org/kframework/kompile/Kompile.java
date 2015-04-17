@@ -21,8 +21,10 @@ import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.compile.BooleanUtils;
 import org.kframework.kore.compile.ConcretizeCells;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
+import org.kframework.kore.compile.ResolveSemanticCasts;
 import org.kframework.kore.compile.SortInfo;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
@@ -93,11 +95,13 @@ public class Kompile {
         Module mainModule = ModuleTransformer.from(this::resolveBubbles).apply(defWithConfig.mainModule());
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 
-        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(afterHeatingCooling);
-        LabelInfo labelInfo = new LabelInfoFromModule(afterHeatingCooling);
-        SortInfo sortInfo = SortInfo.fromModule(afterHeatingCooling);
+        Module afterResolvingCasts = new ResolveSemanticCasts().resolve(afterHeatingCooling);
 
-        Module concretized = new ConcretizeCells(configInfo, labelInfo, sortInfo).concretize(afterHeatingCooling);
+        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(afterResolvingCasts);
+        LabelInfo labelInfo = new LabelInfoFromModule(afterResolvingCasts);
+        SortInfo sortInfo = SortInfo.fromModule(afterResolvingCasts);
+
+        Module concretized = new ConcretizeCells(configInfo, labelInfo, sortInfo).concretize(afterResolvingCasts);
 
         Module kseqModule = defWithConfig.getModule("KSEQ").get();
 
@@ -165,8 +169,6 @@ public class Kompile {
     java.util.Set<ParseFailedException> errors;
     RuleGrammarGenerator gen;
 
-    K _true = KToken(Sort("KBool"), "KTrue");
-
     private Module resolveConfig(Module module) {
         ParseInModule configParser = gen.getConfigGrammar(module);
 
@@ -197,7 +199,7 @@ public class Kompile {
                     List<org.kframework.kore.K> items = configContents.klist().items();
                     switch (configContents.klabel().name()) {
                     case "#ruleNoConditions":
-                        return Configuration(items.get(0), _true, ruleContents.att());
+                        return Configuration(items.get(0), BooleanUtils.TRUE, ruleContents.att());
                     case "#ruleEnsures":
                         return Configuration(items.get(0), items.get(1), ruleContents.att());
                     default:
@@ -240,11 +242,11 @@ public class Kompile {
                     List<org.kframework.kore.K> items = ruleContents.klist().items();
                     switch (ruleContents.klabel().name()) {
                         case "#ruleNoConditions":
-                            return Rule(items.get(0), _true, _true, ruleContents.att());
+                            return Rule(items.get(0), BooleanUtils.TRUE, BooleanUtils.TRUE, ruleContents.att());
                         case "#ruleRequires":
-                            return Rule(items.get(0), items.get(1), _true, ruleContents.att());
+                            return Rule(items.get(0), items.get(1), BooleanUtils.TRUE, ruleContents.att());
                         case "#ruleEnsures":
-                            return Rule(items.get(0), _true, items.get(1), ruleContents.att());
+                            return Rule(items.get(0), BooleanUtils.TRUE, items.get(1), ruleContents.att());
                         case "#ruleRequiresEnsures":
                             return Rule(items.get(0), items.get(1), items.get(2), ruleContents.att());
                         default:

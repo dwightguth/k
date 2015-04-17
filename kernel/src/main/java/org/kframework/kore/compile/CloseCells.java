@@ -5,8 +5,6 @@ import com.google.common.collect.Sets;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
 import org.kframework.definition.Context;
-import org.kframework.definition.Module;
-import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
@@ -136,6 +134,15 @@ public class CloseCells {
         }.apply(term);
     }
 
+    private boolean hasVariable(List<K> contents) {
+        for (K k : contents) {
+            if (k instanceof KVariable || (k instanceof KRewrite &&
+                    ((KRewrite) k).left() instanceof KVariable && ((KRewrite) k).right() instanceof KVariable))
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Close an individual cell.
      */
@@ -166,7 +173,7 @@ public class CloseCells {
             }
 
             if (!openLeft && !openRight) {
-                if (required.isEmpty()) {
+                if (required.isEmpty() || hasVariable(contents)) {
                     return KApply(label, KList(contents));
                 } else {
                     throw KExceptionManager.criticalError("Closed parent cell missing " +

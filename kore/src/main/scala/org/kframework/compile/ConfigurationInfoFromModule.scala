@@ -57,7 +57,7 @@ class ConfigurationInfoFromModule(val m: Module) extends ConfigurationInfo {
     mainCells.head
   }
 
-  override def getLevel(k: Sort): Int = levels(k)
+  override def getLevel(k: Sort): Int = levels.getOrElse(k, -1)
   override def isParentCell(k: Sort): Boolean = edges exists { case (c, _) => c == k }
 
   // todo: Cosmin: very, very approximate implementation -- will have to think about it

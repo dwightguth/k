@@ -33,8 +33,8 @@ public class CloseCellsTest {
         addLabel("EnvCell", "<env>");
         addLabel("ThreadCell", "<thread>");
         addLabel("ListCell", "<list>");
-        addLabel("Map", "'_Map_", true, true);
-        addLabel("List", "'_List_", true);
+        addLabel("Map", "'_Map_", true, true, true);
+        addLabel("List", "'_List_", true, false, true);
     }};
 
     @Test
