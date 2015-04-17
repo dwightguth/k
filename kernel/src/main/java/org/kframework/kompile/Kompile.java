@@ -199,9 +199,9 @@ public class Kompile {
                     List<org.kframework.kore.K> items = configContents.klist().items();
                     switch (configContents.klabel().name()) {
                     case "#ruleNoConditions":
-                        return Configuration(items.get(0), BooleanUtils.TRUE, ruleContents.att());
+                        return Configuration(items.get(0), BooleanUtils.TRUE, configContents.att());
                     case "#ruleEnsures":
-                        return Configuration(items.get(0), items.get(1), ruleContents.att());
+                        return Configuration(items.get(0), items.get(1), configContents.att());
                     default:
                         throw new AssertionError("Wrong KLabel for rule content");
                     }
