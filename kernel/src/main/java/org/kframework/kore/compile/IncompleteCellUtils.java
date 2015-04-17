@@ -1,15 +1,17 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.kore.compile;
 
+import org.kframework.kore.Assoc;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.kframework.kore.KORE.*;
+import static org.kframework.kore.KORE.KApply;
+import static org.kframework.kore.KORE.KLabel;
+import static org.kframework.kore.KORE.KList;
 
 /**
  * Utility methods for dealing with cells as seen in Full K.
@@ -42,19 +44,8 @@ public class IncompleteCellUtils {
         return isOpen(cell.klist().items().get(2));
     }
 
-    private static void flattenCells(List<K> children, K item) {
-        if (item instanceof KApply && ((KApply)item).klabel().name().equals("#cells")) {
-            for (K deeper : ((KApply) item).klist().items()) {
-                flattenCells(children, deeper);
-            }
-        } else {
-            children.add(item);
-        }
-    }
     public static List<K> flattenCells(K cells) {
-        List<K> children = new ArrayList<K>();
-        flattenCells(children, cells);
-        return children;
+        return Assoc.flatten(KLabel("#cells"), cells, KLabel("#EmptyCells"));
     }
 
     public static List<K> getChildren(KApply cell) {
