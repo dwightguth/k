@@ -179,6 +179,11 @@ public class Grammar implements Serializable {
         for (NonTerminal nonTerminal : getAllNonTerminals()) {
             allStates.addAll(nonTerminal.getReachableStates());
         }
+
+        int counter = 0;
+        for (State s : allStates) {
+            s.unique = counter++;
+        }
         // 3. prepare the inverse relation
         Map<State, Integer> inverseAllStates = new HashMap<>();
         for (int i = 0; i < allStates.size(); i++) {
@@ -230,6 +235,11 @@ public class Grammar implements Serializable {
                 state.orderingInfo = new State.OrderingInfo(i);
             }
         }
+
+        counter = 0;
+        for (NonTerminal nt : getAllNonTerminals()) {
+            nt.unique = counter++;
+        }
     }
 
     /**
@@ -273,6 +283,7 @@ public class Grammar implements Serializable {
     public static class NonTerminal implements Comparable<NonTerminal>, Serializable {
         public final String name;
         private final int hashCode;
+        public int unique;
         /**
          * The first state of the state machine for the non-terminal.
          */
@@ -371,7 +382,7 @@ public class Grammar implements Serializable {
         /** Counter for generating unique ids for the state. */
         private static int counter = 0;
         /** The unique id of this state. */
-        public final int unique = counter++;
+        public int unique = counter++;
 
         /** A back reference to the NonTerminal that this state is part of. */
         public final NonTerminal nt;

@@ -28,11 +28,17 @@ import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.pcollections.ConsPStack;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * This is the main code for running the parser.
@@ -429,9 +435,52 @@ public class Parser {
         // TODO: extract Location class into it's own file
         final int[] lines;
         final int[] columns;
-        AutoVivifyingBiMap<NonTerminalCall.Key, NonTerminalCall> ntCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateCall.Key, StateCall> stateCalls = new AutoVivifyingBiMap<>();
-        AutoVivifyingBiMap<StateReturn.Key, StateReturn> stateReturns = new AutoVivifyingBiMap<>();
+
+        private ArrayList<ArrayList<NonTerminalCall>> ntCalls = new ArrayList<>();
+        private ArrayList<ArrayList<Map<NonTerminalCall, StateCall>>> stateCalls = new ArrayList<>();
+        private ArrayList<Map<StateCall, StateReturn>> stateReturns = new ArrayList<>();
+
+        public NonTerminalCall get(NonTerminal nt, int ntBegin) {
+            ArrayList<NonTerminalCall> ntCalls2 = getFromAutoVivifyingList(nt.unique,
+                    () -> new ArrayList<>(Collections.nCopies(ntBegin, null)), ntCalls);
+
+            return getFromAutoVivifyingList(ntBegin, () -> new NonTerminalCall(new NonTerminalCall.Key(nt, ntBegin)),
+                    ntCalls2);
+        }
+
+        public StateCall get(NonTerminalCall ntCall, int stateBegin, State state) {
+            ArrayList<Map<NonTerminalCall, StateCall>> stateCalls2 = getFromAutoVivifyingList(state.unique,
+                    () -> new ArrayList<>(Collections.nCopies(stateBegin, null)), stateCalls);
+            Map<NonTerminalCall, StateCall> stateCalls3 = getFromAutoVivifyingList(stateBegin,
+                    HashMap::new, stateCalls2);
+            StateCall res = stateCalls3.get(ntCall);
+            if (res == null) {
+                res = new StateCall(new StateCall.Key(ntCall, stateBegin, state));
+                stateCalls3.put(ntCall, res);
+            }
+            return res;
+        }
+
+        public StateReturn get(StateCall stateCall, int stateEnd) {
+            Map<StateCall, StateReturn> stateReturns2 = getFromAutoVivifyingList(stateEnd, HashMap::new, stateReturns);
+            StateReturn res = stateReturns2.get(stateCall);
+            if (res == null) {
+                res = new StateReturn(new StateReturn.Key(stateCall, stateEnd));
+                stateReturns2.put(stateCall, res);
+            }
+            return res;
+        }
+
+        private <T> T getFromAutoVivifyingList(int idx, Supplier<T> create, ArrayList<T> list) {
+            if (idx >= list.size())
+                list.addAll(Collections.nCopies(idx - list.size() + 1, null));
+            T res = list.get(idx);
+            if (res == null) {
+                res = create.get();
+                list.set(idx, res);
+            }
+            return res;
+        }
 
         public ParseState(String input, int startLine, int startColumn) {
             /**
@@ -732,8 +781,8 @@ public class Parser {
      */
     public Term parse(NonTerminal nt, int position) {
         assert nt != null : "Start symbol cannot be null.";
-        activateStateCall(s.stateCalls.get(new StateCall.Key(s.ntCalls.get(
-            new NonTerminalCall.Key(nt, position)), position, nt.entryState)),
+        activateStateCall(s.get(s.get(
+            nt, position), position, nt.entryState),
             Function.IDENTITY);
 
         for (StateReturn stateReturn;
@@ -742,7 +791,7 @@ public class Parser {
         }
 
         Ambiguity result = Ambiguity.apply(new HashSet<>());
-        for(StateReturn stateReturn : s.ntCalls.get(new NonTerminalCall.Key(nt,position)).exitStateReturns) {
+        for(StateReturn stateReturn : s.get(nt,position).exitStateReturns) {
             if (stateReturn.key.stateEnd == s.input.length()) {
                 result.items().add(KList.apply(ConsPStack.singleton(Ambiguity.apply(stateReturn.function.applyToNull()))));
             }
@@ -773,12 +822,14 @@ public class Parser {
      */
     public ParseError getErrors() {
         int current = 0;
-        for (StateCall.Key key : s.stateCalls.keySet()) {
+        List<StateCall.Key> stateCalls = s.stateCalls.stream().flatMap(Collection::stream)
+                .flatMap(m -> m.values().stream()).map(s -> s.key).collect(Collectors.toList());
+        for (StateCall.Key key : stateCalls) {
             if (key.state instanceof PrimitiveState)
                 current = Math.max(current, key.stateBegin);
         }
         Set<Pair<Production, RegExState>> tokens = new HashSet<>();
-        for (StateCall.Key key : s.stateCalls.keySet()) {
+        for (StateCall.Key key : stateCalls) {
             if (key.state instanceof RegExState && key.stateBegin == current) {
                 tokens.add(new ImmutablePair<>(
                     null, ((RegExState) key.state)));
@@ -821,13 +872,12 @@ public class Parser {
             if (state instanceof ExitState) {
                 for (StateCall stateCall : stateReturn.key.stateCall.key.ntCall.callers) {
                     s.stateReturnWorkList.enqueue(
-                        s.stateReturns.get(
-                            new StateReturn.Key(stateCall, stateReturn.key.stateEnd)));
+                        s.get(stateCall, stateReturn.key.stateEnd));
                 }
             } else if (state instanceof NextableState) {
                 for (State nextState : ((NextableState) state).next) {
-                    activateStateCall(s.stateCalls.get(new StateCall.Key(
-                        stateReturn.key.stateCall.key.ntCall, stateReturn.key.stateEnd, nextState)),
+                    activateStateCall(s.get(
+                        stateReturn.key.stateCall.key.ntCall, stateReturn.key.stateEnd, nextState),
                         stateReturn.function);
                 }
             } else { throw unknownStateType(); }
@@ -857,14 +907,11 @@ public class Parser {
         } else if (stateReturn.key.stateCall.key.state instanceof NonTerminalState) {
             return stateReturn.function.addNTCall(
                 stateReturn.key.stateCall.function,
-                s.stateReturns.get(new StateReturn.Key(
-                    s.stateCalls.get(new StateCall.Key(
-                        s.ntCalls.get(new NonTerminalCall.Key(
-                            ((Grammar.NonTerminalState) stateReturn.key.stateCall.key.state).child,
-                            stateReturn.key.stateCall.key.stateBegin)),
+                s.get(s.get(s.get(((Grammar.NonTerminalState) stateReturn.key.stateCall.key.state).child,
+                            stateReturn.key.stateCall.key.stateBegin),
                         stateReturn.key.stateEnd,
-                        ((Grammar.NonTerminalState) stateReturn.key.stateCall.key.state).child.exitState)),
-                    stateReturn.key.stateEnd)).function);
+                        ((Grammar.NonTerminalState) stateReturn.key.stateCall.key.state).child.exitState),
+                    stateReturn.key.stateEnd).function);
         } else { throw unknownStateType(); }
     }
 
@@ -878,40 +925,34 @@ public class Parser {
             nextState instanceof ExitState ||
             nextState instanceof RuleState) {
             s.stateReturnWorkList.enqueue(
-                s.stateReturns.get(
-                    new StateReturn.Key(stateCall, stateCall.key.stateBegin)));
+                s.get(stateCall, stateCall.key.stateBegin));
         } else if (nextState instanceof PrimitiveState) {
             for (PrimitiveState.MatchResult matchResult :
                     ((PrimitiveState)nextState).matches(s.input, s.reverseInput, stateCall.key.stateBegin)) {
                 s.stateReturnWorkList.enqueue(
-                    s.stateReturns.get(
-                        new StateReturn.Key(stateCall, matchResult.matchEnd)));
+                    s.get(stateCall, matchResult.matchEnd));
             }
         // not instanceof SimpleState
         } else if (nextState instanceof NonTerminalState) {
             // make sure lookaheads have a stateReturn even if empty
             if (((NonTerminalState) nextState).isLookahead) {
                 s.stateReturnWorkList.enqueue(
-                    s.stateReturns.get(
-                        new StateReturn.Key(stateCall, stateCall.key.stateBegin)));
+                    s.get(stateCall, stateCall.key.stateBegin));
             }
             // add to the ntCall
-            NonTerminalCall ntCall = s.ntCalls.get(new NonTerminalCall.Key(
-                ((NonTerminalState) nextState).child, stateCall.key.stateBegin));
+            NonTerminalCall ntCall = s.get(((NonTerminalState) nextState).child, stateCall.key.stateBegin);
             ntCall.callers.add(stateCall);
             if (ntCall.context.contexts.addAll(stateCall.function.results())) {
                 // enqueues anything sensitive
                 s.stateReturnWorkList.addAll(ntCall.reactivations);
             }
             // activate the entry state call (almost like activateStateCall but we have no stateReturn)
-            StateCall entryStateCall = s.stateCalls.get(new StateCall.Key(
-                ntCall, stateCall.key.stateBegin, ntCall.key.nt.entryState));
+            StateCall entryStateCall = s.get(ntCall, stateCall.key.stateBegin, ntCall.key.nt.entryState);
             activateStateCall(entryStateCall, Function.IDENTITY);
             // process existStateReturns already done in the ntCall
             for (StateReturn exitStateReturn : ntCall.exitStateReturns) {
                 s.stateReturnWorkList.enqueue(
-                    s.stateReturns.get(
-                        new StateReturn.Key(stateCall, exitStateReturn.key.stateEnd)));
+                    s.get(stateCall, exitStateReturn.key.stateEnd));
             }
         } else { throw unknownStateType(); }
     }
