@@ -177,7 +177,7 @@ public class KSyntax2GrammarStatesFilter {
 
     private static Map<String, Automaton> cache = new HashMap<>();
 
-    private static Automaton getAutomaton(String regex) {
+    public static Automaton getAutomaton(String regex) {
         Automaton res = cache.get(regex);
         if (res == null) {
             res = new RegExp(regex).toAutomaton();

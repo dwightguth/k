@@ -230,6 +230,20 @@ public class Grammar implements Serializable {
                 state.orderingInfo = new State.OrderingInfo(i);
             }
         }
+
+        List<State> sortedStates = new ArrayList<>(allStates);
+        Collections.sort(sortedStates, (a1, a2) -> a2.orderingInfo.compareTo(a1.orderingInfo));
+
+        for (State state : sortedStates) {
+            if (nullability.isEntryNullable(state)) {
+
+            }
+        }
+
+        First first = new First(allStates, nullability);
+        for (NonTerminal nt : getAllNonTerminals()) {
+            nt.lookahead = new RunAutomaton(first.getFirst(nt.entryState));
+        }
     }
 
     /**
@@ -285,6 +299,8 @@ public class Grammar implements Serializable {
         // and ExitState
         private final Set<NextableState> intermediaryStates = new HashSet<>();
         final OrderingInfo orderingInfo = null; // TODO: unused until we fix lookahead
+
+        public RunAutomaton lookahead;
 
         /**
          * Metadata used by the parser used to determine in what order to process StateReturns
@@ -552,6 +568,8 @@ public class Grammar implements Serializable {
         public final RunAutomaton precedePattern;
         public final RunAutomaton followPattern;
 
+        public final Automaton rawPattern;
+
         /** The set of terminals (keywords) that shouldn't be parsed as this regular expression. */
 
         public RegExState(String name, NonTerminal nt, Automaton pattern) {
@@ -563,6 +581,7 @@ public class Grammar implements Serializable {
             assert pattern != null;
             this.precedePattern = new RunAutomaton(precedePattern != null ? precedePattern : BasicAutomata.makeEmpty(), false);
             this.pattern = new RunAutomaton(pattern, false);
+            this.rawPattern = pattern;
             this.followPattern = new RunAutomaton(followPattern != null ? followPattern : BasicAutomata.makeEmpty(), false);
         }
 

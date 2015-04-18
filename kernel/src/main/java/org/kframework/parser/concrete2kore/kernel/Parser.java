@@ -889,6 +889,10 @@ public class Parser {
             }
         // not instanceof SimpleState
         } else if (nextState instanceof NonTerminalState) {
+            NonTerminal nt = ((NonTerminalState)nextState).child;
+            if (stateCall.key.stateBegin < s.input.length() && nt.lookahead.step(nt.lookahead.getInitialState(), s.input.charAt(stateCall.key.stateBegin)) == -1) {
+                return;
+            }
             // make sure lookaheads have a stateReturn even if empty
             if (((NonTerminalState) nextState).isLookahead) {
                 s.stateReturnWorkList.enqueue(
@@ -897,7 +901,7 @@ public class Parser {
             }
             // add to the ntCall
             NonTerminalCall ntCall = s.ntCalls.get(new NonTerminalCall.Key(
-                ((NonTerminalState) nextState).child, stateCall.key.stateBegin));
+                nt, stateCall.key.stateBegin));
             ntCall.callers.add(stateCall);
             if (ntCall.context.contexts.addAll(stateCall.function.results())) {
                 // enqueues anything sensitive

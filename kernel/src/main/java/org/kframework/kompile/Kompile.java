@@ -82,6 +82,7 @@ public class Kompile {
     public Tuple3<Module, Definition, BiFunction<String, Source, K>> run(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) {
         Definition defWithConfig = parseDefinition(definitionFile, mainModuleName, mainProgramsModule, true);
 
+        ruleParser = gen.getRuleGrammar(defWithConfig.mainModule());
         Module mainModule = ModuleTransformer.from(this::resolveBubbles).apply(defWithConfig.mainModule());
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 
@@ -223,8 +224,8 @@ public class Kompile {
         return Module(module.name(), module.imports(), (Set<Sentence>) module.localSentences().$bar(configDeclProductions), module.att());
     }
 
+    ParseInModule ruleParser;
     private Module resolveBubbles(Module mainModuleWithBubble) {
-        ParseInModule ruleParser = gen.getRuleGrammar(mainModuleWithBubble);
 
         Set<Sentence> ruleSet = stream(mainModuleWithBubble.localSentences())
                 .parallel()
@@ -238,6 +239,7 @@ public class Kompile {
                     return ruleParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
                 })
                 .flatMap(result -> {
+                    System.err.println("[]");
                     if (result._1().isRight()) {
                         kem.addAllKException(result._2().stream().map(e -> e.getKException()).collect(Collectors.toList()));
                         return Stream.of(result._1().right().get());
