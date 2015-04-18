@@ -11,6 +11,7 @@ import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
+import org.kframework.kore.KRewrite;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -22,10 +23,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static org.kframework.kore.KORE.KApply;
-import static org.kframework.kore.KORE.KList;
-import static org.kframework.kore.KORE.KVariable;
+import static org.kframework.kore.KORE.*;
 
 /**
  * Arrange cell contents and variables to match the klabels declared for cells.
@@ -101,8 +101,9 @@ public class SortCells {
         KVariable var;
         KLabel parentCell;
         Set<Sort> remainingCells;
+        Map<Sort, K> split;
 
-        void addOccurances(ConcretizationInfo cfg, KLabel cell, KVariable var, List<K> items) {
+        void addOccurances(KLabel cell, KVariable var, List<K> items) {
             this.var = var;
             if (parentCell == null) {
                 parentCell = cell;
@@ -117,6 +118,12 @@ public class SortCells {
                 if (item instanceof KApply) {
                     KApply kApply = (KApply) item;
                     Sort s = cfg.getCellSort(kApply.klabel());
+                    if (cfg.getMultiplicity(s) != ConfigurationInfo.Multiplicity.STAR) {
+                        remainingCells.remove(s);
+                    }
+                } else if (item instanceof KVariable) {
+                    // only get here if the variable was originally sorted in a semantic cast
+                    Sort s = Sort(item.att().<String>get("sort").get());
                     if (cfg.getMultiplicity(s) != ConfigurationInfo.Multiplicity.STAR) {
                         remainingCells.remove(s);
                     }
@@ -138,11 +145,14 @@ public class SortCells {
             if (remainingCells.size() == 1) {
                 return ImmutableMap.of(Iterables.getOnlyElement(remainingCells), var);
             }
-            Map<Sort, K> res = new HashMap<>();
-            for (Sort cell : remainingCells) {
-                res.put(cell, newDotVariable());
+            if(split != null) {
+                return split;
             }
-            return res;
+            split = new HashMap<>();
+            for (Sort cell : remainingCells) {
+                split.put(cell, newDotVariable());
+            }
+            return split;
         }
     }
 
@@ -150,7 +160,7 @@ public class SortCells {
     KVariable newDotVariable() {
         KVariable newLabel;
         do {
-            newLabel = KVariable("DotVar" + (counter++));
+            newLabel = KVariable("_" + (counter++));
         } while (variables.containsKey(newLabel));
         variables.put(newLabel, new VarInfo());
         return newLabel;
@@ -167,30 +177,73 @@ public class SortCells {
             @Override
             public Void apply(KApply k) {
                 if (cfg.isParentCell(k.klabel())) {
-                    KVariable var = null;
-                    List<K> items = new ArrayList<>(k.klist().size());
+                    KVariable leftVar = null, rightVar = null;
+                    List<K> leftItems = new ArrayList<>(k.klist().size());
+                    List<K> rightItems = new ArrayList<>(k.klist().size());
                     for (K item : k.klist().items()) {
-                        if (item instanceof KVariable) {
-                            if (var != null) {
-                                throw KExceptionManager.criticalError(
-                                        "AC matching of multiple cell variables not yet supported. "
-                                                + "encountered variables " + var.toString() + " and "
-                                                + item.toString() + " in cell " + k);
-                            } else {
-                                var = (KVariable) item;
-                            }
+                        if (isCellVariable(item)) {
+                            leftVar = assignVar(leftVar, item);
+                            rightVar = assignVar(rightVar, item);
                         } else {
-                            items.add(item);
+                            if (item instanceof KRewrite) {
+                                KRewrite rw = (KRewrite) item;
+                                if (isCellVariable(rw.left())) {
+                                    leftVar = assignVar(leftVar, rw.left());
+                                } else {
+                                    leftItems.add(rw.left());
+                                }
+                                if (isCellVariable(rw.right())) {
+                                    rightVar = assignVar(rightVar, rw.right());
+                                } else {
+                                    rightItems.add(rw.right());
+                                }
+                            } else {
+                                leftItems.add(item);
+                                rightItems.add(item);
+                            }
                         }
                     }
-                    if (var != null) {
-                        if (!variables.containsKey(var)) {
-                            variables.put(var, new VarInfo());
-                        }
-                        variables.get(var).addOccurances(cfg, k.klabel(), var, items);
-                    }
+                    putVar(k, leftVar, leftItems);
+                    putVar(k, rightVar, rightItems);
                 }
                 return super.apply(k);
+            }
+
+            private void putVar(KApply k, KVariable var, List<K> items) {
+                if (var != null) {
+                    if (!variables.containsKey(var)) {
+                        variables.put(var, new VarInfo());
+                    }
+                    variables.get(var).addOccurances(k.klabel(), var, items);
+                }
+            }
+
+            private KVariable assignVar(KVariable leftVar, K item) {
+                if (leftVar != null) {
+                    throw KExceptionManager.compilerError(
+                            "AC matching of multiple cell variables not yet supported. "
+                                    + "encountered variables " + leftVar.toString() + " and "
+                                    + item.toString(), item);
+                }
+                leftVar = (KVariable) item;
+                return leftVar;
+            }
+
+            private boolean isCellVariable(K item) {
+                if (item instanceof KVariable) {
+                    if (item.att().<String>get("sort").isEmpty()) {
+                        return true;
+                    } else {
+                        Sort varSort = Sort(item.att().<String>get("sort").get());
+                        if (!cfg.cfg.isCell(varSort)) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                } else {
+                    return false;
+                }
             }
         }.apply(term);
     }
@@ -205,19 +258,35 @@ public class SortCells {
                     List<Sort> order = cfg.getChildren(k.klabel());
                     ArrayList<K> ordered = new ArrayList<K>(Collections.nCopies(order.size(), null));
                     for (K item : k.klist().items()) {
-                        if (item instanceof KVariable) {
-                            VarInfo info = variables.get(item);
-                            Map<Sort, K> split = info.getSplit((KVariable) item);
-                            for (Map.Entry<Sort, K> e : split.entrySet()) {
-                                ordered.set(order.indexOf(e.getKey()), e.getValue());
-                            }
-                        } else if (item instanceof KApply) {
-                            ordered.set(order.indexOf(cfg.getCellSort(((KApply) item).klabel())), apply(item));
-                        } else {
-                            assert false;
+                        Map<Sort, K> split = getSplit(item);
+                        for (Map.Entry<Sort, K> e : split.entrySet()) {
+                            ordered.set(order.indexOf(e.getKey()), e.getValue());
                         }
                     }
                     return KApply(k.klabel(), KList(ordered), k.att());
+                }
+            }
+
+            private Map<Sort, K> getSplit(K item) {
+                if (item instanceof KVariable) {
+                    VarInfo info = variables.get(item);
+                    return info.getSplit((KVariable) item);
+                } else if (item instanceof KApply) {
+                    return Collections.singletonMap(cfg.getCellSort(((KApply) item).klabel()), apply(item));
+                } else if (item instanceof KRewrite) {
+                    KRewrite rw = (KRewrite) item;
+                    Map<Sort, K> splitLeft = getSplit(rw.left());
+                    Map<Sort, K> splitRight = getSplit(rw.right());
+                    if (!splitLeft.keySet().equals(splitRight.keySet())) {
+                        throw KExceptionManager.compilerError("Cannot compute variable split of rewrite in which "
+                                + "left and right hand side have different cells. Found: " + splitLeft.keySet()
+                                + " and " + splitRight.keySet(), item);
+                    }
+                    return splitLeft.keySet().stream().collect(Collectors.toMap(sort -> sort,
+                            sort -> KRewrite(splitLeft.get(sort), splitRight.get(sort), rw.att())));
+                } else {
+                    throw KExceptionManager.compilerError("Unexpected kind of term found in cell. Expected variable, "
+                            + "apply, or rewrite; found " + item.getClass().getSimpleName(), item);
                 }
             }
 

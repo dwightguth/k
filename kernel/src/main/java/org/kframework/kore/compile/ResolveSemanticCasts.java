@@ -8,11 +8,11 @@ import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.KVariable;
 
 import java.util.Set;
 
-import static org.kframework.kore.KORE.KApply;
-import static org.kframework.kore.KORE.KLabel;
+import static org.kframework.kore.KORE.*;
 
 /**
  * Created by dwightguth on 4/17/15.
@@ -48,8 +48,12 @@ public class ResolveSemanticCasts {
     }
 
     K addSideCondition(K requires) {
-        return casts.stream().map(kapp -> (K)KApply(KLabel("is" + kapp.klabel().name().substring("#SemanticCastTo".length())), kapp.klist()))
+        return casts.stream().map(kapp -> (K)KApply(KLabel("is" + getSortNameOfCast(kapp)), kapp.klist()))
                 .reduce(requires, BooleanUtils::and);
+    }
+
+    private String getSortNameOfCast(KApply kapp) {
+        return kapp.klabel().name().substring("#SemanticCastTo".length());
     }
 
     void gatherCasts(K term) {
@@ -68,6 +72,11 @@ public class ResolveSemanticCasts {
             @Override
             public K apply(KApply k) {
                 if (casts.contains(k)) {
+                    K child = k.klist().items().get(0);
+                    if (child instanceof KVariable) {
+                        KVariable var = (KVariable) child;
+                        return KVariable(var.name(), var.att().add("sort", getSortNameOfCast(k)));
+                    }
                     return super.apply(k.klist().items().get(0));
                 }
                 return super.apply(k);
