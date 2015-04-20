@@ -93,6 +93,12 @@ public class Kompile {
         Definition defWithConfig = parseDefinition(definitionFile, mainModuleName, mainProgramsModule, true);
 
         Module mainModule = ModuleTransformer.from(this::resolveBubbles).apply(defWithConfig.mainModule());
+
+        if (!errors.isEmpty()) {
+            kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            throw KExceptionManager.compilerError("Had " + errors.size() + " parsing errors.");
+        }
+
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 
         Module afterResolvingCasts = new ResolveSemanticCasts().resolve(afterHeatingCooling);

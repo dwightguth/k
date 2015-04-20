@@ -152,10 +152,10 @@ public class GenerateSentencesFromConfigDecl {
             // syntax CellBag ::= ".CellBag"
             // syntax CellBag  ::= CellBag CellBag [assoc, unit(.CellBag)]
             Sort bagSort = Sort(sortName + "Bag");
-            Sentence bagSubsort = Production(bagSort, Seq(NonTerminal(sort)), Att().add("cellbag"));
+            Sentence bagSubsort = Production(bagSort, Seq(NonTerminal(sort)), Att());
             Sentence bagUnit = Production("." + bagSort.name(), bagSort, Seq(Terminal("." + bagSort.name())));
             Sentence bag = Production("_" + bagSort + "_", bagSort, Seq(NonTerminal(bagSort), NonTerminal(bagSort)),
-                    Att().add("assoc").add("unit", "." + bagSort.name()));
+                    Att().add("assoc").add("unit", "." + bagSort.name()).add("cellbag"));
 
             return Tuple2.apply((Set<Sentence>)childResult._1().$bar(Set(initializer, cellProduction,
                     bagSubsort, bagUnit, bag)), Lists.newArrayList(bagSort));

@@ -3,6 +3,7 @@ package org.kframework.kore.compile;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
 import org.kframework.definition.Context;
@@ -253,12 +254,27 @@ public class SortCells {
             @Override
             public K apply(KApply k) {
                 if (!cfg.isParentCell(k.klabel())) {
+                    if (k.klabel().equals(KLabel("isCells"))) {
+                        if (k.klist().items().size() != 1) {
+                            throw KExceptionManager.compilerError("Unexpected isCells predicate of arity "
+                                    + k.klist().size() + " which cannot be split into individual cells.", k);
+                        }
+                        K item = k.klist().items().get(0);
+                        Map<Sort, K> split = getSplit(item);
+                        if (split == null) {
+                            // someone typed a variable as Cells but not in a cell context. Therefore, we simply drop
+                            // this check.
+                            return BooleanUtils.TRUE;
+                        }
+                        return split.entrySet().stream().map(e -> (K) KApply(KLabel("is" + e.getKey().name()), e.getValue())).reduce(BooleanUtils.TRUE, BooleanUtils::and);
+                    }
                     return super.apply(k);
                 } else {
                     List<Sort> order = cfg.getChildren(k.klabel());
                     ArrayList<K> ordered = new ArrayList<K>(Collections.nCopies(order.size(), null));
                     for (K item : k.klist().items()) {
                         Map<Sort, K> split = getSplit(item);
+                        assert split != null;
                         for (Map.Entry<Sort, K> e : split.entrySet()) {
                             ordered.set(order.indexOf(e.getKey()), e.getValue());
                         }
@@ -270,15 +286,30 @@ public class SortCells {
             private Map<Sort, K> getSplit(K item) {
                 if (item instanceof KVariable) {
                     VarInfo info = variables.get(item);
+                    if (info == null) {
+                        return null;
+                    }
                     return info.getSplit((KVariable) item);
                 } else if (item instanceof KApply) {
+                    if (IncompleteCellUtils.flattenCells(item).size() == 0) {
+                        return Collections.emptyMap();
+                    }
                     return Collections.singletonMap(cfg.getCellSort(((KApply) item).klabel()), apply(item));
                 } else if (item instanceof KRewrite) {
                     KRewrite rw = (KRewrite) item;
                     Map<Sort, K> splitLeft = getSplit(rw.left());
                     Map<Sort, K> splitRight = getSplit(rw.right());
+                    if (splitLeft == null || splitRight == null) return null;
+                    if (splitLeft.keySet().containsAll(splitRight.keySet())) {
+                        for (Sort s : Sets.difference(splitLeft.keySet(), splitRight.keySet())) {
+                            switch(cfg.getMultiplicity(s)) {
+                            case ONE:
+                                throw KExceptionManager.compilerError("Cannot rewrite a multiplicity=\"1\" cell to the cell unit.", item)
+                            }
+                        }
+                    }
                     if (!splitLeft.keySet().equals(splitRight.keySet())) {
-                        throw KExceptionManager.compilerError("Cannot compute variable split of rewrite in which "
+                        throw KExceptionManager.compilerError("Cannot compute cell variable split of rewrite in which "
                                 + "left and right hand side have different cells. Found: " + splitLeft.keySet()
                                 + " and " + splitRight.keySet(), item);
                     }

@@ -18,13 +18,12 @@ import scala.collection.immutable.Seq;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.kframework.Collections.*;
 import static org.kframework.definition.Constructors.Att;
-import static org.kframework.definition.Constructors.NonTerminal;
-import static org.kframework.definition.Constructors.Production;
-import static org.kframework.definition.Constructors.Terminal;
-import static org.kframework.kore.KORE.Sort;
+import static org.kframework.definition.Constructors.*;
+import static org.kframework.kore.KORE.*;
 
 /**
  * Generator for rule and ground parsers.
@@ -116,16 +115,21 @@ public class RuleGrammarGenerator {
             }
         }
         if (mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
-            scala.collection.immutable.Set<Sentence> prods2 = stream(mod.sentences()).map(s -> {
+            scala.collection.immutable.Set<Sentence> prods2 = stream(mod.sentences()).flatMap(s -> {
                 if (s instanceof Production && (s.att().contains("cell") || s.att().contains("maincell"))) {
                     Production p = (Production) s;
                     // assuming that productions tagged with 'cell' start and end with terminals, and only have non-terminals in the middle
                     assert p.items().head() instanceof Terminal || p.items().head() instanceof RegexTerminal;
                     assert p.items().last() instanceof Terminal || p.items().last() instanceof RegexTerminal;
                     Seq<ProductionItem> pi = Seq(p.items().head(), NonTerminal(Sort("#OptionalDots")), NonTerminal(Sort("K")), NonTerminal(Sort("#OptionalDots")), p.items().last());
-                    return Production(p.klabel().get().name(), Sort("Cell"), pi, p.att());
+                    Production p2 = Production(p.klabel().get().name(), p.sort(), pi, p.att());
+                    Production p3 = Production(Sort("Cell"), Seq(NonTerminal(p.sort())));
+                    return Stream.of(p2, p3);
                 }
-                return s;
+                if (s instanceof Production && (s.att().contains("cellbag"))) {
+                    return Stream.empty();
+                }
+                return Stream.of(s);
             }).collect(Collections.toSet());
             prods.addAll(mutable(prods2));
         } else

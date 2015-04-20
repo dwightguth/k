@@ -64,7 +64,8 @@ module RULE-CELLS
   // if this module is imported, the parser automatically
   // generates, for all productions that have the attribute 'cell' or 'maincell',
   // a production like below:
-  //syntax Cell ::= "<top>" #OptionalDots K #OptionalDots "</top>" [klabel(<top>)]
+  //syntax TopCell ::= "<top>" #OptionalDots K #OptionalDots "</top>" [klabel(<top>)]
+  //syntax Cell ::= TopCell
 
   syntax #OptionalDots ::= "..." [klabel(#dots)]
                          | ""    [klabel(#noDots)]
