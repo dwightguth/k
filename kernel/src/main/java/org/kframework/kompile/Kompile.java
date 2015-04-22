@@ -4,7 +4,9 @@ package org.kframework.kompile;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.kframework.Collections;
+import org.kframework.Pickling;
 import org.kframework.attributes.Source;
 import org.kframework.compile.ConfigurationInfoFromModule;
 import org.kframework.compile.LabelInfo;
@@ -155,12 +157,13 @@ public class Kompile {
 
         errors = java.util.Collections.synchronizedSet(Sets.newHashSet());
         caches = new HashMap<>();
+        File cacheFile = files.resolveKompiled("cache.bin");
 
-        if (cacheParses) {
+        if (cacheParses && cacheFile.exists()) {
             try {
-                caches = loader.load(Map.class, files.resolveKompiled("cache.bin"));
+                caches = Pickling.unpickleParser(FileUtils.readFileToByteArray(cacheFile));
             } catch (FileNotFoundException e) {
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 kem.registerInternalHiddenWarning("Invalidating serialized cache due to corruption.", e);
             }
         }
@@ -171,7 +174,13 @@ public class Kompile {
         gen = new RuleGrammarGenerator(defWithConfig);
         Definition parsedDef = DefinitionTransformer.from(this::resolveBubbles).apply(defWithConfig);
 
-        loader.saveOrDie(files.resolveKompiled("cache.bin"), caches);
+        try {
+            FileUtils.writeByteArrayToFile(cacheFile, Pickling.pickleParser(caches));
+        } catch (IOException e) {
+            throw KExceptionManager.criticalError("Failed to write to " + files.resolveKompiled("cache.bin"), e);
+        }
+
+        loader.saveOrDie(cacheFile, caches);
 
         if (!errors.isEmpty()) {
             kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
@@ -193,13 +202,14 @@ public class Kompile {
         Module configParserModule = gen.getConfigGrammar(module);
 
         ParseCache cache = loadCache(configParserModule);
+        ParseInModule parser = new ParseInModule(cache.getModule());
 
         Set<Sentence> configDeclProductions = stream(module.localSentences())
                 .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("config"))
-                .flatMap(b -> performParse(cache, b))
+                .flatMap(b -> performParse(parser, cache.getCache(), b))
                 .map(contents -> {
                     KApply configContents = (KApply) contents;
                     List<K> items = configContents.klist().items();
@@ -228,13 +238,14 @@ public class Kompile {
         Module ruleParserModule = gen.getRuleGrammar(module);
 
         ParseCache cache = loadCache(ruleParserModule);
+        ParseInModule parser = new ParseInModule(cache.getModule());
 
         Set<Sentence> ruleSet = stream(module.localSentences())
                 .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> !b.sentenceType().equals("config"))
-                .flatMap(b -> performParse(cache, b))
+                .flatMap(b -> performParse(parser, cache.getCache(), b))
                 .map(contents -> {
                     KApply ruleContents = (KApply) contents;
                     List<org.kframework.kore.K> items = ruleContents.klist().items();
@@ -274,21 +285,21 @@ public class Kompile {
         return _this.sortDeclarations().equals(that.sortDeclarations());
     }
 
-    private Stream<? extends K> performParse(ParseCache parser, Bubble b) {
+    private Stream<? extends K> performParse(ParseInModule parser, Map<String, ParsedSentence> cache, Bubble b) {
         int startLine = b.att().<Integer>get("contentStartLine").get();
         int startColumn = b.att().<Integer>get("contentStartColumn").get();
         String source = b.att().<String>get("Source").get();
         Tuple2<Either<java.util.Set<ParseFailedException>, Term>, java.util.Set<ParseFailedException>> result;
-        if (parser.getCache().containsKey(b.contents())) {
-            ParsedSentence parse = parser.getCache().get(b.contents());
+        if (cache.containsKey(b.contents())) {
+            ParsedSentence parse = cache.get(b.contents());
             kem.addAllKException(parse.getWarnings().stream().map(e -> e.getKException()).collect(Collectors.toList()));
             return Stream.of(parse.getParse());
         } else {
-            result = parser.getParser().parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
+            result = parser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
             kem.addAllKException(result._2().stream().map(e -> e.getKException()).collect(Collectors.toList()));
             if (result._1().isRight()) {
                 K k = TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
-                parser.getCache().put(b.contents(), new ParsedSentence(k, new HashSet<>(result._2())));
+                cache.put(b.contents(), new ParsedSentence(k, new HashSet<>(result._2())));
                 return Stream.of(k);
             } else {
                 errors.addAll(result._1().left().get());
