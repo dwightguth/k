@@ -12,6 +12,7 @@ import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.DefinitionDir;
 import org.kframework.utils.file.Environment;
@@ -79,7 +80,7 @@ public class DefinitionLoadingModule extends AbstractModule {
         for (int i = 0; i < dirs.length; i++) {
             if (dirs[i].getAbsolutePath().endsWith("-kompiled")) {
                 if (directory != null) {
-                    throw KExceptionManager.criticalError("Multiple compiled definitions found in the "
+                    throw KEMException.criticalError("Multiple compiled definitions found in the "
                             + "current working directory: " + directory.getAbsolutePath() + " and " +
                             dirs[i].getAbsolutePath());
                 } else {
@@ -89,11 +90,11 @@ public class DefinitionLoadingModule extends AbstractModule {
         }
 
         if (directory == null) {
-            throw KExceptionManager.criticalError("Could not find a compiled definition. " +
+            throw KEMException.criticalError("Could not find a compiled definition. " +
                     "Use --directory to specify one.");
         }
         if (!directory.isDirectory()) {
-            throw KExceptionManager.criticalError("Does not exist or not a directory: " + directory.getAbsolutePath());
+            throw KEMException.criticalError("Does not exist or not a directory: " + directory.getAbsolutePath());
         }
         return directory;
     }
@@ -121,7 +122,7 @@ public class DefinitionLoadingModule extends AbstractModule {
             }
         }
         if (!directory.isDirectory()) {
-            throw KExceptionManager.criticalError("Does not exist or not a directory: " + directory.getAbsolutePath());
+            throw KEMException.criticalError("Does not exist or not a directory: " + directory.getAbsolutePath());
         }
         return directory;
     }

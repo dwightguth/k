@@ -51,6 +51,7 @@ import org.kframework.transformation.TransformationMembersInjector;
 import org.kframework.transformation.TransformationProvider;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.inject.Annotations;
@@ -221,7 +222,7 @@ public class KRunModule extends AbstractModule {
         Executor getExecutor(KompileOptions options, Map<String, Provider<Executor>> map, KExceptionManager kem) {
             Provider<Executor> provider = map.get(options.backend);
             if (provider == null) {
-                throw KExceptionManager.criticalError("Backend " + options.backend + " does not support execution. Supported backends are: "
+                throw KEMException.criticalError("Backend " + options.backend + " does not support execution. Supported backends are: "
                         + map.keySet());
             }
             return provider.get();
@@ -231,7 +232,7 @@ public class KRunModule extends AbstractModule {
         LtlModelChecker getModelChecker(KompileOptions options, Map<String, Provider<LtlModelChecker>> map, KExceptionManager kem) {
             Provider<LtlModelChecker> provider = map.get(options.backend);
             if (provider == null) {
-                throw KExceptionManager.criticalError("Backend " + options.backend + " does not support ltl model checking. Supported backends are: "
+                throw KEMException.criticalError("Backend " + options.backend + " does not support ltl model checking. Supported backends are: "
                         + map.keySet());
             }
             return provider.get();
@@ -241,7 +242,7 @@ public class KRunModule extends AbstractModule {
         Prover getProver(KompileOptions options, Map<String, Provider<Prover>> map, KExceptionManager kem) {
             Provider<Prover> provider = map.get(options.backend);
             if (provider == null) {
-                throw KExceptionManager.criticalError("Backend " + options.backend + " does not support program verification. Supported backends are: "
+                throw KEMException.criticalError("Backend " + options.backend + " does not support program verification. Supported backends are: "
                         + map.keySet());
             }
             return provider.get();

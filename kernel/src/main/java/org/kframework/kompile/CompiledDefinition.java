@@ -7,6 +7,7 @@ import org.kframework.definition.Module;
 import org.kframework.kore.K;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
+import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 
 import java.io.Serializable;
 import java.util.function.BiFunction;
@@ -53,6 +54,8 @@ public class CompiledDefinition implements Serializable {
         return kompiledDefinition.mainModule();
     }
 
+    public Module syntaxModule() { return kompiledDefinition.mainSyntaxModule(); }
+
     /**
      * Creates a parser for a module.
      * Will probably want to move the method out of this class here eventually.
@@ -61,10 +64,14 @@ public class CompiledDefinition implements Serializable {
      */
 
     public BiFunction<String, Source, K> getParser(Module module, String programStartSymbol) {
-        ParseInModule parseInModule = new ParseInModule(module);
+        ParseInModule parseInModule = new ParseInModule(getParserModule(module));
 
         return (BiFunction<String, Source, K> & Serializable) (s, source) -> {
             return TreeNodesToKORE.down(TreeNodesToKORE.apply(parseInModule.parseString(s, programStartSymbol, source)._1().right().get()));
         };
+    }
+
+    public Module getParserModule(Module module) {
+        return new RuleGrammarGenerator(parsedDefinition).getCombinedGrammar(module);
     }
 }

@@ -3,6 +3,8 @@
 package org.kframework.backend.java.compile;
 
 import org.kframework.attributes.Att;
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
 import org.kframework.backend.java.kil.KCollection;
 import org.kframework.backend.java.kil.KItem;
 import org.kframework.backend.java.kil.KLabelConstant;
@@ -14,10 +16,8 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
-import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
-import scala.Option;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,7 +61,7 @@ public class KOREtoBackendKIL extends org.kframework.kore.AbstractConstructors<o
     }
 
     public Term KApply1(org.kframework.kore.KLabel klabel, org.kframework.kore.KList klist, Att att) {
-        return KItem.of(KLabel(klabel.name()), KList(klist.items()), context).evaluate(context);
+        return KItem.of(KLabel(klabel.name()), KList(klist.items()), context, att.getOptional("org.kframework.attributes.Source", Source.class).orElse(null), att.getOptional("org.kframework.attributes.Location", Location.class).orElse(null));
     }
 
     @Override

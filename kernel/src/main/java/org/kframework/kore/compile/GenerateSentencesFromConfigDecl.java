@@ -18,7 +18,7 @@ import org.kframework.kore.KSequence;
 import org.kframework.kore.KToken;
 import org.kframework.kore.Sort;
 import org.kframework.utils.StringUtil;
-import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.KEMException;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.immutable.Set;
@@ -100,7 +100,7 @@ public class GenerateSentencesFromConfigDecl {
                         }
                     }
                 }
-                throw KExceptionManager.compilerError("Malformed cell in configuration declaration.", term);
+                throw KEMException.compilerError("Malformed cell in configuration declaration.", term);
             } else if (kapp.klabel().name().equals("#cells")) {
                 //is a cell bag, and thus represents the multiple children of its parent cell
                 if (ensures != null) {
@@ -131,7 +131,7 @@ public class GenerateSentencesFromConfigDecl {
             // child of a leaf cell. Generate no productions, but inform parent that it has a child of a particular sort.
             return Tuple2.apply(Set(), Lists.newArrayList(Sorts.K()));
         } else {
-            throw KExceptionManager.compilerError("Unexpected value found in configuration declaration, expected KToken or KApply", term);
+            throw KEMException.compilerError("Unexpected value found in configuration declaration, expected KToken or KApply", term);
         }
     }
 
@@ -196,7 +196,7 @@ public class GenerateSentencesFromConfigDecl {
                 }
             }
         }
-        throw KExceptionManager.compilerError("Malformed cell properties", k);
+        throw KEMException.compilerError("Malformed cell properties", k);
     }
 
     private static Tuple2<String, String> getCellProperty(K k) {
@@ -220,7 +220,7 @@ public class GenerateSentencesFromConfigDecl {
                 }
             }
         }
-        throw KExceptionManager.compilerError("Malformed cell property", k);
+        throw KEMException.compilerError("Malformed cell property", k);
     }
 
     private static String getSortOfCell(String cellName) {
@@ -249,7 +249,7 @@ public class GenerateSentencesFromConfigDecl {
         case "?":
             return Multiplicity.OPTIONAL;
         default:
-            throw KExceptionManager.compilerError("Invalid multiplicity found in cell: " + multiplicity.get(), body);
+            throw KEMException.compilerError("Invalid multiplicity found in cell: " + multiplicity.get(), body);
         }
     }
 }

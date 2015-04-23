@@ -14,6 +14,7 @@ import org.kframework.transformation.Transformation;
 import org.kframework.transformation.TransformationNotSatisfiedException;
 import org.kframework.transformation.TransformationProvider;
 import org.kframework.utils.BinaryLoader;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.JarInfo;
@@ -105,7 +106,7 @@ public class KRunFrontEnd extends FrontEnd {
             }
         } catch (TransformationNotSatisfiedException
                 | AmbiguousTransformationException e) {
-            throw KExceptionManager.criticalError(e.getMessage(), e);
+            throw KEMException.criticalError(e.getMessage(), e);
         }
     }
 }
