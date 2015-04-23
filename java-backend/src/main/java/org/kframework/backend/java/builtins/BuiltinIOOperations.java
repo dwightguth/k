@@ -39,12 +39,11 @@ public class BuiltinIOOperations {
     public BuiltinIOOperations(
             Definition def,
             FileSystem fs,
-            ConfigurationCreationOptions ccOptions,
             KILtoBackendJavaKILTransformer kilTransformer,
             RunProcess rp) {
         this.def = def;
         this.fs = fs;
-        this.ccOptions = ccOptions;
+        this.ccOptions = def.kRunOptions().configurationCreation;
         this.kilTransformer = kilTransformer;
         this.rp = rp;
     }

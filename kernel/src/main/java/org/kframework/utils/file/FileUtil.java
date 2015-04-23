@@ -9,7 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.main.GlobalOptions;
-import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.inject.RequestScoped;
 
 import javax.annotation.Nullable;
@@ -61,7 +61,7 @@ public class FileUtil {
             try {
                 FileUtils.deleteDirectory(tempDir);
             } catch (IOException e) {
-                throw KExceptionManager.criticalError("Failed to delete temporary directory", e);
+                throw KEMException.criticalError("Failed to delete temporary directory", e);
             }
         }
     }
@@ -163,7 +163,7 @@ public class FileUtil {
         try {
             FileUtils.copyFile(from, to);
         } catch (IOException e) {
-            throw KExceptionManager.criticalError("Could not copy " + from + " to " + to, e);
+            throw KEMException.criticalError("Could not copy " + from + " to " + to, e);
         }
     }
 
@@ -171,7 +171,7 @@ public class FileUtil {
         try {
             FileUtils.copyFileToDirectory(from, toDir);
         } catch (IOException e) {
-            throw KExceptionManager.criticalError("Could not copy " + from + " to directory " + toDir, e);
+            throw KEMException.criticalError("Could not copy " + from + " to directory " + toDir, e);
         }
     }
 
@@ -179,11 +179,11 @@ public class FileUtil {
         try {
             File dir = file.getAbsoluteFile().getParentFile();
             if (!dir.exists() && !dir.mkdirs()) {
-                throw KExceptionManager.criticalError("Could not create directory " + dir);
+                throw KEMException.criticalError("Could not create directory " + dir);
             }
             FileUtils.writeStringToFile(file, content);
         } catch (IOException e) {
-            throw KExceptionManager.criticalError("Could not write to file " + file.getAbsolutePath(), e);
+            throw KEMException.criticalError("Could not write to file " + file.getAbsolutePath(), e);
         }
     }
 
@@ -191,7 +191,7 @@ public class FileUtil {
         try {
             return FileUtils.readFileToString(file);
         } catch (IOException e) {
-            throw KExceptionManager.criticalError("Could not read from file " + file.getAbsolutePath(), e);
+            throw KEMException.criticalError("Could not read from file " + file.getAbsolutePath(), e);
         }
     }
 
@@ -201,7 +201,7 @@ public class FileUtil {
             PipedInputStream in = new PipedInputStream(out);
             return Pair.of(in, out);
         } catch (IOException e) {
-            throw KExceptionManager.internalError("Error creating input/output pipe", e);
+            throw KEMException.internalError("Error creating input/output pipe", e);
         }
     }
 
@@ -211,7 +211,7 @@ public class FileUtil {
             PipedOutputStream out = new PipedOutputStream(in);
             return Pair.of(out, in);
         } catch (IOException e) {
-            throw KExceptionManager.internalError("Error creating input/output pipe", e);
+            throw KEMException.internalError("Error creating input/output pipe", e);
         }
     }
 
@@ -219,7 +219,7 @@ public class FileUtil {
         try {
             return IOUtils.toString(reader);
         } catch (IOException e) {
-            throw KExceptionManager.internalError("Error reading from " + reader, e);
+            throw KEMException.internalError("Error reading from " + reader, e);
         }
     }
 
@@ -228,7 +228,7 @@ public class FileUtil {
         try {
             return new FileReader(f);
         } catch (FileNotFoundException e) {
-            throw KExceptionManager.criticalError("Could not read from file " + f.getAbsolutePath(), e);
+            throw KEMException.criticalError("Could not read from file " + f.getAbsolutePath(), e);
         }
     }
 }

@@ -332,7 +332,7 @@ public class KItem extends Term implements KItemRepresentation {
                 }
                 return result;
             } catch (StackOverflowError e) {
-                throw KExceptionManager.criticalError(TRACE_MSG, e);
+                throw KEMException.criticalError(TRACE_MSG, e);
             } catch (KEMException e) {
                 e.exception.addTraceFrame("while evaluating function " + kItem.kLabel().toString());
                 throw e;
@@ -456,7 +456,7 @@ public class KItem extends Term implements KItemRepresentation {
                                 } else {
                                     if (matches.size() > 1) {
                                         if (javaOptions.deterministicFunctions) {
-                                            throw KExceptionManager.criticalError("More than one possible match. " +
+                                            throw KEMException.criticalError("More than one possible match. " +
                                                     "Function " + kLabelConstant + " might be non-deterministic.");
                                         }
                                         kem.registerInternalWarning("More than one possible match. " +
@@ -498,7 +498,7 @@ public class KItem extends Term implements KItemRepresentation {
                             } else {
                                 if (tool == Tool.KRUN) {
                                     if (result != null && !result.equals(rightHandSide)) {
-                                        throw KExceptionManager.criticalError("[non-deterministic function definition]: more than one rule can apply to the function\n" + kItem);
+                                        throw KEMException.criticalError("[non-deterministic function definition]: more than one rule can apply to the function\n" + kItem);
                                     }
                                 }
                                 RuleAuditing.succeed(rule);

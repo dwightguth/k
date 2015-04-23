@@ -17,6 +17,7 @@ import org.kframework.kore.KLabel;
 import org.kframework.kore.KRewrite;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.util.ArrayList;
@@ -115,7 +116,7 @@ public class SortCells {
             if (parentCell == null) {
                 parentCell = cell;
             } else if (!parentCell.equals(cell)) {
-                throw KExceptionManager.criticalError("Cell variable used under two cells, "
+                throw KEMException.criticalError("Cell variable used under two cells, "
                         + parentCell + " and " + cell);
             }
             if (remainingCells == null) {
@@ -214,7 +215,7 @@ public class SortCells {
                         }
                     }
                     if (rhsOf == null && leftVars.size() - nonACVars.size() > 1) {
-                        throw KExceptionManager.compilerError(
+                        throw KEMException.compilerError(
                                 "AC matching of multiple cell variables not yet supported. "
                                         + "encountered variables " + Sets.difference(leftVars.keySet(), nonACVars) + " in cell " + k, k);
                     }
@@ -282,7 +283,7 @@ public class SortCells {
                 if (!cfg.isParentCell(k.klabel())) {
                     if (k.klabel().name().equals("isBag")) {
                         if (k.klist().size() != 1) {
-                            throw KExceptionManager.compilerError("Unexpected isBag predicate not of arity 1 found; cannot compile to sorted cells.", k);
+                            throw KEMException.compilerError("Unexpected isBag predicate not of arity 1 found; cannot compile to sorted cells.", k);
                         }
                         K item = k.klist().items().get(0);
                         Map<Sort, K> split = getSplit(item);
@@ -305,7 +306,7 @@ public class SortCells {
                     }
                     order.stream().filter(s -> ordered.get(order.indexOf(s)) == null).forEach(sort -> {
                         if (cfg.getMultiplicity(sort) == Multiplicity.ONE) {
-                            throw KExceptionManager.compilerError("Missing cell of multiplicity=\"1\": " + sort, k);
+                            throw KEMException.compilerError("Missing cell of multiplicity=\"1\": " + sort, k);
                         } else {
                             ordered.set(order.indexOf(sort), cfg.cfg.getUnit(sort));
                         }
@@ -347,14 +348,14 @@ public class SortCells {
                     return splitLeft.keySet().stream().collect(Collectors.toMap(sort -> sort,
                             sort -> KRewrite(splitLeft.get(sort), splitRight.get(sort), rw.att())));
                 } else {
-                    throw KExceptionManager.compilerError("Unexpected kind of term found in cell. Expected variable, "
+                    throw KEMException.compilerError("Unexpected kind of term found in cell. Expected variable, "
                             + "apply, or rewrite; found " + item.getClass().getSimpleName(), item);
                 }
             }
 
             private K concatenate(Sort sort, List<K> children) {
                 if (cfg.getMultiplicity(sort) != Multiplicity.STAR) {
-                    throw KExceptionManager.compilerError("Attempting to concatenate cells not of multiplicity=\"*\" "
+                    throw KEMException.compilerError("Attempting to concatenate cells not of multiplicity=\"*\" "
                             + "into a cell collection.", children.iterator().next());
                 }
                 return children.stream().reduce(cfg.cfg.getUnit(sort), (k1, k2) -> KApply(cfg.cfg.getConcat(sort), k1, k2));
@@ -363,7 +364,7 @@ public class SortCells {
             private void addDefault(K item, Map<Sort, K> splitLeft, Map<Sort, K> splitRight) {
                 for (Sort s : Sets.difference(splitLeft.keySet(), splitRight.keySet())) {
                     if (cfg.getMultiplicity(s) == Multiplicity.ONE) {
-                        throw KExceptionManager.compilerError("Cannot rewrite a multiplicity=\"1\" cell to or from the cell unit.", item);
+                        throw KEMException.compilerError("Cannot rewrite a multiplicity=\"1\" cell to or from the cell unit.", item);
                     } else {
                         splitRight.put(s, cfg.cfg.getUnit(s));
                     }

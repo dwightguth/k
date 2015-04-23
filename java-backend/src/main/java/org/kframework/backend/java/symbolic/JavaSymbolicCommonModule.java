@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.inject.Builtins;
@@ -32,7 +33,7 @@ public class JavaSymbolicCommonModule extends AbstractModule {
         try {
             FileUtil.loadProperties(properties, getClass(), HOOK_PROPERTIES_FILE_NAME);
         } catch (IOException e) {
-            throw KExceptionManager.internalError("Could not read from resource " + HOOK_PROPERTIES_FILE_NAME, e);
+            throw KEMException.internalError("Could not read from resource " + HOOK_PROPERTIES_FILE_NAME, e);
         }
 
         MapBinder<String, String> builtinMethods = MapBinder.newMapBinder(binder(),

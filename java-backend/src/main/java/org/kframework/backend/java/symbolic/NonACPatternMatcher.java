@@ -20,8 +20,7 @@ import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.RewriteEngineUtils;
-import org.kframework.kil.loader.Context;
-import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -211,7 +210,7 @@ public class NonACPatternMatcher {
                 } else if (subject instanceof AssociativeCommutativeCollection || subject instanceof BuiltinList) {
                     return false;
                 } else {
-                    throw KExceptionManager.internalError("unexpected subject type: found " + subject.getClass().getSimpleName());
+                    throw KEMException.internalError("unexpected subject type: found " + subject.getClass().getSimpleName());
                 }
             }
         }

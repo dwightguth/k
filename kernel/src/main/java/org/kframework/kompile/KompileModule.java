@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.kframework.backend.Backend;
-import org.kframework.backend.Backends;
 import org.kframework.main.FrontEnd;
 import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.DefinitionDir;
 import org.kframework.utils.file.KompiledDir;
@@ -86,7 +86,7 @@ public class KompileModule extends AbstractModule {
     Backend getBackend(KompileOptions options, Map<String, Backend> map, KExceptionManager kem) {
         Backend backend = map.get(options.backend);
         if (backend == null) {
-            throw KExceptionManager.criticalError("Invalid backend: " + options.backend
+            throw KEMException.criticalError("Invalid backend: " + options.backend
                     + ". It should be one of " + map.keySet());
         }
         return backend;

@@ -8,8 +8,8 @@ import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.util.ImpureFunctionException;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Attributes;
-import org.kframework.kil.Production;
 import org.kframework.main.Tool;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.inject.Builtins;
@@ -25,7 +25,6 @@ import java.util.Map;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
 /**
  * Utility class that handles the builtin (hooked) operations and their Java
@@ -63,7 +62,7 @@ public class BuiltinFunction {
             throwImpureExceptionHandle = lookup.findStatic(BuiltinFunction.class,
                     "throwImpureException", hookType);
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw KExceptionManager.internalError("Failed to load partial evaluation hook implementation", e);
+            throw KEMException.internalError("Failed to load partial evaluation hook implementation", e);
         }
         for (Map.Entry<String, Attributes> entry : definition.kLabelAttributes().entrySet()) {
             String hookAttribute = entry.getValue().getAttr(Attribute.HOOK_KEY);

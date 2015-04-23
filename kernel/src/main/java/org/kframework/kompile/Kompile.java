@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import org.kframework.Collections;
 import org.kframework.attributes.Source;
 import org.kframework.builtin.BooleanUtils;
+import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConfigurationInfoFromModule;
 import org.kframework.compile.LabelInfo;
 import org.kframework.compile.LabelInfoFromModule;
@@ -18,6 +19,7 @@ import org.kframework.definition.Module;
 import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.Sort;
 import org.kframework.kore.compile.ConcretizeCells;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
 import org.kframework.kore.compile.ResolveSemanticCasts;
@@ -31,6 +33,7 @@ import org.kframework.parser.concrete2kore.ParserUtils;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.StringUtil;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.file.FileUtil;
@@ -114,7 +117,14 @@ public class Kompile {
 
     public Definition addSemanticsModule(Definition d) {
         Module kseqModule = d.getModule("KSEQ").get();
-        Module withKSeq = Module("SEMANTICS", Set(d.mainModule(), kseqModule), Collections.<Sentence>Set(), Att());
+        java.util.Set<Sentence> prods = new HashSet<>();
+        for (Sort srt : iterable(d.mainModule().definedSorts())) {
+            if (!gen.kSorts().contains(srt) && !srt.name().startsWith("#")) {
+                // K ::= Sort
+                prods.add(Production(Sorts.KItem(), Seq(NonTerminal(srt)), Att()));
+            }
+        }
+        Module withKSeq = Module("SEMANTICS", Set(d.mainModule(), kseqModule), immutable(prods), Att());
         java.util.Set<Module> allModules = mutable(d.modules());
         allModules.add(withKSeq);
         return Definition(withKSeq, d.mainSyntaxModule(), immutable(allModules));
@@ -186,7 +196,7 @@ public class Kompile {
 
         if (!errors.isEmpty()) {
             kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
-            throw KExceptionManager.compilerError("Had " + errors.size() + " parsing errors.");
+            throw KEMException.compilerError("Had " + errors.size() + " parsing errors.");
         }
         return parsedDef;
     }
