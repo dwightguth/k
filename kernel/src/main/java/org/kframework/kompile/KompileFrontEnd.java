@@ -14,6 +14,7 @@ import org.kframework.main.FrontEnd;
 import org.kframework.parser.DefinitionLoader;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.JarInfo;
@@ -72,12 +73,12 @@ public class KompileFrontEnd extends FrontEnd {
     @Override
     public int run() {
         if (!options.mainDefinitionFile().exists()) {
-            throw KExceptionManager.criticalError("Definition file doesn't exist: " +
+            throw KEMException.criticalError("Definition file doesn't exist: " +
                     options.mainDefinitionFile().getAbsolutePath());
         }
 
         if (options.experimental.kore) {
-            Kompile kompile = new Kompile(files, kem);
+            Kompile kompile = new Kompile(options, files, kem);
             //TODO(dwightguth): handle start symbols
             CompiledDefinition def = kompile.run(options.mainDefinitionFile(), options.mainModule(), options.syntaxModule(), "K");
             loader.saveOrDie(files.resolveKompiled("compiled.bin"), def);
