@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/coq-backend/coq-backend.iml" filepath="$PROJECT_DIR$/coq-backend/coq-backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java-backend/java-backend.iml" filepath="$PROJECT_DIR$/java-backend/java-backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/k-distribution/k-distribution.iml" filepath="$PROJECT_DIR$/k-distribution/k-distribution.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kernel/kernel.iml" filepath="$PROJECT_DIR$/kernel/kernel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kore/kore.iml" filepath="$PROJECT_DIR$/kore/kore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/parent.iml" filepath="$PROJECT_DIR$/parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sdf-parser/sdf-parser.iml" filepath="$PROJECT_DIR$/sdf-parser/sdf-parser.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tiny/tiny.iml" filepath="$PROJECT_DIR$/tiny/tiny.iml" />
+    </modules>
+  </component>
+</project>

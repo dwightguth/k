@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/coq-backend" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/java-backend" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/k-distribution" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kernel" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kore" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sdf-parser" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tiny" charset="UTF-8" />
+  </component>
+</project>
