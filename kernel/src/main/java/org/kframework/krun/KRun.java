@@ -7,9 +7,6 @@ import org.kframework.transformation.Transformation;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 
-/**
- * Created by dwightguth on 4/30/15.
- */
 public class KRun implements Transformation<Void, Void> {
 
     private final KExceptionManager kem;
