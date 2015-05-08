@@ -117,6 +117,8 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
 
   def execute(k: kore.K): kore.K = execute(cons.convert(k))
 
+  def `match`(k: kore.K, rule: definition.Rule) = throw new UnsupportedOperationException
+
   def execute(k: K): K = {
     var steps = 0
     var time = System.nanoTime()

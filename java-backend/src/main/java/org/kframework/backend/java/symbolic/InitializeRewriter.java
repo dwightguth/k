@@ -14,8 +14,10 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.definition.Module;
+import org.kframework.definition.Rule;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.K;
+import org.kframework.kore.KVariable;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.io.FileSystem;
@@ -31,6 +33,7 @@ import scala.collection.JavaConversions;
 import java.lang.invoke.MethodHandle;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -95,6 +98,18 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
             this.rewriter = new SymbolicRewriter(definition,  kompileOptions, javaOptions, new KRunState.Counter());
             this.rewritingContext = rewritingContext;
             this.kem = kem;
+        }
+
+        @Override
+        public List<? extends Map<? extends KVariable, ? extends K>> match(K k, Rule rule) {
+            KOREtoBackendKIL converter = new KOREtoBackendKIL(TermContext.of(rewritingContext));
+            Term backendKil = KILtoBackendJavaKILTransformer.expandAndEvaluate(rewritingContext, kem, converter.convert(k));
+            TermContext tc = TermContext.of(rewritingContext, backendKil, BigInteger.ZERO);
+            org.kframework.backend.java.kil.Rule backendRule = KILtoBackendJavaKILTransformer.expandAndEvaluate(rewritingContext, kem, converter.convert(false, tc, rule));
+            return PatternMatcher.match(
+                    backendKil,
+                    backendRule,
+                    tc);
         }
 
         @Override

@@ -368,13 +368,7 @@ public class Rule extends JavaSymbolicObject {
      * Returns the KLabel constant defined by this rule (either a function or a pattern).
      */
     public KLabelConstant definedKLabel() {
-        assert isFunction() || isPattern();
-
-        return (KLabelConstant) ((KItem) leftHandSide).kLabel();
-    }
-
-    public KLabelConstant anywhereKLabel() {
-        assert isAnywhere();
+        assert isFunction() || isPattern() || isAnywhere();
 
         return (KLabelConstant) ((KItem) leftHandSide).kLabel();
     }

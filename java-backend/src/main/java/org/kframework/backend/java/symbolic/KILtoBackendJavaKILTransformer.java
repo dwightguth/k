@@ -120,11 +120,12 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
     }
 
     public Rule transformAndEval(org.kframework.kil.Rule node) {
-        Rule rule = null;
-        rule = new MacroExpander(TermContext.of(globalContext), kem).processRule((Rule) this.visitNode(node));
-        rule = evaluateRule(rule, globalContext);
+        return expandAndEvaluate(globalContext, kem, (Rule) this.visitNode(node));
+    }
 
-        return rule;
+    public static Rule expandAndEvaluate(GlobalContext globalContext, KExceptionManager kem, Rule rule) {
+        rule = new MacroExpander(TermContext.of(globalContext), kem).processRule(rule);
+        return evaluateRule(rule, globalContext);
     }
 
     public Term transformAndEval(org.kframework.kil.Term node) {
@@ -136,8 +137,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
 
     public static Term expandAndEvaluate(GlobalContext globalContext, KExceptionManager kem, Term term) {
         term = new MacroExpander(TermContext.of(globalContext), kem).processTerm((Term) term);
-        term = term.evaluate(TermContext.of(globalContext));
-        return term;
+        return term.evaluate(TermContext.of(globalContext));
     }
 
     @Override
@@ -629,7 +629,12 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
             // TODO(AndreiS): some evaluation is required in the LHS as well
             // TODO(YilongL): cannot simply uncomment the following code because it
             // may evaluate the LHS using the rule itself
-            //Term leftHandSide = rule.leftHandSide().evaluate(termContext);
+            Term leftHandSide;
+            if (rule.isFunction() || rule.isPattern() || rule.isAnywhere()) {
+                leftHandSide = rule.leftHandSide().evaluate(termContext, rule.definedKLabel());
+            } else {
+                leftHandSide = rule.leftHandSide().evaluate(termContext);
+            }
 
             Rule origRule = rule;
             Term rightHandSide = rule.rightHandSide().evaluate(termContext);
@@ -658,7 +663,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
 
             Rule newRule = new Rule(
                     rule.label(),
-                    rule.leftHandSide(),
+                    leftHandSide,
                     rightHandSide,
                     requires,
                     ensures,
