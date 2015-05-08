@@ -148,12 +148,14 @@ public class Kompile {
     }
 
     private Definition concretizeTransformer(Definition input) {
+        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(input.mainModule());
+        LabelInfo labelInfo = new LabelInfoFromModule(input.mainModule());
+        SortInfo sortInfo = SortInfo.fromModule(input.mainModule());
         return DefinitionTransformer.fromSentenceTransformer(
-                s -> concretizeSentence(s, input),
+                new ConcretizeCells(configInfo, labelInfo, sortInfo, kem)::concretize,
                 "concretizing configuration"
         ).apply(input);
     }
-
 
     private Sentence concretizeSentence(Sentence s, Definition input) {
         ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(input.mainModule());

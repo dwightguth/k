@@ -310,7 +310,7 @@ public class KItem extends Term implements KItemRepresentation {
             try {
                 Term result = kItem.isEvaluable(context) ?
                         evaluateFunction(kItem, copyOnShareSubstAndEval, context, exception) :
-                            kItem.applyAnywhereRules(copyOnShareSubstAndEval, context);
+                            kItem.applyAnywhereRules(copyOnShareSubstAndEval, context, exception);
                 if (result instanceof KItem && ((KItem) result).isEvaluable(context) && result.isGround()) {
                     // we do this check because this warning message can be very large and cause OOM
                     if (options.warnings.includesExceptionType(ExceptionType.HIDDENWARNING) && stage == Stage.REWRITING) {
@@ -568,13 +568,17 @@ public class KItem extends Term implements KItemRepresentation {
      *
      * @return the result on success, or this {@code KItem} otherwise
      */
-    private Term applyAnywhereRules(boolean copyOnShareSubstAndEval, TermContext context) {
+    private Term applyAnywhereRules(boolean copyOnShareSubstAndEval, TermContext context, KLabel exception) {
         if (!isAnywhereApplicable(context)) {
             return this;
         }
 
         Definition definition = context.definition();
         KLabelConstant kLabelConstant = (KLabelConstant) kLabel;
+
+        if (kLabelConstant.equals(exception)) {
+            return this;
+        }
 
         /* apply [anywhere] rules */
         /* TODO(YilongL): make KLabelConstant dependent on Definition and store
