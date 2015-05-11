@@ -29,7 +29,6 @@ import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
 import org.kframework.kore.K;
-import org.kframework.kore.KApply;
 import org.kframework.kore.compile.RewriteToTop;
 import org.kframework.kore.convertors.KOREtoKIL;
 import org.kframework.utils.errorsystem.KEMException;
@@ -240,8 +239,6 @@ public class Definition extends JavaSymbolicObject {
                 type = org.kframework.kil.Sort.SET;
             } else if (assoc.isPresent() && comm.isPresent() && !idem.isPresent()) {
                 //TODO(dwightguth): distinguish between Bag and Map
-                if (!prod.att().contains(Attribute.HOOK_KEY))
-                    continue;
                 type = org.kframework.kil.Sort.MAP;
             } else if (!assoc.isPresent() && !comm.isPresent() && !idem.isPresent()) {
                 continue;
@@ -265,7 +262,7 @@ public class Definition extends JavaSymbolicObject {
             if (s instanceof org.kframework.definition.Rule) {
                 org.kframework.definition.Rule rule = (org.kframework.definition.Rule) s;
                 K leftHandSide = RewriteToTop.toLeft(rule.body());
-                Rule r = transformer.convert(leftHandSide instanceof KApply && module.attributesFor().apply(((KApply)leftHandSide).klabel()).contains(Attribute.FUNCTION_KEY), termContext, rule);
+                Rule r = transformer.convertInternal(module, termContext, rule);
                 addRule(r);
             }
         });

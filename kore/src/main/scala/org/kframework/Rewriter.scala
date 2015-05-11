@@ -19,7 +19,13 @@ trait Rewriter {
    * - for search, it returns an Or with multiple ground terms as children
    */
 
-  def `match`(k: kore.K, rule: Rule): java.util.List[_ <: java.util.Map[_ <: KVariable, _ <: K]]
+  def convert(k: K): K = k
 
-  def execute(k: kore.K): kore.K
+  def `match`(k: K, trace: Boolean, rule: Rule): java.util.List[_ <: java.util.Map[_ <: KVariable, _ <: K]]
+
+  def substitute(substitution: java.util.Map[_ <: KVariable, _ <: K], rule: Rule): K
+
+  def execute(k: K): K
+
+  def rules : java.util.List[_ <: Rule]
 }
