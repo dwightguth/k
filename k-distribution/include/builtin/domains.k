@@ -165,7 +165,6 @@ endmodule
 module BOOL
   imports KSEQ
   imports BOOL-SYNTAX
-
   syntax Bool ::= "notBool" Bool          [function, smtlib(not), boolOperation, latex(\neg_{\scriptstyle\it Bool}{#1}), hook(#BOOL:notBool_)]
                 > Bool "andBool" Bool     [function, left, smtlib(and), boolOperation, latex({#1}\wedge_{\scriptstyle\it Bool}{#2}), hook(#BOOL:_andBool_)]
                 | K "andThenBool" K       [function, left, smtlib(and), boolOperation, hook(#BOOL:_andThenBool_)]
