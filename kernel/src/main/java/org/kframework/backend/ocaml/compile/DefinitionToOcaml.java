@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.*;
@@ -110,6 +111,9 @@ public class DefinitionToOcaml {
             "| KToken(sort, s) -> print_string \"#token(\"; print_string(print_sort(sort)); print_string (\", \\\"\" ^ s ^ \"\\\")\")\n" +
             "| InjectedKLabel(klabel) -> print_string \"#klabel(\"; print_string(print_klabel(klabel)); print_string(\")\")\n" +
             "| KSequence(k) -> print_ksequence(k)\n" +
+            "| Bool(b) -> print_k(KToken(Lbl0042006f006f006c, string_of_bool(b)))\n" +
+            "| Int(i) -> print_k(KToken(Lbl0049006e0074, string_of_int(i)))\n" +
+            "| Map(m) -> KMap.iter (fun k v -> print_string(\"`_|->_`(\"); print_k(k); print_string(\", \"); print_k(v); print_string(\")\")) m\n" +
             "and print_klist(c: k list) : unit = match c with\n" +
             "| [] -> print_string(\".KList\")\n" +
             "| e::l -> print_k(e); print_string(\", \"); print_klist(l)\n" +
@@ -123,9 +127,9 @@ public class DefinitionToOcaml {
             "  with Stuck c' -> c'\n";
 
     public static final ImmutableMap<String, String> hooks;
-
+    public static final ImmutableMap<String, Function<String, String>> sortHooks;
     static {
-        ImmutableMap.Builder builder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         builder.put("#INT:_%Int_", "Int a :: Int b :: [] -> Int (a mod b)");
         builder.put("Map:_|->_", "k1 :: k2 :: [] -> Map (KMap.add k1 k2 KMap.empty)");
         builder.put("Map:.Map", "[] -> Map KMap.empty");
@@ -133,15 +137,26 @@ public class DefinitionToOcaml {
         builder.put("Map:lookup", "Map k1 :: k2 :: [] -> KMap.find k2 k1");
         builder.put("MetaK:#tokenSort", "KToken (sort, s) -> String print_sort(sort))");
         builder.put("#K-EQUAL:_==K_", "k1 :: k2 :: [] -> Bool (k1 = k2)");
+        builder.put("#BOOL:_andBool_", "Bool b1 :: Bool b2 :: [] -> Bool (b1 && b2)");
         hooks = builder.build();
     }
 
+    static {
+        ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
+        builder.put("#BOOL", s -> "(Bool " + s + ")");
+        builder.put("#INT", s -> "(Int " + s + ")");
+        builder.put("#STRING", s -> "(String " + StringUtil.enquoteCString(StringUtil.unquoteKString(s)));
+        sortHooks = builder.build();
+    }
+
+    private Module mainModule;
+
     public String convert(CompiledDefinition def) {
-        Module mainModule = def.executionModule();
-        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(new ConvertDataStructureToLookup(mainModule)::convert, "convert data structures to lookups");
+        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(new ConvertDataStructureToLookup(def.executionModule())::convert, "convert data structures to lookups");
         Function1<Module, Module> generatePredicates = func(new GenerateSortPredicates()::gen);
         Function1<Module, Module> pipeline = convertLookups.andThen(generatePredicates);
-        return convert(pipeline.apply(mainModule));
+        mainModule = pipeline.apply(def.executionModule());
+        return convert();
     }
 
     Set<KLabel> functions;
@@ -152,12 +167,12 @@ public class DefinitionToOcaml {
         sb.append("let _ = try print_k(run(");
         convert(sb, v -> {
             throw KEMException.criticalError("Ocaml backend does not support symbolic terms.", v);
-        }, functions).apply(k);
+        }).apply(k);
         sb.append(")) with Stuck c' -> print_k c'");
         return sb.toString();
     }
 
-    private String convert(Module mainModule) {
+    private String convert() {
         StringBuilder sb = new StringBuilder();
         sb.append("type sort = ");
         for (Sort s : iterable(mainModule.definedSorts())) {
@@ -214,7 +229,7 @@ public class DefinitionToOcaml {
                 sb.append(hooks.get(hook));
             }
             for (Rule r : functionRules.get(functionLabel).stream().sorted((a1, a2) -> Boolean.compare(a1.att().contains("owise"), a2.att().contains("owise"))).collect(Collectors.toList())) {
-                convert(r, sb, functions, true);
+                convert(r, sb, true);
             }
             sb.append("| _ -> raise (Stuck (KApply (");
             encodeStringToIdentifier(sb, functionLabel.name());
@@ -224,7 +239,7 @@ public class DefinitionToOcaml {
         sb.append("let step (c: k) : k = match c with \n");
         for (Rule r : iterable(mainModule.rules())) {
             if (!functionRules.values().contains(r)) {
-                convert(r, sb, functions, false);
+                convert(r, sb, false);
             }
         }
         sb.append("| _ -> raise (Stuck c)\n");
@@ -261,7 +276,7 @@ public class DefinitionToOcaml {
     }
 
 
-    private static void convert(Rule r, StringBuilder sb, Set<KLabel> functions, boolean function) {
+    private void convert(Rule r, StringBuilder sb, boolean function) {
         sb.append("(* rule ");
         sb.append(ToKast.apply(r.body()));
         sb.append(" requires ");
@@ -276,7 +291,7 @@ public class DefinitionToOcaml {
         K right = RewriteToTop.toRight(r.body());
         K requires = r.requires();
         SetMultimap<KVariable, String> vars = HashMultimap.create();
-        Visitor visitor = convert(sb, v -> applyVarLhs(v, sb, vars), functions);
+        Visitor visitor = convert(sb, v -> applyVarLhs(v, sb, vars));
         if (function) {
             assert left instanceof KApply;
             KApply kapp = (KApply) left;
@@ -287,15 +302,15 @@ public class DefinitionToOcaml {
         String result = convert(vars);
         Holder numLookups = new Holder();
         if (!(result.equals("true") && requires.equals(BooleanUtils.TRUE))) {
-            sb.append(convertLookups(requires, functions, vars, numLookups));
+            sb.append(convertLookups(requires, vars, numLookups));
             sb.append(" when isTrue(");
-            convert(sb, v -> applyVarRhs(v, sb, vars), functions).apply(requires);
+            convert(sb, v -> applyVarRhs(v, sb, vars)).apply(requires);
             sb.append(") && (");
             sb.append(result);
             sb.append(")");
         }
         sb.append(" -> ");
-        convert(sb, v -> applyVarRhs(v, sb, vars), functions).apply(right);
+        convert(sb, v -> applyVarRhs(v, sb, vars)).apply(right);
         for (int i = 0; i < numLookups.i; i++) {
             sb.append(")");
         }
@@ -304,7 +319,7 @@ public class DefinitionToOcaml {
 
     private static class Holder { int i; }
 
-    private static String convertLookups(K requires, Set<KLabel> functions, SetMultimap<KVariable, String> vars, Holder h) {
+    private String convertLookups(K requires, SetMultimap<KVariable, String> vars, Holder h) {
         StringBuilder sb = new StringBuilder();
         h.i = 0;
         new VisitKORE() {
@@ -314,7 +329,7 @@ public class DefinitionToOcaml {
                     if (k.klist().items().size() != 2) {
                         throw KEMException.internalError("Unexpected arity of lookup: " + k.klist().size(), k);
                     }
-                    convertLookup(sb, k.klist().items().get(0), k.klist().items().get(1), functions, vars);
+                    convertLookup(sb, k.klist().items().get(0), k.klist().items().get(1), vars);
                     h.i++;
                 }
                 return super.apply(k);
@@ -323,11 +338,11 @@ public class DefinitionToOcaml {
         return sb.toString();
     }
 
-    private static void convertLookup(StringBuilder sb, K lhs, K rhs, Set<KLabel> functions, SetMultimap<KVariable, String> vars) {
+    private void convertLookup(StringBuilder sb, K lhs, K rhs, SetMultimap<KVariable, String> vars) {
         sb.append(" -> (match ");
-        convert(sb, v -> applyVarRhs(v, sb, vars), functions).apply(rhs);
+        convert(sb, v -> applyVarRhs(v, sb, vars)).apply(rhs);
         sb.append(" with \n");
-        convert(sb, v -> applyVarLhs(v, sb, vars), functions).apply(lhs);
+        convert(sb, v -> applyVarLhs(v, sb, vars)).apply(lhs);
     }
 
     private static String convert(SetMultimap<KVariable, String> vars) {
@@ -360,19 +375,17 @@ public class DefinitionToOcaml {
         vars.put(k, varName);
     }
 
-    private static Visitor convert(StringBuilder sb, Consumer<KVariable> convertVar, Set<KLabel> functions) {
-        return new Visitor(functions, sb, convertVar);
+    private Visitor convert(StringBuilder sb, Consumer<KVariable> convertVar) {
+        return new Visitor(sb, convertVar);
     }
 
-    private static class Visitor extends VisitKORE {
-        private final Set<KLabel> functions;
+    private class Visitor extends VisitKORE {
         private final StringBuilder sb;
         private final Consumer<KVariable> convertVar;
 
-        public Visitor(Set<KLabel> functions, StringBuilder sb, Consumer<KVariable> convertVar) {
-            this.functions = functions;
+        public Visitor(StringBuilder sb, Consumer<KVariable> convertVar) {
             this.sb = sb;
-            this.convertVar = convertVar;;
+            this.convertVar = convertVar;
         }
 
         @Override
@@ -401,7 +414,13 @@ public class DefinitionToOcaml {
 
         @Override
         public Void apply(KToken k) {
-            if (hooks.containsKey())
+            if (mainModule.sortAttributesFor().contains(k.sort())) {
+                String hook = mainModule.sortAttributesFor().apply(k.sort()).<String>getOptional("hook").orElse("");
+                if (sortHooks.containsKey(hook)) {
+                    sb.append(sortHooks.get(hook).apply(k.s()));
+                    return null;
+                }
+            }
             sb.append("KToken (");
             apply(k.sort());
             sb.append(", ");
