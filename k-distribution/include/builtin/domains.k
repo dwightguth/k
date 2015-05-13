@@ -157,6 +157,7 @@ module LIST
 endmodule
 
 module BOOL-SYNTAX
+  syntax Bool [hook(#BOOL)]
   syntax Bool ::= "true"  [token]
   syntax Bool ::= "false" [token]
 endmodule
@@ -220,6 +221,7 @@ endmodule
 module INT
   imports INT-SYNTAX
   imports BOOL
+  imports K-EQUAL
 
   syntax Int ::= "~Int" Int                     [function, latex(\mathop{\sim_{\scriptstyle\it Int}}{#1}), hook(#INT:~Int_)]
                > left:
@@ -265,6 +267,7 @@ module INT
                 | Int "=/=Int" Int        [function, left, smtlib(distinct), latex({#1}\mathrel{{=}{/}{=}_{\scriptstyle\it Int}}{#2}), hook(#INT:_=/=Int_)]
                 | Int "dividesInt" Int    [function]
 
+  rule I1 ==Int I2 => I1 ==K I2
   rule I1:Int =/=Int I2:Int => notBool `I1 ==Int I2`
   rule `I1:Int dividesInt I2:Int` => `I2 %Int I1` ==Int 0
 
@@ -461,8 +464,10 @@ endmodule
 
 module K-REFLECTION
   imports BASIC-K
+  imports STRING
 
   syntax K ::= "#configuration" [function, impure, hook(MetaK:#configuration)]
+  syntax String ::= #tokenSort(K) [function, hook(MetaK:#tokenSort)]
 
 endmodule
 

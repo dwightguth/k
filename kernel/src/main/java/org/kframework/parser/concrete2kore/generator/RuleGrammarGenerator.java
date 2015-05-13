@@ -53,7 +53,7 @@ public class RuleGrammarGenerator {
         kSorts.add(Sorts.KString());
     }
 
-    public Set<Sort> kSorts() {
+    public static Set<Sort> kSorts() {
         return java.util.Collections.unmodifiableSet(kSorts);
     }
     /// modules that have a meaning:
