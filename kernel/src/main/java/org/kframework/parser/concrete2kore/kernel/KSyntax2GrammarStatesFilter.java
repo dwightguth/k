@@ -16,6 +16,8 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Rule.WrapLabelRule;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -92,23 +94,24 @@ public class KSyntax2GrammarStatesFilter {
             Map<Pair<ProductionItem, NextableState>, List<Production>> productionsAtPosition = productionsRemaining.keySet().stream()
                     .collect(Collectors.groupingBy(p -> Pair.of(p.items().apply(h.i), productionsRemaining.get(p))));
             for (Pair<ProductionItem, NextableState> pair : productionsAtPosition.keySet()) {
+                Collection<Production> productions = productionsAtPosition.get(pair);
                 ProductionItem prdItem = pair.getKey();
                 NextableState previous = pair.getValue();
                 if (prdItem instanceof org.kframework.definition.NonTerminal) {
                     org.kframework.definition.NonTerminal srt = (org.kframework.definition.NonTerminal) prdItem;
                     Grammar.NonTerminalState nts = new Grammar.NonTerminalState(sort + " ::= " + srt.sort(), nt,
-                            grammar.get(srt.sort().name()), false);
+                            grammar.get(srt.sort().name()), false, productions);
                     previous.next.add(nts);
                     previous = nts;
                 } else if (prdItem instanceof TerminalLike) {
                     TerminalLike lx = (TerminalLike) prdItem;
-                    Grammar.PrimitiveState pstate = new Grammar.RegExState(
+                    Grammar.RegExState pstate = new Grammar.RegExState(
                             sort.name() + ":" + lx.toString(),
                             nt,
                             lx.precedePattern(),
                             lx.pattern(),
-                            lx.followPattern());
-                    RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1));
+                            lx.followPattern(), productions);
+                    RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1), productions);
                     previous.next.add(pstate);
                     pstate.next.add(del);
                     previous = del;
@@ -135,7 +138,7 @@ public class KSyntax2GrammarStatesFilter {
                         if (prd.att().contains(Constants.REJECT2))
                             pattern = getAutomaton(prd.att().get(Constants.REJECT2).get().toString());
                     }
-                    RuleState labelRule = new RuleState("AddLabelRS", nt, new WrapLabelRule(prd, pattern, rejects));
+                    RuleState labelRule = new RuleState("AddLabelRS", nt, new WrapLabelRule(prd, pattern, rejects), Collections.singleton(prd));
                     previous.next.add(labelRule);
                     previous = labelRule;
 

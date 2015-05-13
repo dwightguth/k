@@ -3,15 +3,19 @@ package org.kframework.parser.concrete2kore.kernel;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableSet;
 import dk.brics.automaton.BasicAutomata;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
+import org.kframework.definition.Production;
 import org.kframework.parser.concrete2kore.kernel.Rule.DeleteRule;
 import org.kframework.utils.algorithms.SCCTarjan;
 
+import javax.annotation.RegEx;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -121,8 +125,8 @@ public class Grammar implements Serializable {
         // create a whitespace PrimitiveState after every every terminal that can match a character
         for (NonTerminal nonTerminal : getAllNonTerminals()) {
             for (State s : nonTerminal.getReachableStates()) {
-                if (s instanceof PrimitiveState) {
-                    PrimitiveState ps = ((PrimitiveState) s);
+                if (s instanceof RegExState) {
+                    RegExState ps = ((RegExState) s);
                     addWhitespace(ps);
                 }
             }
@@ -151,10 +155,10 @@ public class Grammar implements Serializable {
         while (start.next.iterator().hasNext() && start.next.iterator().next() instanceof RuleState) {
             start = (NextableState) start.next.iterator().next();
         }
-        PrimitiveState whitespace = new RegExState(
-            "whitespace", start.nt, pattern);
+        RegExState whitespace = new RegExState(
+            "whitespace", start.nt, pattern, start.productions);
         RuleState deleteToken = new RuleState(
-            "whitespace-D", start.nt, new DeleteRule(1));
+            "whitespace-D", start.nt, new DeleteRule(1), start.productions);
         whitespace.next.add(deleteToken);
         deleteToken.next.addAll(start.next);
         start.next.clear();
@@ -460,17 +464,20 @@ public class Grammar implements Serializable {
                 return super.add(s);
             }
         };
-        NextableState(String name, NonTerminal nt, boolean intermediary) {
+        NextableState(String name, NonTerminal nt, boolean intermediary, Collection<Production> productions) {
             super(name, nt);
             if (intermediary) { nt.intermediaryStates.add(this); }
+            this.productions = ImmutableSet.copyOf(productions);
         }
+
+        public final ImmutableSet<Production> productions;
     }
 
     /**
      * The first state of a NonTerminal. Only one per NonTerminal.
      */
     public static class EntryState extends NextableState {
-        EntryState(String name, NonTerminal nt) { super(name, nt, false); }
+        EntryState(String name, NonTerminal nt) { super(name, nt, false, new HashSet<>()); }
     }
 
     /**
@@ -486,8 +493,8 @@ public class Grammar implements Serializable {
 
         public NonTerminalState(
                 String name, NonTerminal nt,
-                NonTerminal child, boolean isLookahead) {
-            super(name, nt, true);
+                NonTerminal child, boolean isLookahead, Collection<Production> productions) {
+            super(name, nt, true, productions);
             assert child != null;
             nt.intermediaryStates.add(this);
             this.child = child;
@@ -501,34 +508,23 @@ public class Grammar implements Serializable {
     public static class RuleState extends NextableState {
         /** The rule to be applied. */
         public final Rule rule;
-        public RuleState(String name, NonTerminal nt, Rule rule) {
-            super(name, nt, true);
+        public RuleState(String name, NonTerminal nt, Rule rule, Collection<Production> productions) {
+            super(name, nt, true, productions);
             assert rule != null;
             this.rule = rule;
         }
     }
 
     /**
-     * PrimitiveState is the only State that matches on characters and consumes them.
-     * The content of the matched string is stored into a KApp of a #token.
-     * TODO: revisit this description once we get the new KORE
+     * Uses java regular expression (@link Matcher} class to consume characters in the
+     * char sequence.
      */
-    public abstract static class PrimitiveState extends NextableState {
+    public static class RegExState extends NextableState {
         public static class MatchResult {
             final public int matchEnd;
             public MatchResult(int matchEnd) {
                 this.matchEnd = matchEnd;
             }
-        }
-
-        /*
-         *  Returns a set of matches at the given position in the given string.
-         *  If there are no matches, the returned set will be empty.
-         */
-        abstract Set<MatchResult> matches(String text, String reverseText, int startPosition);
-
-        public PrimitiveState(String name, NonTerminal nt) {
-            super(name, nt, true);
         }
 
         /**
@@ -539,31 +535,28 @@ public class Grammar implements Serializable {
             Set<MatchResult> matchResults = this.matches("", "", 0);
             return matchResults.size() != 0;
         }
-    }
 
-    /**
-     * Uses java regular expression (@link Matcher} class to consume characters in the
-     * char sequence.
-     */
-    public static class RegExState extends PrimitiveState {
         /** The java regular expression pattern. */
         public final RunAutomaton pattern;
         public final RunAutomaton precedePattern;
         public final RunAutomaton followPattern;
 
-        public RegExState(String name, NonTerminal nt, RunAutomaton pattern) {
-            this(name, nt, new RunAutomaton(BasicAutomata.makeEmpty(), false), pattern, new RunAutomaton(BasicAutomata.makeEmpty(), false));
+        public RegExState(String name, NonTerminal nt, RunAutomaton pattern, Collection<Production> productions) {
+            this(name, nt, new RunAutomaton(BasicAutomata.makeEmpty(), false), pattern, new RunAutomaton(BasicAutomata.makeEmpty(), false), productions);
         }
 
-        public RegExState(String name, NonTerminal nt, RunAutomaton precedePattern, RunAutomaton pattern, RunAutomaton followPattern) {
-            super(name, nt);
+        public RegExState(String name, NonTerminal nt, RunAutomaton precedePattern, RunAutomaton pattern, RunAutomaton followPattern, Collection<Production> productions) {
+            super(name, nt, true, productions);
             assert pattern != null;
             this.precedePattern = precedePattern;
             this.pattern = pattern;
             this.followPattern = followPattern;
         }
 
-        // Position is an 'int' offset into the text because CharSequence uses 'int'
+        /*
+         *  Returns a set of matches at the given position in the given string.
+         *  If there are no matches, the returned set will be empty.
+         */
         Set<MatchResult> matches(String text, String reverseText, int startPosition) {
             int matchedLength = pattern.run(text, startPosition);
             if (matchedLength == -1)

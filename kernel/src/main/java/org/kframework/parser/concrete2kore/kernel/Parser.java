@@ -1,11 +1,9 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import com.google.common.collect.Sets;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
-import org.kframework.definition.Production;
 import org.kframework.parser.Ambiguity;
 import org.kframework.parser.Constant;
 import org.kframework.parser.KList;
@@ -15,7 +13,6 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.ExitState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NextableState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminalState;
-import org.kframework.parser.concrete2kore.kernel.Grammar.PrimitiveState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RegExState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.State;
@@ -33,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * This is the main code for running the parser.
@@ -514,7 +512,7 @@ public class Parser {
 
         /**
          * The identity function that maps everything to a singleton containing an empty KList.
-         * This is an identity because it maps every context to the {@link KList#EMPTY} which is the identity for KList.
+         * This is an identity because it maps every context to .KList which is the identity for KList.
          *
          * NOTE: It is important that this function is never mutated, but we have no good way
          * of enforcing this.
@@ -617,7 +615,6 @@ public class Parser {
          * 'string' of sort 'sort' to the end of the mapping in that.
          * @param that      The function from which
          * @param string    The token value
-         * @param prd      The production of the token. 'null' if intermediate token
          * @return 'true' iff the mappings in this function changed.
          */
         boolean addToken(Function that, String string) {
@@ -752,17 +749,38 @@ public class Parser {
             CharSequence content = s.input;
             ParseError perror = getErrors();
 
-            String msg = content.length() == perror.position ?
-                    "Parse error: unexpected end of file." :
-                    "Parse error: unexpected character '" + content.charAt(perror.position) + "'.";
+            StringBuilder msg = new StringBuilder();
+            if (content.length() == perror.position) {
+                msg.append("Parse error: unexpected end of file.");
+            } else {
+                msg.append("Parse error: unexpected character '");
+                msg.append(content.charAt(perror.position));
+                msg.append("'.");
+            }
+            msg.append("\n");
+            if (perror.tokens.size() > 0) {
+                addTrace(msg, perror.tokens);
+            }
             Location loc = new Location(perror.line, perror.column,
                     perror.line, perror.column + 1);
             Source source = perror.source;
             throw new ParseFailedException(new KException(
-                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, loc));
+                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg.toString(), source, loc));
         }
 
         return result;
+    }
+
+    private void addTrace(StringBuilder msg, Set<StateCall> tokens) {
+        if (tokens.isEmpty()) return;
+        msg.append("After parsing one of: \n");
+        tokens.stream().flatMap(t -> ((NextableState)t.key.state).productions.stream()).distinct().forEach(p -> {
+            msg.append(p);
+            msg.append("\n");
+        });
+        addTrace(msg, Sets.difference(tokens.stream()
+                .filter(t -> ((NextableState) t.key.state).productions.size() > 0)
+                .flatMap(t -> t.key.ntCall.callers.stream()).collect(Collectors.toSet()), tokens));
     }
 
     /**
@@ -774,14 +792,13 @@ public class Parser {
     public ParseError getErrors() {
         int current = 0;
         for (StateCall.Key key : s.stateCalls.keySet()) {
-            if (key.state instanceof PrimitiveState)
+            if (key.state instanceof RegExState)
                 current = Math.max(current, key.stateBegin);
         }
-        Set<Pair<Production, RegExState>> tokens = new HashSet<>();
-        for (StateCall.Key key : s.stateCalls.keySet()) {
-            if (key.state instanceof RegExState && key.stateBegin == current) {
-                tokens.add(new ImmutablePair<>(
-                    null, ((RegExState) key.state)));
+        Set<StateCall> tokens = new HashSet<>();
+        for (StateReturn.Key key : s.stateReturns.keySet()) {
+            if (key.stateEnd == current) {
+                tokens.add(key.stateCall);
             }
         }
         return new ParseError(source, current, s.lines[current], s.columns[current], tokens);
@@ -800,9 +817,9 @@ public class Parser {
         /// The line of the error
         public final int line;
         /// Pairs of Sorts and RegEx patterns that the parsed expected to occur next
-        public final Set<Pair<Production, RegExState>> tokens;
+        public final Set<StateCall> tokens;
 
-        public ParseError(Source source, int position, int line, int column, Set<Pair<Production, RegExState>> tokens) {
+        public ParseError(Source source, int position, int line, int column, Set<StateCall> tokens) {
             assert tokens != null;
             this.source = source;
             this.position = position;
@@ -841,7 +858,7 @@ public class Parser {
             return stateReturn.function.add(stateReturn.key.stateCall.function);
         } else if (stateReturn.key.stateCall.key.state instanceof ExitState) {
             return stateReturn.function.add(stateReturn.key.stateCall.function);
-        } else if (stateReturn.key.stateCall.key.state instanceof PrimitiveState) {
+        } else if (stateReturn.key.stateCall.key.state instanceof RegExState) {
             return stateReturn.function.addToken(stateReturn.key.stateCall.function,
                 s.input.subSequence(stateReturn.key.stateCall.key.stateBegin,
                     stateReturn.key.stateEnd).toString());
@@ -880,9 +897,9 @@ public class Parser {
             s.stateReturnWorkList.enqueue(
                 s.stateReturns.get(
                     new StateReturn.Key(stateCall, stateCall.key.stateBegin)));
-        } else if (nextState instanceof PrimitiveState) {
-            for (PrimitiveState.MatchResult matchResult :
-                    ((PrimitiveState)nextState).matches(s.input, s.reverseInput, stateCall.key.stateBegin)) {
+        } else if (nextState instanceof RegExState) {
+            for (RegExState.MatchResult matchResult :
+                    ((RegExState)nextState).matches(s.input, s.reverseInput, stateCall.key.stateBegin)) {
                 s.stateReturnWorkList.enqueue(
                     s.stateReturns.get(
                         new StateReturn.Key(stateCall, matchResult.matchEnd)));
