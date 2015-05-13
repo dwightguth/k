@@ -109,11 +109,7 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
   //        throw DivergingAttributesForTheSameKLabel(ps)
   //  }
 
-  @transient lazy val attributesFor: Map[KLabel, Att] = productionsFor mapValues {p => {
-    val union = p.flatMap(_.att.att)
-    val attMap = union.collect({case t@KApply(KLabel(_), _) => t}).groupBy(_.klabel).map { case (l, as) => (l, as) }
-    Att(union.filter { k => !k.isInstanceOf[KApply] || attMap(k.asInstanceOf[KApply].klabel).size == 1})
-  }}
+  @transient lazy val attributesFor: Map[KLabel, Att] = productionsFor mapValues {mergeAttributes(_)}
 
   @transient lazy val signatureFor: Map[KLabel, Set[(Seq[Sort], Sort)]] =
     productionsFor mapValues {
@@ -126,6 +122,19 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
     }
 
   val sortDeclarations: Set[SyntaxSort] = sentences.collect({ case s: SyntaxSort => s })
+
+  lazy val sortDeclarationsFor: Map[Sort, Set[SyntaxSort]] =
+    sortDeclarations
+      .groupBy(_.sort)
+      .map { case (l, ps) => (l, ps) }
+
+  @transient lazy val sortAttributesFor: Map[Sort, Att] =  sortDeclarationsFor mapValues {mergeAttributes(_)}
+
+  private def mergeAttributes[T <: Sentence](p: Set[T]) = {
+    val union = p.flatMap(_.att.att)
+    val attMap = union.collect({case t@KApply(KLabel(_), _) => t}).groupBy(_.klabel).map { case (l, as) => (l, as) }
+    Att(union.filter { k => !k.isInstanceOf[KApply] || attMap(k.asInstanceOf[KApply].klabel).size == 1})
+  }
 
   val definedSorts: Set[Sort] = (productions map {_.sort}) ++ (sortDeclarations map {_.sort})
 
