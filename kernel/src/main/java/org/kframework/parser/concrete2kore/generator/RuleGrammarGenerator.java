@@ -52,7 +52,7 @@ public class RuleGrammarGenerator {
         kSorts.add(Sorts.KString());
     }
 
-    public static Set<Sort> kSorts() {
+    private static Set<Sort> kSorts() {
         return java.util.Collections.unmodifiableSet(kSorts);
     }
     /// modules that have a meaning:
@@ -85,17 +85,8 @@ public class RuleGrammarGenerator {
         return getCombinedGrammar(newM);
     }
 
-    public Module getProgramsGrammar(Module mod) {
-        Set<Sentence> prods = new HashSet<>();
-        // if no start symbol has been defined in the configuration, then use K
-        for (Sort srt : iterable(mod.definedSorts())) {
-            if (!kSorts.contains(srt) && !mod.listSorts().contains(srt)) {
-                // K ::= Sort
-                prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
-            }
-        }
-        Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
-        return newM;
+    public static boolean isParserSort(Sort s) {
+        return kSorts.contains(s) || s.name().startsWith("#");
     }
 
     /**
@@ -112,7 +103,7 @@ public class RuleGrammarGenerator {
 
         if (baseK.getModule(AUTO_CASTS).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                if (!isParserSort(srt)) {
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), srt));
                 }
@@ -124,7 +115,7 @@ public class RuleGrammarGenerator {
         }
         if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                if (!isParserSort(srt)) {
                     // K ::= Sort
                     prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
                 }
@@ -133,7 +124,7 @@ public class RuleGrammarGenerator {
 
         if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                if (!isParserSort(srt)) {
                     // Sort ::= KBott
                     prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
                 }
