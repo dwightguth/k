@@ -1,9 +1,9 @@
 package org.kframework.kore.compile;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.kframework.Collections;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.builtin.Sorts;
+import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
 import org.kframework.definition.NonTerminal;
 import org.kframework.definition.Production;
@@ -11,7 +11,6 @@ import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.K;
-import org.kframework.kore.KApply;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
@@ -41,11 +40,16 @@ import static org.kframework.kore.KORE.*;
  */
 public class GenerateSortPredicates {
 
+    private final Definition def;
     private Module mod;
+
+    public GenerateSortPredicates(Definition def) {
+        this.def = def;
+    }
 
     public Module gen(Module mod) {
         this.mod = mod;
-        return Module(mod.name(), mod.imports(), (Set<Sentence>) mod.localSentences().$bar(stream(mod.definedSorts())
+        return Module(mod.name(), (Set<Module>) mod.imports().$bar(Set(def.getModule("K-REFLECTION").get())), (Set<Sentence>) mod.localSentences().$bar(stream(mod.definedSorts())
                 .flatMap(this::gen).collect(Collections.toSet())), mod.att());
     }
 
@@ -53,9 +57,9 @@ public class GenerateSortPredicates {
         List<Sentence> res = new ArrayList<>();
         Production prod = Production("is" + sort.name(), Sorts.Bool(), Seq(Terminal("is" + sort.name()), Terminal("("), NonTerminal(Sorts.K()), Terminal(")")), Att().add(Attribute.FUNCTION_KEY));
         res.add(prod);
-        if (!RuleGrammarGenerator.kSorts().contains(sort) && !sort.name().startsWith("#")) {
+        if (!RuleGrammarGenerator.isParserSort(sort)) {
             for (Sort bigSort : iterable(mod.subsorts().relations().apply(sort))) {
-                if (!RuleGrammarGenerator.kSorts().contains(bigSort) && !bigSort.name().startsWith("#")) {
+                if (!RuleGrammarGenerator.isParserSort(bigSort)) {
                     Rule subsort = Rule(KRewrite(KApply(KLabel("is" + bigSort.name()), KVariable("K")), BooleanUtils.TRUE), KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.TRUE);
                     res.add(subsort);
                 }

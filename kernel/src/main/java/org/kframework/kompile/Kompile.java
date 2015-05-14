@@ -129,8 +129,8 @@ public class Kompile {
         Module kseqModule = d.getModule("KSEQ").get();
         java.util.Set<Sentence> prods = new HashSet<>();
         for (Sort srt : iterable(d.mainModule().definedSorts())) {
-            if (!gen.kSorts().contains(srt) && !srt.name().startsWith("#")) {
-                // K ::= Sort
+            if (!RuleGrammarGenerator.isParserSort(srt)) {
+                // KItem ::= Sort
                 prods.add(Production(Sorts.KItem(), Seq(NonTerminal(srt)), Att()));
             }
         }
