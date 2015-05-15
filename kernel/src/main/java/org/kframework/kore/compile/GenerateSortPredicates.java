@@ -88,7 +88,7 @@ public class GenerateSortPredicates {
             }
         }
         res.add(Rule(KRewrite(KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.TRUE),
-                KApply(KLabel("_==K_"), KApply(KLabel("#tokenSort"), KVariable("K")), KToken(Sorts.String(), StringUtil.enquoteKString(sort.name()))),
+                KApply(KLabel("_==K_"), KApply(KLabel("#sort"), KVariable("K")), KToken(Sorts.String(), StringUtil.enquoteKString(sort.name()))),
                 BooleanUtils.TRUE));
         res.add(Rule(KRewrite(KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.FALSE), BooleanUtils.TRUE, BooleanUtils.TRUE, Att().add("owise")));
         return res.stream();

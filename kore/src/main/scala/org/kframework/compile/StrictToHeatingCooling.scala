@@ -19,7 +19,7 @@ object StrictToHeatingCooling extends ModuleTransformer({m: Module =>
 
     val cooled = klabel(vars: _*) // e.g., A + B
 
-    def heated(position: Int) = KSequence(vars(position), klabel(vars.updated(position, hole): _*)) // e.g., A ~> A + B
+    def heated(position: Int) = KSequence(KApply(KLabel("#SemanticCastToKItem"), vars(position)), klabel(vars.updated(position, hole): _*)) // e.g., A ~> A + B
 
     val strictIn = p.att.get[String]("strict")
       .map {valueString =>
