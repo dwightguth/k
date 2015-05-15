@@ -469,7 +469,7 @@ module K-REFLECTION
   imports STRING
 
   syntax K ::= "#configuration" [function, impure, hook(MetaK:#configuration)]
-  syntax String ::= #tokenSort(K) [function, hook(MetaK:#tokenSort)]
+  syntax String ::= #sort(K) [function, hook(MetaK:#sort)]
 
 endmodule
 
