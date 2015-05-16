@@ -67,28 +67,31 @@ public class GenerateSortPredicates {
         }
         for (Production p : stream(mod.productions()).filter(p -> p.sort().equals(sort)).collect(Collectors.toSet())) {
             if (p.klabel().isDefined() && !p.att().contains(Attribute.FUNCTION_KEY)) {
-                List<K> klist = new ArrayList<>();
-                List<K> side = new ArrayList<>();
-                int i = 0;
-                List<NonTerminal> nts = stream(p.items()).filter(pi -> pi instanceof NonTerminal).map(pi -> (NonTerminal) pi).collect(Collectors.toList());
-                for (NonTerminal nt : nts) {
-                    KVariable v = KVariable("K" + i++);
-                    klist.add(v);
-                    side.add(KApply(KLabel("is" + nt.sort().name()), v));
-                };
-                Optional<K> sideCondition = side.stream().reduce(BooleanUtils::and);
-                K requires;
-                if (!sideCondition.isPresent()) {
-                    requires = BooleanUtils.TRUE;
-                } else {
-                    requires = sideCondition.get();
+                if (!RuleGrammarGenerator.isParserSort(p.sort())) {
+                    List<K> klist = new ArrayList<>();
+                    List<K> side = new ArrayList<>();
+                    int i = 0;
+                    List<NonTerminal> nts = stream(p.items()).filter(pi -> pi instanceof NonTerminal).map(pi -> (NonTerminal) pi).collect(Collectors.toList());
+                    for (NonTerminal nt : nts) {
+                        KVariable v = KVariable("K" + i++);
+                        klist.add(v);
+                        side.add(KApply(KLabel("is" + nt.sort().name()), v));
+                    }
+                    ;
+                    Optional<K> sideCondition = side.stream().reduce(BooleanUtils::and);
+                    K requires;
+                    if (!sideCondition.isPresent()) {
+                        requires = BooleanUtils.TRUE;
+                    } else {
+                        requires = sideCondition.get();
+                    }
+                    Rule r = Rule(KRewrite(KApply(KLabel("is" + sort.name()), KApply(p.klabel().get(), KList(klist))), BooleanUtils.TRUE), requires, BooleanUtils.TRUE);
+                    res.add(r);
                 }
-                Rule r = Rule(KRewrite(KApply(KLabel("is" + sort.name()), KApply(p.klabel().get(), KList(klist))), BooleanUtils.TRUE), requires, BooleanUtils.TRUE);
-                res.add(r);
             }
         }
-        res.add(Rule(KRewrite(KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.TRUE),
-                KApply(KLabel("_==K_"), KApply(KLabel("#sort"), KVariable("K")), KToken(Sorts.String(), StringUtil.enquoteKString(sort.name()))),
+        res.add(Rule(KRewrite(KApply(KLabel("is" + sort.name()), KApply(KLabel("#KToken"), KToken(Sorts.KString(), sort.name()), KVariable("_"))), BooleanUtils.TRUE),
+                BooleanUtils.TRUE,
                 BooleanUtils.TRUE));
         res.add(Rule(KRewrite(KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.FALSE), BooleanUtils.TRUE, BooleanUtils.TRUE, Att().add("owise")));
         return res.stream();
