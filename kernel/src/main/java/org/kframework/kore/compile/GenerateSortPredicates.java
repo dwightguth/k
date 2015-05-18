@@ -49,7 +49,7 @@ public class GenerateSortPredicates {
 
     public Module gen(Module mod) {
         this.mod = mod;
-        return Module(mod.name(), (Set<Module>) mod.imports().$bar(Set(def.getModule("K-REFLECTION").get())), (Set<Sentence>) mod.localSentences().$bar(stream(mod.definedSorts())
+        return Module(mod.name(), mod.imports(), (Set<Sentence>) mod.localSentences().$bar(stream(mod.definedSorts())
                 .flatMap(this::gen).collect(Collections.toSet())), mod.att());
     }
 
