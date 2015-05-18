@@ -79,7 +79,7 @@ public class DefinitionToOcaml {
             " and kitem = KApply of klabel * t list\n" +
             "           | KToken of sort * string\n" +
             "           | InjectedKLabel of klabel\n" +
-            "           | Map of t m\n" +
+            "           | Map of m\n" +
             "           | List of t list\n" +
             "           | Set of s" +
             "           | Int of int\n" +
@@ -89,33 +89,27 @@ public class DefinitionToOcaml {
 
     public static final String prelude = "module type S =\n" +
             "sig\n" +
-            "  type 'a m\n" +
+            "  type m\n" +
             "  type s\n" +
             "  type " + kType +
             "  val compare : t -> t -> int\n" +
             "end \n" +
             "\n" +
             "\n" +
-            "module rec K : (S with type 'a m = 'a Map.Make(K).t and type s = Set.Make(K).t)  = \n" +
+            "module rec K : (S with type m = (K.t, K.t) Hashtbl.t and type s = (K.t, unit) Hashtbl.t) = \n" +
             "struct\n" +
-            "  type 'a m = 'a Map.Make(K).t\n" +
-            "  and s = Set.Make(K).t\n" +
+            "  type m = (K.t, K.t) Hashtbl.t\n" +
+            "  and s = (K.t, unit) Hashtbl.t\n" +
             "  and " + kType +
             "  let compare = Pervasives.compare\n" +
             "end\n" +
             "\n" +
-            "module KMap = Map.Make(K)\n" +
-            "module KSet = Set.Make(K)\n" +
             "\n" +
             "open K\n" +
             "type k = K.t" +
             "\n" +
             "exception Stuck of k\n" +
-            "module GuardElt = struct\n" +
-            "  type t = Guard of int\n" +
-            "  let compare = Pervasives.compare\n" +
-            "end\n" +
-            "module Guard = Set.Make(GuardElt)\n";
+            "type guard = Guard of int\n";
 
     public static final String TRUE = "(Bool true)";
 
@@ -135,10 +129,11 @@ public class DefinitionToOcaml {
             "| InjectedKLabel(klabel) -> print_string \"#klabel(\"; print_string(print_klabel(klabel)); print_string(\")\")\n" +
             "| Bool(b) -> print_kitem(KToken(LblBool, string_of_bool(b)))\n" +
             "| Int(i) -> print_kitem(KToken(LblInt, string_of_int(i)))\n" +
-            "| Map(m) -> if m = KMap.empty then print_string(\"`.Map`(.KList)\") else KMap.iter (fun k v -> print_string(\"`_|->_`(\"); print_k(k); print_string(\", \"); print_k(v); print_string(\")\")) m\n";
+            "| Map(m) -> if Hashtbl.length(m) = 0 then print_string(\"`.Map`(.KList)\") else Hashtbl.iter (fun k v -> print_string(\"`_|->_`(\"); print_k(k); print_string(\", \"); print_k(v); print_string(\")\")) m\n" +
+            "let guard_step = Hashtbl.create 10\n";
 
     public static final String postlude = "let run c =\n" +
-            "  try let rec go c = go (step c Guard.empty)\n" +
+            "  try let rec go c = Hashtbl.clear guard_step; go (step c)\n" +
             "      in go c\n" +
             "  with Stuck c' -> c'\n";
 
@@ -152,13 +147,13 @@ public class DefinitionToOcaml {
         builder.put("#INT:_+Int_", "[Int a] :: [Int b] :: [] -> [Int (a + b)]");
         builder.put("#INT:_<=Int_", "[Int a] :: [Int b] :: [] -> [Bool (a <= b)]");
         builder.put("#INT:_=/=Int_", "[Int a] :: [Int b] :: [] -> [Bool (a = b)]");
-        builder.put("Map:_|->_", "k1 :: k2 :: [] -> [Map (KMap.add k1 k2 KMap.empty)]");
-        builder.put("Map:.Map", "[] -> [Map KMap.empty]");
-        builder.put("Map:__", "([Map k1]) :: ([Map k2]) :: [] -> [Map (KMap.merge (fun k a b -> match a, b with None, None -> None | None, Some v | Some v, None -> Some v) k1 k2)]");
-        builder.put("Map:lookup", "[Map k1] :: k2 :: [] -> (try KMap.find k2 k1 with Not_found -> [Bottom])");
-        builder.put("Map:remove", "[Map k1] :: k2 :: [] -> [Map (KMap.remove k2 k1)]");
-        builder.put("Map:keys", "[Map k1] :: [] -> [Set (KMap.fold (fun key -> KSet.add) k1 KSet.empty)]");
-        builder.put("Set:in", "k1 :: [Set k2] :: [] -> [Bool (KSet.mem k1 k2)]");
+        builder.put("Map:_|->_", "k1 :: k2 :: [] -> let v = Hashtbl.create 10 in (Hashtbl.add v k1 k2); [Map v]");
+        builder.put("Map:.Map", "[] -> [Map (Hashtbl.create 10)]");
+        builder.put("Map:__", "([Map k1]) :: ([Map k2]) :: [] -> [Map (Hashtbl.fold (fun k v t -> (Hashtbl.add t k v); t) k1 k2)]");
+        builder.put("Map:lookup", "[Map k1] :: k2 :: [] -> (try Hashtbl.find k1 k2 with Not_found -> [Bottom])");
+        builder.put("Map:remove", "[Map k1] :: k2 :: [] -> Hashtbl.remove k1 k2; [Map k1]");
+        builder.put("Map:keys", "[Map k1] :: [] -> let s = Hashtbl.create 10 in Hashtbl.iter (fun k v -> Hashtbl.add s k ()) k1; [Set s]");
+        builder.put("Set:in", "k1 :: [Set k2] :: [] -> [Bool (Hashtbl.mem k2 k1)]");
         builder.put("MetaK:#sort", "[KToken (sort, s)] :: [] -> [String (print_sort(sort))] " +
                 "| [Int _] :: [] -> [String \"Int\"] " +
                 "| [String _] :: [] -> [String \"String\"] " +
@@ -209,6 +204,7 @@ public class DefinitionToOcaml {
     }
 
     Set<KLabel> functions;
+    SetMultimap<KLabel, Rule> functionRules;
 
     public String convert(K k) {
         StringBuilder sb = new StringBuilder();
@@ -259,7 +255,7 @@ public class DefinitionToOcaml {
             sb.append("\n");
         }
         sb.append(midlude);
-        SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
+        functionRules = HashMultimap.create();
         for (Rule r : iterable(mainModule.rules())) {
             K left = RewriteToTop.toLeft(r.body());
             if (left instanceof KSequence) {
@@ -282,11 +278,16 @@ public class DefinitionToOcaml {
         List<List<KLabel>> functionOrder = sortFunctions(functionRules);
 
         for (List<KLabel> component : functionOrder) {
+            for(KLabel functionLabel : component) {
+                sb.append("let guard_");
+                encodeStringToFunction(sb, functionLabel.name());
+                sb.append(" : (guard, unit) Hashtbl.t = Hashtbl.create 10\n");
+            }
             String conn = "let rec ";
             for (KLabel functionLabel : component) {
                 sb.append(conn);
                 String functionName = encodeStringToFunction(sb, functionLabel.name());
-                sb.append(" (l: k list) (guards: Guard.t) : k = match l with \n");
+                sb.append(" (l: k list) : k = match l with \n");
                 String hook = mainModule.attributesFor().apply(functionLabel).<String>getOptional(Attribute.HOOK_KEY).orElse("");
                 if (hooks.containsKey(hook)) {
                     sb.append("| ");
@@ -309,7 +310,7 @@ public class DefinitionToOcaml {
                 conn = "and ";
             }
         }
-        sb.append("let rec step (c: k) (guards: Guard.t) : k = match c with \n");
+        sb.append("let rec step (c: k): k = match c with \n");
         int i = 0;
 
         for (Rule r : stream(mainModule.rules()).sorted(this::sortRules).collect(Collectors.toList())) {
@@ -453,7 +454,7 @@ public class DefinitionToOcaml {
         }
         String result = convert(vars);
         Holder numLookups = new Holder();
-        sb.append(convertLookups(requires, vars, numLookups, ruleNum));
+        sb.append(convertLookups(requires, vars, numLookups, ruleNum, functionName));
         if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
             sb.append(" when ");
             sb.append("isTrue(");
@@ -465,14 +466,14 @@ public class DefinitionToOcaml {
         sb.append(" -> ");
         convert(sb, true, vars).apply(right);
         for (int i = 0; i < numLookups.i; i++) {
-            sb.append("| _ -> (").append(functionName).append(" c (Guard.add (GuardElt.Guard ").append(ruleNum).append(") guards)))");
+            sb.append("| _ -> Hashtbl.add guard_").append(functionName).append(" (Guard ").append(ruleNum).append(") (); ").append(functionName).append(" c)");
         }
         sb.append("\n");
     }
 
     private static class Holder { int i; }
 
-    private String convertLookups(K requires, SetMultimap<KVariable, String> vars, Holder h, int ruleNum) {
+    private String convertLookups(K requires, SetMultimap<KVariable, String> vars, Holder h, int ruleNum, String functionName) {
         StringBuilder sb = new StringBuilder();
         h.i = 0;
         new VisitKORE() {
@@ -482,7 +483,7 @@ public class DefinitionToOcaml {
                     if (k.klist().items().size() != 2) {
                         throw KEMException.internalError("Unexpected arity of lookup: " + k.klist().size(), k);
                     }
-                    convertLookup(sb, k.klist().items().get(0), k.klist().items().get(1), vars, ruleNum);
+                    convertLookup(sb, k.klist().items().get(0), k.klist().items().get(1), vars, ruleNum, functionName);
                     h.i++;
                 }
                 return super.apply(k);
@@ -491,8 +492,8 @@ public class DefinitionToOcaml {
         return sb.toString();
     }
 
-    private void convertLookup(StringBuilder sb, K lhs, K rhs, SetMultimap<KVariable, String> vars, int ruleNum) {
-        sb.append(" when not (Guard.mem (GuardElt.Guard ").append(ruleNum).append(") guards)");
+    private void convertLookup(StringBuilder sb, K lhs, K rhs, SetMultimap<KVariable, String> vars, int ruleNum, String functionName) {
+        sb.append(" when not (Hashtbl.mem guard_").append(functionName).append(" (Guard ").append(ruleNum).append("))");
         sb.append(" -> (match ");
         convert(sb, true, vars).apply(rhs);
         sb.append(" with \n");
@@ -572,9 +573,15 @@ public class DefinitionToOcaml {
             } else if (functions.contains(k.klabel())) {
                 sb.append("(");
                 encodeStringToFunction(sb, k.klabel().name());
-                sb.append("(");
+                if (functionRules.get(k.klabel()).stream().filter(r -> hasLookups(r)).count() > 0) {
+                    sb.append("((Hashtbl.clear guard_");
+                    encodeStringToFunction(sb, k.klabel().name());
+                    sb.append("); ");
+                } else {
+                    sb.append("(");
+                }
                 apply(k.klist().items(), true);
-                sb.append(") Guard.empty)");
+                sb.append("))");
             } else {
                 sb.append("KApply (");
                 apply(k.klabel());
