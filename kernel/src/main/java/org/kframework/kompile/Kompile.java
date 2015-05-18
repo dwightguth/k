@@ -283,7 +283,7 @@ public class Kompile {
 
     public Rule compileRule(CompiledDefinition compiledDef, String contents, Source source) {
         gen = new RuleGrammarGenerator(compiledDef.kompiledDefinition);
-        java.util.Set<K> res = performParse(new HashMap<>(), new ParseInModule(gen.getRuleGrammar(compiledDef.executionModule())),
+        java.util.Set<K> res = performParse(new HashMap<>(), new ParseInModule(gen.getRuleGrammar(compiledDef.executionModule()), kompileOptions.strict()),
                 new Bubble("rule", contents, Att().add("contentStartLine", 1).add("contentStartColumn", 1).add("Source", source.source())))
                 .collect(Collectors.toSet());
         if (!errors.isEmpty()) {
@@ -315,8 +315,8 @@ public class Kompile {
 
     private ParseCache loadCache(Module parser) {
         ParseCache cachedParser = caches.get(parser.name());
-        if (cachedParser == null || !equalsSyntax(cachedParser.getModule(), parser)) {
-            cachedParser = new ParseCache(parser, java.util.Collections.synchronizedMap(new HashMap<>()));
+        if (cachedParser == null || !equalsSyntax(cachedParser.getModule(), parser) || cachedParser.isStrict() != kompileOptions.strict()) {
+            cachedParser = new ParseCache(parser, kompileOptions.strict(), java.util.Collections.synchronizedMap(new HashMap<>()));
             caches.put(parser.name(), cachedParser);
         }
         return cachedParser;
