@@ -339,7 +339,7 @@ public class DefinitionToOcaml {
         List<List<KLabel>> functionOrder = sortFunctions(functionRules);
 
         for (List<KLabel> component : functionOrder) {
-            String conn = "let ";
+            String conn = "let rec ";
             for (KLabel functionLabel : component) {
                 sb.append(conn);
                 String functionName = encodeStringToFunction(sb, functionLabel.name());
