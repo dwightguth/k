@@ -71,119 +71,105 @@ public class DefinitionToOcaml {
 
         DefinitionToOcaml convert = new DefinitionToOcaml();
         String ocaml = convert.convert(def);
-        FileUtil.testFileUtil().saveToWorkingDirectory("def.ml", ocaml);
+        FileUtil.testFileUtil().saveToWorkingDirectory("def.sml", ocaml);
         String pgm = convert.convert(new KRun(kem, FileUtil.testFileUtil()).plugConfigVars(def, Collections.singletonMap(KToken(Sorts.KConfigVar(), "$PGM"), program)));
         FileUtil.testFileUtil().saveToWorkingDirectory("pgm.ml", pgm);
     }
 
-    public static final String kType = "t = kitem list\n" +
-            " and kitem = KApply of klabel * t list\n" +
+    public static final String kType = "datatype kitem = KApply of klabel * kitem list list\n" +
             "           | KToken of sort * string\n" +
             "           | InjectedKLabel of klabel\n" +
-            "           | Map of t m\n" +
-            "           | List of t list\n" +
+            "           | Map of kitem list m\n" +
+            "           | List of kitem list list\n" +
             "           | Set of s\n" +
             "           | Int of int\n" +
             "           | String of string\n" +
             "           | Bool of bool\n" +
             "           | Bottom\n";
 
-    public static final String prelude = "module type S =\n" +
+    public static final String prelude = "open IntInf\n" +
+            "signature K =\n" +
             "sig\n" +
             "  type 'a m\n" +
             "  type s\n" +
-            "  type " + kType +
-            "  val compare : t -> t -> int\n" +
-            "end \n" +
-            "\n" +
-            "\n" +
-            "module rec K : (S with type 'a m = 'a Map.Make(K).t and type s = Set.Make(K).t)  = \n" +
-            "struct\n" +
-            "  module KMap = Map.Make(K)\n" +
-            "  module KSet = Set.Make(K)\n" +
-            "  type 'a m = 'a KMap.t\n" +
-            "  and s = KSet.t\n" +
-            "  and " + kType +
-            "  let rec compare c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare_kitem hd1 hd2 in if v = 0 then compare tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "  and compare_kitem c1 c2 = match (c1, c2) with\n" +
-            "    | (KApply(kl1, k1)), (KApply(kl2, k2)) -> let v = compare_klabel kl1 kl2 in if v = 0 then compare_klist k1 k2 else v\n" +
-            "    | (KToken(s1, st1)), (KToken(s2, st2)) -> let v = compare_sort s1 s2 in if v = 0 then Pervasives.compare st1 st2 else v\n" +
-            "    | (InjectedKLabel kl1), (InjectedKLabel kl2) -> compare_klabel kl1 kl2\n" +
-            "    | (Map m1), (Map m2) -> (KMap.compare) compare m1 m2\n" +
-            "    | (List l1), (List l2) -> compare_klist l1 l2\n" +
-            "    | (Set s1), (Set s2) -> (KSet.compare) s1 s2\n" +
-            "    | (Int i1), (Int i2) -> i2 - i1\n" +
-            "    | (String s1), (String s2) -> Pervasives.compare s1 s2\n" +
-            "    | (Bool b1), (Bool b2) -> if b1 = b2 then 0 else if b1 then -1 else 1\n" +
-            "    | Bottom, Bottom -> 0\n" +
-            "    | KApply(_, _), _ -> -1\n" +
-            "    | _, KApply(_, _) -> 1\n" +
-            "    | KToken(_, _), _ -> -1\n" +
-            "    | _, KToken(_, _) -> 1\n" +
-            "    | InjectedKLabel(_), _ -> -1\n" +
-            "    | _, InjectedKLabel(_) -> 1\n" +
-            "    | Map(_), _ -> -1\n" +
-            "    | _, Map(_) -> 1\n" +
-            "    | List(_), _ -> -1\n" +
-            "    | _, List(_) -> 1\n" +
-            "    | Set(_), _ -> -1\n" +
-            "    | _, Set(_) -> 1\n" +
-            "    | Int(_), _ -> -1\n" +
-            "    | _, Int(_) -> 1\n" +
-            "    | String(_), _ -> -1\n" +
-            "    | _, String(_) -> 1\n" +
-            "    | Bool(_), _ -> -1\n" +
-            "    | _, Bool(_) -> 1\n" +
-            "  and compare_klist c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare hd1 hd2 in if v = 0 then compare_klist tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "  and compare_klabel kl1 kl2 = (order_klabel kl2) - (order_klabel kl1)\n" +
-            "  and compare_sort s1 s2 = (order_sort s2) - (order_sort s1)\n" +
+            "  " + kType +
+            "  type ord_key\n" +
+            "  val compare: (ord_key * ord_key) -> order\n" +
             "end\n" +
-            "\n" +
-            "  module KMap = Map.Make(K)\n" +
-            "  module KSet = Set.Make(K)\n" +
-            "\n" +
-            "open K\n" +
-            "type k = K.t" +
-            "\n" +
-            "exception Stuck of k\n" +
-            "module GuardElt = struct\n" +
-            "  type t = Guard of int\n" +
-            "  let compare c1 c2 = match c1 with Guard(i1) -> match c2 with Guard(i2) -> i2 - i1\n" +
+            "functor KFn (structure Map: ORD_MAP; structure Set: ORD_SET) =\n" +
+            "  struct\n" +
+            "    type 'a m = 'a Map.map\n" +
+            "    type s = Set.set\n" +
+            "    " + kType +
+            "    fun compare c1 c2 = case (c1, c2) of\n" +
+            "      ([], []) => EQUAL\n" +
+            "      | ((hd1 :: tl1), (hd2 :: tl2)) => let val v = compare_kitem hd1 hd2 in if v = EQUAL then compare tl1 tl2 else v end\n" +
+            "      | ((hd1 :: tl1), _) => (LESS)\n" +
+            "      | _ => GREATER\n" +
+            "    and compare_kitem c1 c2 = case (c1, c2) of\n" +
+            "      ((KApply(kl1, k1)), (KApply(kl2, k2))) => let val v = compare_klabel kl1 kl2 in if v = EQUAL then compare_klist k1 k2 else v end\n" +
+            "      | ((KToken(s1, st1)), (KToken(s2, st2))) => let val v = compare_sort s1 s2 in if v = EQUAL then String.compare(st1, st2) else v end\n" +
+            "      | ((InjectedKLabel kl1), (InjectedKLabel kl2)) => compare_klabel kl1 kl2\n" +
+            "      | ((Map m1), (Map m2)) => Map.collate (fn(k1, k2) => compare k1 k2) (m1, m2)\n" +
+            "      | ((List l1), (List l2)) => compare_klist l1 l2\n" +
+            "      | ((Set s1), (Set s2)) => Set.compare(s1, s2)\n" +
+            "      | ((Int i1), (Int i2)) => IntInf.compare(i1,i2)\n" +
+            "      | ((String s1), (String s2)) => String.compare(s1, s2)\n" +
+            "      | ((Bool b1), (Bool b2)) => if b1 = b2 then EQUAL else if b1 then (LESS) else GREATER\n" +
+            "      | (Bottom, Bottom) => EQUAL\n" +
+            "      | (KApply(_, _), _) => (LESS)\n" +
+            "      | (_, KApply(_, _)) => GREATER\n" +
+            "      | (KToken(_, _), _) => (LESS)\n" +
+            "      | (_, KToken(_, _)) => GREATER\n" +
+            "      | (InjectedKLabel(_), _) => (LESS)\n" +
+            "      | (_, InjectedKLabel(_)) => GREATER\n" +
+            "      | (Map(_), _) => (LESS)\n" +
+            "      | (_, Map(_)) => GREATER\n" +
+            "      | (List(_), _) => (LESS)\n" +
+            "      | (_, List(_)) => GREATER\n" +
+            "      | (Set(_), _) => (LESS)\n" +
+            "      | (_, Set(_)) => GREATER\n" +
+            "      | (Int(_), _) => (LESS)\n" +
+            "      | (_, Int(_)) => GREATER\n" +
+            "      | (String(_), _) => (LESS)\n" +
+            "      | (_, String(_)) => GREATER\n" +
+            "      | (Bool(_), _) => (LESS)\n" +
+            "      | (_, Bool(_)) => GREATER\n" +
+            "    and compare_klist c1 c2 = case (c1, c2) of\n" +
+            "      ([], []) => EQUAL\n" +
+            "      | ((hd1 :: tl1), (hd2 :: tl2)) => let val v = compare hd1 hd2 in if v = EQUAL then compare_klist tl1 tl2 else v end\n" +
+            "      | ((hd1 :: tl1), _) => (LESS)\n" +
+            "      | _ => GREATER\n" +
+            "    and compare_klabel kl1 kl2 = Int.compare((order_klabel kl1), (order_klabel kl2))\n" +
+            "    and compare_sort s1 s2 = Int.compare((order_sort s1), (order_sort s2))\n" +
             "end\n" +
-            "module Guard = Set.Make(GuardElt)\n";
+            "structure KImpl = KFn(RedBlackMapFn(KImpl), RedBlackSetFn(KImpl))\n" +
+            "exception Stuck of k\n";
 
     public static final String TRUE = "(Bool true)";
 
-    public static final String midlude = "let eq k1 k2 = k1 = k2\n" +
-            "let isTrue(c: k) : bool = match c with\n" +
-            "| ([" + TRUE + "]) -> true\n" +
-            "| _ -> false\n" +
-            "let rec print_klist(c: k list) : unit = match c with\n" +
-            "| [] -> print_string(\".KList\")\n" +
-            "| e::l -> print_k(e); print_string(\", \"); print_klist(l)\n" +
-            "and print_k(c: k) : unit = match c with\n" +
-            "| [] -> print_string(\".K\")\n" +
-            "| e::l -> print_kitem(e); print_string(\" ~> \"); print_k(l)\n" +
-            "and print_kitem(c: kitem) : unit = match c with\n" +
-            "| KApply(klabel, klist) -> print_string(print_klabel(klabel)); print_string \"(\"; print_klist(klist); print_string \")\"\n" +
-            "| KToken(sort, s) -> print_string \"#token(\"; print_string(print_sort_string(sort)); print_string (\", \\\"\" ^ s ^ \"\\\")\")\n" +
-            "| InjectedKLabel(klabel) -> print_string \"#klabel(\"; print_string(print_klabel(klabel)); print_string(\")\")\n" +
-            "| Bool(b) -> print_kitem(KToken(LblBool, string_of_bool(b)))\n" +
-            "| Int(i) -> print_kitem(KToken(LblInt, string_of_int(i)))\n" +
-            "| Map(m) -> if m = KMap.empty then print_string(\"`.Map`(.KList)\") else KMap.iter (fun k v -> print_string(\"`_|->_`(\"); print_k(k); print_string(\", \"); print_k(v); print_string(\")\")) m\n";
+    public static final String midlude = "fun eq k1 k2 = k1 = k2\n" +
+            "fun isTrue(c: k) : bool = case c of\n" +
+            "[" + TRUE + "] => true\n" +
+            "| _ => false\n" +
+            "fun print_klist(c: k list) : unit = (case c of \n" +
+            "[] => print_string(\".KList\")\n" +
+            "| e::l => print_k(e); print_string(\", \"); print_klist(l))\n" +
+            "and print_k(c: k) : unit = (case c of\n" +
+            "[] => print_string(\".K\")\n" +
+            "| e::l => print_kitem(e); print_string(\" ~> \"); print_k(l))\n" +
+            "and print_kitem(c: kitem) : unit = (case c of\n" +
+            "KApply(klabel, klist) => (print_string(print_klabel(klabel)); print_string \"(\"; print_klist(klist); print_string \")\")\n" +
+            "| KToken(sort, s) => (print_string \"#token(\"; print_string(print_sort_string(sort)); print_string (\", \\\"\" ^ s ^ \"\\\")\"))\n" +
+            "| InjectedKLabel(klabel) => (print_string \"#klabel(\"; print_string(print_klabel(klabel)); print_string(\")\"))\n" +
+            "| Bool(b) => (print_kitem(KToken(LblBool, string_of_bool(b))))\n" +
+            "| Int(i) => (print_kitem(KToken(LblInt, string_of_int(i))))\n" +
+            "| Map(m) => (if m = KMap.empty then print_string(\"`.Map`(.KList)\") else KMap.iter (fn k => fn v => print_string(\"`_|->_`(\"); print_k(k); print_string(\", \"); print_k(v); print_string(\")\")) m))\n";
 
-    public static final String postlude = "let run c =\n" +
-            "  try let rec go c = go (step c)\n" +
-            "      in go c\n" +
-            "  with Stuck c' -> c'\n";
+    public static final String postlude = "fun run c =\n" +
+            "  (let fun go c = go (step c)\n" +
+            "      in go c end)\n" +
+            "  handle Stuck c' => c'\n";
 
     public static final ImmutableMap<String, String> hooks;
     public static final ImmutableMap<String, Function<String, String>> sortHooks;
@@ -191,28 +177,28 @@ public class DefinitionToOcaml {
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("#INT:_%Int_", "[Int a] :: [Int b] :: [] -> [Int (a mod b)]");
-        builder.put("#INT:_+Int_", "[Int a] :: [Int b] :: [] -> [Int (a + b)]");
-        builder.put("#INT:_<=Int_", "[Int a] :: [Int b] :: [] -> [Bool (a <= b)]");
-        builder.put("#INT:_=/=Int_", "[Int a] :: [Int b] :: [] -> [Bool (a = b)]");
-        builder.put("Map:_|->_", "k1 :: k2 :: [] -> [Map (KMap.add k1 k2 KMap.empty)]");
-        builder.put("Map:.Map", "[] -> [Map KMap.empty]");
-        builder.put("Map:__", "([Map k1]) :: ([Map k2]) :: [] -> [Map (KMap.merge (fun k a b -> match a, b with None, None -> None | None, Some v | Some v, None -> Some v) k1 k2)]");
-        builder.put("Map:lookup", "[Map k1] :: k2 :: [] -> (try KMap.find k2 k1 with Not_found -> [Bottom])");
-        builder.put("Map:remove", "[Map k1] :: k2 :: [] -> [Map (KMap.remove k2 k1)]");
-        builder.put("Map:keys", "[Map k1] :: [] -> [Set (KMap.fold (fun key -> KSet.add) k1 KSet.empty)]");
-        builder.put("Set:in", "k1 :: [Set k2] :: [] -> [Bool (KSet.mem k1 k2)]");
-        builder.put("MetaK:#sort", "[KToken (sort, s)] :: [] -> [String (print_sort(sort))] " +
-                "| [Int _] :: [] -> [String \"Int\"] " +
-                "| [String _] :: [] -> [String \"String\"] " +
-                "| [Bool _] :: [] -> [String \"Bool\"] " +
-                "| [Map _] :: [] -> [String \"Map\"] " +
-                "| [List _] :: [] -> [String \"List\"] " +
-                "| [Set _] :: [] -> [String \"Set\"] " +
-                "| _ -> [String \"\"]");
-        builder.put("#K-EQUAL:_==K_", "k1 :: k2 :: [] -> [Bool (eq k1 k2)]");
-        builder.put("#BOOL:_andBool_", "[Bool b1] :: [Bool b2] :: [] -> [Bool (b1 && b2)]");
-        builder.put("#BOOL:notBool_", "[Bool b1] :: [] -> [Bool (not b1)]");
+        builder.put("#INT:_%Int_", "[Int a] :: [Int b] :: [] => [Int (a mod b)]");
+        builder.put("#INT:_+Int_", "[Int a] :: [Int b] :: [] => [Int (a + b)]");
+        builder.put("#INT:_<=Int_", "[Int a] :: [Int b] :: [] => [Bool (a <= b)]");
+        builder.put("#INT:_=/=Int_", "[Int a] :: [Int b] :: [] => [Bool (a = b)]");
+        builder.put("Map:_|->_", "k1 :: k2 :: [] => [Map (KMap.add k1 k2 KMap.empty)]");
+        builder.put("Map:.Map", "[] => [Map KMap.empty]");
+        builder.put("Map:__", "([Map k1]) :: ([Map k2]) :: [] => [Map (KMap.merge (fn k => fn a => fn b => case (a, b) of (None, None) => None | (None, Some v) => Some v | (Some v, None) => Some v) k1 k2)]");
+        builder.put("Map:lookup", "[Map k1] :: k2 :: [] => (KMap.find k2 k1 handle Not_found => [Bottom])");
+        builder.put("Map:remove", "[Map k1] :: k2 :: [] => [Map (KMap.remove k2 k1)]");
+        builder.put("Map:keys", "[Map k1] :: [] => [Set (KMap.fold (fn key => KSet.add) k1 KSet.empty)]");
+        builder.put("Set:in", "k1 :: [Set k2] :: [] => [Bool (KSet.mem k1 k2)]");
+        builder.put("MetaK:#sort", "[KToken (sort, s)] :: [] => [String (print_sort(sort))] " +
+                "| [Int _] :: [] => [String \"Int\"] " +
+                "| [String _] :: [] => [String \"String\"] " +
+                "| [Bool _] :: [] => [String \"Bool\"] " +
+                "| [Map _] :: [] => [String \"Map\"] " +
+                "| [List _] :: [] => [String \"List\"] " +
+                "| [Set _] :: [] => [String \"Set\"] " +
+                "| _ => [String \"\"]");
+        builder.put("#K-EQUAL:_==K_", "k1 :: k2 :: [] => [Bool (eq k1 k2)]");
+        builder.put("#BOOL:_andBool_", "[Bool b1] :: [Bool b2] :: [] => [Bool (b1 && b2)]");
+        builder.put("#BOOL:notBool_", "[Bool b1] :: [] => [Bool (not b1)]");
         hooks = builder.build();
     }
 
@@ -226,14 +212,14 @@ public class DefinitionToOcaml {
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("isK", "k1 :: [] -> [Bool true]");
-        builder.put("isKItem", "[k1] :: [] -> [Bool true]");
-        builder.put("isInt", "[Int _] :: [] -> [Bool true]");
-        builder.put("isString", "[String _] :: [] -> [Bool true]");
-        builder.put("isBool", "[Bool _] :: [] -> [Bool true]");
-        builder.put("isMap", "[Map _] :: [] -> [Bool true]");
-        builder.put("isSet", "[Set _] :: [] -> [Bool true]");
-        builder.put("isList", "[List _] :: [] -> [Bool true]");
+        builder.put("isK", "k1 :: [] => [Bool true]");
+        builder.put("isKItem", "[k1] :: [] => [Bool true]");
+        builder.put("isInt", "[Int _] :: [] => [Bool true]");
+        builder.put("isString", "[String _] :: [] => [Bool true]");
+        builder.put("isBool", "[Bool _] :: [] => [Bool true]");
+        builder.put("isMap", "[Map _] :: [] => [Bool true]");
+        builder.put("isSet", "[Set _] :: [] => [Bool true]");
+        builder.put("isList", "[List _] :: [] => [Bool true]");
         predicateRules = builder.build();
     }
 
@@ -256,64 +242,80 @@ public class DefinitionToOcaml {
     public String convert(K k) {
         StringBuilder sb = new StringBuilder();
         sb.append("open Def\n");
-        sb.append("let _ = try print_k(run(");
+        sb.append("let _ = print_k(run(");
         convert(sb, true, HashMultimap.create(), false).apply(new LiftToKSequence().convert(k));
-        sb.append(")) with Stuck c' -> print_k c'");
+        sb.append(")) handle Stuck c' => print_k c'");
         return sb.toString();
     }
 
+    private int guardSize;
+
     private String convert() {
         StringBuilder sb = new StringBuilder();
-        sb.append("type sort = ");
+        String conn = "";
+        sb.append("datatype sort = ");
         for (Sort s : iterable(mainModule.definedSorts())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, s.name());
             sb.append("\n");
+            conn = "|";
         }
-        sb.append("let order_sort(s: sort) = match s with \n");
+        sb.append("fun order_sort(s: sort) = case s of \n");
         int i = 0;
+        conn = "";
         for (Sort s : iterable(mainModule.definedSorts())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, s.name());
-            sb.append(" -> ").append(i++).append("\n");
+            sb.append(" => ").append(i++).append("\n");
+            conn = "|";
         }
-        sb.append("type klabel = ");
+        sb.append("datatype klabel = ");
+        conn = "";
         for (KLabel label : iterable(mainModule.definedKLabels())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, label.name());
             sb.append("\n");
+            conn = "|";
         }
         i = 0;
-        sb.append("let order_klabel(l: klabel) = match l with \n");
+        sb.append("fun order_klabel(l: klabel) = case l of \n");
+        conn = "";
         for (KLabel label : iterable(mainModule.definedKLabels())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, label.name());
-            sb.append(" -> ").append(i++).append("\n");
+            sb.append(" => ").append(i++).append("\n");
+            conn = "|";
         }
         sb.append(prelude);
-        sb.append("let print_sort_string(c: sort) : string = match c with \n");
+        sb.append("fun print_sort_string(c: sort) : string = case c of \n");
+        conn = "";
         for (Sort s : iterable(mainModule.definedSorts())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, s.name());
-            sb.append(" -> ");
+            sb.append(" => ");
             sb.append(StringUtil.enquoteCString(StringUtil.enquoteKString(s.name())));
             sb.append("\n");
+            conn = "|";
         }
-        sb.append("let print_sort(c: sort) : string = match c with \n");
+        sb.append("fun print_sort(c: sort) : string = case c of \n");
+        conn = "";
         for (Sort s : iterable(mainModule.definedSorts())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, s.name());
-            sb.append(" -> ");
+            sb.append(" => ");
             sb.append(StringUtil.enquoteCString(s.name()));
             sb.append("\n");
+            conn = "|";
         }
-        sb.append("let print_klabel(c: klabel) : string = match c with \n");
+        sb.append("fun print_klabel(c: klabel) : string = case c of \n");
+        conn = "";
         for (KLabel label : iterable(mainModule.definedKLabels())) {
-            sb.append("|");
+            sb.append(conn);
             encodeStringToIdentifier(sb, label.name());
-            sb.append(" -> ");
+            sb.append(" => ");
             sb.append(StringUtil.enquoteCString(ToKast.apply(label)));
             sb.append("\n");
+            conn = "|";
         }
         sb.append(midlude);
         SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
@@ -336,54 +338,66 @@ public class DefinitionToOcaml {
             }
         }
 
+        List<Rule> rules = stream(mainModule.rules()).sorted(this::sortRules).collect(Collectors.toList());
+        sb.append("type guard = {");
+        conn = "";
+        for (i = 0; i < rules.stream().filter(r -> !functionRules.values().contains(r)).count(); i++) {
+            sb.append(conn);
+            sb.append("guard").append(i);
+            sb.append(": bool");
+            conn = ", ";
+        }
+        guardSize = i;
+        sb.append("}\n");
+
         List<List<KLabel>> functionOrder = sortFunctions(functionRules);
 
         for (List<KLabel> component : functionOrder) {
-            String conn = "let ";
+            conn = "fun ";
+            String conn2 = "";
             for (KLabel functionLabel : component) {
                 sb.append(conn);
                 String functionName = encodeStringToFunction(sb, functionLabel.name());
-                sb.append(" (l: k list) (guards: Guard.t) : k = match l with \n");
+                sb.append(" (l: k list) (guards: guard) : k = case (l, guards) of \n");
                 String hook = mainModule.attributesFor().apply(functionLabel).<String>getOptional(Attribute.HOOK_KEY).orElse("");
                 if (hooks.containsKey(hook)) {
-                    sb.append("| ");
+                    sb.append(conn2);
                     sb.append(hooks.get(hook));
                     sb.append("\n");
+                    conn2 = "| ";
                 }
                 if (predicateRules.containsKey(functionLabel.name())) {
-                    sb.append("| ");
+                    sb.append(conn2);
                     sb.append(predicateRules.get(functionLabel.name()));
                     sb.append("\n");
+                    conn2 = "| ";
                 }
 
                 i = 0;
                 for (Rule r : functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList())) {
+                    sb.append(conn2);
                     convert(r, sb, true, i++, functionName);
+                    conn2 = "| ";
                 }
-                sb.append("| _ -> raise (Stuck [KApply (");
+                sb.append(conn2).append("_ => raise (Stuck [KApply (");
                 encodeStringToIdentifier(sb, functionLabel.name());
                 sb.append(", l)])\n");
                 conn = "and ";
+                conn2 = "";
             }
         }
 
-        boolean hasLookups = false;
-        Map<Boolean, List<Rule>> sortedRules = stream(mainModule.rules()).collect(Collectors.groupingBy(this::hasLookups));
-        sb.append("let rec lookups_step (c: k) (guards: Guard.t) : k = match c with \n");
         i = 0;
-        for (Rule r : sortedRules.get(true)) {
+        sb.append("fun step (c: k) (guards: guard) : k = case (c, guards) of \n");
+        conn = "";
+        for (Rule r : rules) {
             if (!functionRules.values().contains(r)) {
-                convert(r, sb, false, i++, "lookups_step");
-            }
-        }
-        sb.append("| _ -> raise (Stuck c)\n");
-        sb.append("let step (c: k) : k = match c with \n");
-        for (Rule r : sortedRules.get(false)) {
-            if (!functionRules.values().contains(r)) {
+                sb.append(conn);
                 convert(r, sb, false, i++, "step");
+                conn = "| ";
             }
         }
-        sb.append("| _ -> lookups_step c Guard.empty\n");
+        sb.append("| _ => raise (Stuck c)\n");
         sb.append(postlude);
         return sb.toString();
     }
@@ -505,7 +519,7 @@ public class DefinitionToOcaml {
         sb.append(" ");
         sb.append(r.att().toString());
         sb.append("*)\n");
-        sb.append("| ");
+        sb.append("(");
         K left = RewriteToTop.toLeft(r.body());
         K right = RewriteToTop.toRight(r.body());
         K requires = r.requires();
@@ -517,22 +531,64 @@ public class DefinitionToOcaml {
         } else {
             visitor.apply(left);
         }
+        sb.append(", ");
+        matchGuard(sb, ruleNum);
+        sb.append(")");
         String result = convert(vars);
         Holder numLookups = new Holder();
         sb.append(convertLookups(requires, vars, numLookups, ruleNum));
+        sb.append(" => ");
         if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
-            sb.append(" when ");
+            sb.append(" if ");
             convert(sb, true, vars, true).apply(requires);
             sb.append(" && (");
             sb.append(result);
-            sb.append(")");
+            sb.append(") then ");
         }
-        sb.append(" -> ");
         convert(sb, true, vars, false).apply(right);
+        if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
+            sb.append(" else (").append(functionName).append(" c (");
+            addGuardToCurrent(sb, ruleNum);
+            sb.append("))");
+        }
         for (int i = 0; i < numLookups.i; i++) {
-            sb.append("| _ -> (").append(functionName).append(" c (Guard.add (GuardElt.Guard ").append(ruleNum).append(") guards)))");
+            sb.append("| _ => (").append(functionName).append(" c (");
+            addGuardToCurrent(sb, ruleNum);
+            sb.append(")))");
         }
         sb.append("\n");
+    }
+
+    private void matchGuard(StringBuilder sb, int ruleNum) {
+        sb.append("{");
+        String conn = "";
+        for (int i = 0; i < guardSize; i++) {
+            sb.append(conn);
+            sb.append("guard").append(i).append("= ");
+            if (i == ruleNum) {
+                sb.append(false);
+            } else {
+                sb.append("_");
+            }
+            conn = ", ";
+        }
+        sb.append("}");
+    }
+
+    private void addGuardToCurrent(StringBuilder sb, int ruleNum) {
+        sb.append("{");
+        String conn = "";
+        for (int i = 0; i < guardSize; i++) {
+            sb.append(conn);
+            sb.append("guard").append(i).append("= ");
+            if (i == ruleNum) {
+                sb.append("true");
+            } else {
+                sb.append("#guard").append(i).append(" guards");
+            }
+            conn = ", ";
+        }
+        sb.append("}");
     }
 
     private static class Holder { int i; }
@@ -557,10 +613,9 @@ public class DefinitionToOcaml {
     }
 
     private void convertLookup(StringBuilder sb, K lhs, K rhs, SetMultimap<KVariable, String> vars, int ruleNum) {
-        sb.append(" when not (Guard.mem (GuardElt.Guard ").append(ruleNum).append(") guards)");
-        sb.append(" -> (match ");
+        sb.append(" => (case ");
         convert(sb, true, vars, false).apply(rhs);
-        sb.append(" with \n");
+        sb.append(" of \n");
         convert(sb, false, vars, false).apply(lhs);
     }
 
@@ -600,8 +655,8 @@ public class DefinitionToOcaml {
             String hook = mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
             if (sortHooks.containsKey(hook)) {
                 sb.append("(");
-                sb.append(s.name()).append(" _");
-                sb.append(" as ").append(varName).append(")");
+                sb.append(varName).append(" as ");
+                sb.append(s.name()).append(" _)");
                 return;
             }
         }
