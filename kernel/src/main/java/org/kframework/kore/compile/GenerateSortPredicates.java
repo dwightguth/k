@@ -55,12 +55,14 @@ public class GenerateSortPredicates {
 
     private Stream<? extends Sentence> gen(Sort sort) {
         List<Sentence> res = new ArrayList<>();
-        Production prod = Production("is" + sort.name(), Sorts.Bool(), Seq(Terminal("is" + sort.name()), Terminal("("), NonTerminal(Sorts.K()), Terminal(")")), Att().add(Attribute.FUNCTION_KEY));
+        Production prod = Production("is" + sort.name(), Sorts.Bool(),
+                Seq(Terminal("is" + sort.name()), Terminal("("), NonTerminal(Sorts.K()), Terminal(")")),
+                Att().add(Attribute.FUNCTION_KEY).add(Attribute.PREDICATE_KEY, sort.name()));
         res.add(prod);
         if (!RuleGrammarGenerator.isParserSort(sort)) {
             for (Sort bigSort : iterable(mod.subsorts().relations().apply(sort))) {
                 if (!RuleGrammarGenerator.isParserSort(bigSort)) {
-                    Rule subsort = Rule(KRewrite(KApply(KLabel("is" + bigSort.name()), KVariable("K")), BooleanUtils.TRUE), KApply(KLabel("is" + sort.name()), KVariable("K")), BooleanUtils.TRUE);
+                    Rule subsort = Rule(KRewrite(KApply(KLabel("is" + bigSort.name()), KVariable("K", Att().add(Attribute.SORT_KEY, sort.name()))), BooleanUtils.TRUE), KApply(KLabel("is" + sort.name()), KVariable("K", Att().add(Attribute.SORT_KEY, sort.name()))), BooleanUtils.TRUE);
                     res.add(subsort);
                 }
             }

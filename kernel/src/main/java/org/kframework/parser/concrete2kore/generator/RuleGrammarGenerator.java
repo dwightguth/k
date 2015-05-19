@@ -85,6 +85,19 @@ public class RuleGrammarGenerator {
         return getCombinedGrammar(newM);
     }
 
+    public Module getProgramsGrammar(Module mod) {
+        Set<Sentence> prods = new HashSet<>();
+        // if no start symbol has been defined in the configuration, then use K
+        for (Sort srt : iterable(mod.definedSorts())) {
+            if (!kSorts.contains(srt) && !mod.listSorts().contains(srt)) {
+                // K ::= Sort
+                prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
+            }
+        }
+        Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
+        return newM;
+    }
+
     public static boolean isParserSort(Sort s) {
         return kSorts.contains(s) || s.name().startsWith("#");
     }

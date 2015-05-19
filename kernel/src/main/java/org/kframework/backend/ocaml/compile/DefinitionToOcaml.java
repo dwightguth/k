@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -338,7 +339,7 @@ public class DefinitionToOcaml {
         List<List<KLabel>> functionOrder = sortFunctions(functionRules);
 
         for (List<KLabel> component : functionOrder) {
-            String conn = "let rec ";
+            String conn = "let ";
             for (KLabel functionLabel : component) {
                 sb.append(conn);
                 String functionName = encodeStringToFunction(sb, functionLabel.name());
@@ -572,6 +573,7 @@ public class DefinitionToOcaml {
             Iterator<String> iter = nonLinearVars.iterator();
             String last = iter.next();
             while (iter.hasNext()) {
+                //handle nonlinear variables in pattern
                 String next = iter.next();
                 sb.append("(eq ");
                 sb.append(last);
@@ -628,7 +630,6 @@ public class DefinitionToOcaml {
 
         @Override
         public Void apply(KApply k) {
-            boolean stack = inBooleanExp;
             if (k.klabel().name().equals("#match")) {
                 apply(BooleanUtils.TRUE);
             } else if (k.klabel().name().equals("#KToken")) {
@@ -640,61 +641,7 @@ public class DefinitionToOcaml {
                 apply(((KSequence) k.klist().items().get(1)).items().get(0));
                 sb.append(")");
             } else if (functions.contains(k.klabel())) {
-                String hook = mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
-                if (useNativeBooleanExp && hook.equals("#BOOL:_andBool_") || hook.equals("#BOOL:_andThenBool_")) {
-                    assert k.klist().items().size() == 2;
-                    if (!stack) {
-                        sb.append("[Bool ");
-                    }
-                    inBooleanExp = true;
-                    sb.append("(");
-                    apply(k.klist().items().get(0));
-                    sb.append(") && (");
-                    apply(k.klist().items().get(1));
-                    sb.append(")");
-                    if (!stack) {
-                        sb.append("]");
-                    }
-                } else if (useNativeBooleanExp && hook.equals("#BOOL:_orBool_") || hook.equals("#BOOL:_orElseBool_")) {
-                    assert k.klist().items().size() == 2;
-                    if (!stack) {
-                        sb.append("[Bool ");
-                    }
-                    inBooleanExp = true;
-                    sb.append("(");
-                    apply(k.klist().items().get(0));
-                    sb.append(") || (");
-                    apply(k.klist().items().get(1));
-                    sb.append(")");
-                    if (!stack) {
-                        sb.append("]");
-                    }
-                } else if (useNativeBooleanExp && hook.equals("#BOOL:notBool_")) {
-                    assert k.klist().items().size() == 1;
-                    if (!stack) {
-                        sb.append("[Bool ");
-                    }
-                    inBooleanExp = true;
-                    sb.append("(not ");
-                    apply(k.klist().items().get(0));
-                    sb.append(")");
-                    if (!stack) {
-                        sb.append("]");
-                    }
-                } else {
-                    if (stack) {
-                        sb.append("(isTrue ");
-                    }
-                    inBooleanExp = false;
-                    sb.append("(");
-                    encodeStringToFunction(sb, k.klabel().name());
-                    sb.append("(");
-                    apply(k.klist().items(), true);
-                    sb.append(") Guard.empty)");
-                    if (stack) {
-                        sb.append(")");
-                    }
-                }
+                applyFunction(k);
             } else {
                 sb.append("KApply (");
                 apply(k.klabel());
@@ -702,8 +649,97 @@ public class DefinitionToOcaml {
                 apply(k.klist().items(), true);
                 sb.append(")");
             }
-            inBooleanExp = stack;
             return null;
+        }
+
+        public void applyFunction(KApply k) {
+            boolean stack = inBooleanExp;
+            String hook = mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
+            // use native &&, ||, not where possible
+            if (useNativeBooleanExp && hook.equals("#BOOL:_andBool_") || hook.equals("#BOOL:_andThenBool_")) {
+                assert k.klist().items().size() == 2;
+                if (!stack) {
+                    sb.append("[Bool ");
+                }
+                inBooleanExp = true;
+                sb.append("(");
+                apply(k.klist().items().get(0));
+                sb.append(") && (");
+                apply(k.klist().items().get(1));
+                sb.append(")");
+                if (!stack) {
+                    sb.append("]");
+                }
+            } else if (useNativeBooleanExp && hook.equals("#BOOL:_orBool_") || hook.equals("#BOOL:_orElseBool_")) {
+                assert k.klist().items().size() == 2;
+                if (!stack) {
+                    sb.append("[Bool ");
+                }
+                inBooleanExp = true;
+                sb.append("(");
+                apply(k.klist().items().get(0));
+                sb.append(") || (");
+                apply(k.klist().items().get(1));
+                sb.append(")");
+                if (!stack) {
+                    sb.append("]");
+                }
+            } else if (useNativeBooleanExp && hook.equals("#BOOL:notBool_")) {
+                assert k.klist().items().size() == 1;
+                if (!stack) {
+                    sb.append("[Bool ");
+                }
+                inBooleanExp = true;
+                sb.append("(not ");
+                apply(k.klist().items().get(0));
+                sb.append(")");
+                if (!stack) {
+                    sb.append("]");
+                }
+            } else {
+                if (mainModule.attributesFor().apply(k.klabel()).contains(Attribute.PREDICATE_KEY)) {
+                    Sort s = Sort(mainModule.attributesFor().apply(k.klabel()).<String>get(Attribute.PREDICATE_KEY).get());
+                    if (mainModule.sortAttributesFor().contains(s)) {
+                        String hook2 = mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
+                        if (sortHooks.containsKey(hook2)) {
+                            if (k.klist().items().size() == 1) {
+                                KSequence item = (KSequence) k.klist().items().get(0);
+                                if (item.items().size() == 1 &&
+                                        vars.containsKey(item.items().get(0))) {
+                                    Optional<String> varSort = item.items().get(0).att().<String>getOptional(Attribute.SORT_KEY);
+                                    if (varSort.isPresent() && varSort.get().equals(s.name())) {
+                                        // this has been subsumed by a structural check on the builtin data type
+                                        apply(BooleanUtils.TRUE);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (s.equals(Sorts.KItem()) && k.klist().items().size() == 1) {
+                        if (k.klist().items().get(0) instanceof KSequence) {
+                            KSequence item = (KSequence) k.klist().items().get(0);
+                            if (item.items().size() == 1) {
+                                apply(BooleanUtils.TRUE);
+                                return;
+                            }
+                        }
+                    }
+                }
+                if (stack) {
+                    sb.append("(isTrue ");
+                }
+                inBooleanExp = false;
+                sb.append("(");
+                encodeStringToFunction(sb, k.klabel().name());
+                sb.append("(");
+                apply(k.klist().items(), true);
+                sb.append(") Guard.empty)");
+                if (stack) {
+                    sb.append(")");
+                }
+            }
+            inBooleanExp = stack;
         }
 
         @Override
