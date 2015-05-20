@@ -2,6 +2,7 @@ package org.kframework.kore.compile;
 
 import org.kframework.attributes.Att;
 import org.kframework.builtin.BooleanUtils;
+import org.kframework.builtin.Sorts;
 import org.kframework.definition.Context;
 import org.kframework.definition.Module;
 import org.kframework.definition.Rule;
@@ -14,8 +15,10 @@ import org.kframework.kore.KRewrite;
 import org.kframework.kore.KVariable;
 import org.kframework.utils.errorsystem.KEMException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,7 +112,41 @@ public class ConvertDataStructureToLookup {
                     if (att.contains(Attribute.COMMUTATIVE_KEY)) {
                         if (att.contains(Attribute.IDEMPOTENT_KEY)) {
                             // Set
-                            throw KEMException.internalError("Unsupported collection type: Set", k);
+                            if (rhsOf == null) {
+                                //left hand side
+                                KVariable frame = null;
+                                Set<K> elements = new LinkedHashSet<>();
+                                for (K component : components) {
+                                    if (component instanceof KVariable) {
+                                        if (frame != null) {
+                                            throw KEMException.internalError("Unsupported associative matching on Set. Found variables " + component + " and " + frame, k);
+                                        }
+                                        frame = (KVariable) component;
+                                    } else if (component instanceof KApply) {
+                                        KApply kapp = (KApply) component;
+                                        if (kapp.klabel().equals(KLabel(m.attributesFor().apply(k.klabel()).<String>get("element").get()))) {
+                                            elements.add(kapp);
+                                        } else {
+                                            throw KEMException.internalError("Unexpected term in set, not a set element.", kapp);
+                                        }
+                                    }
+                                }
+                                KVariable set = newDotVariable();
+                                if (frame != null) {
+                                    K removeElements = elements.stream().reduce(KApply(KLabel(".Set")), (k1, k2) -> KApply(KLabel("_Set_"), k1, k2));
+                                    state.add(KApply(KLabel("#match"), frame, KApply(KLabel("_-Set_"), set, removeElements)));
+                                }
+                                for (K element : elements) {
+                                    state.add(KApply(KLabel("_in_"), element, set));
+                                }
+                                if (lhsOf == null) {
+                                    return KRewrite(set, RewriteToTop.toRight(k));
+                                } else {
+                                    return set;
+                                }
+                            } else {
+                                return super.apply(k);
+                            }
                         } else {
                             //TODO(dwightguth): differentiate Map and Bag
                             if (rhsOf == null) {
@@ -151,7 +188,54 @@ public class ConvertDataStructureToLookup {
                             }
                         }
                     } else {
-                        throw KEMException.internalError("Unsupported collection type: List", k);
+                        // List
+                        if (rhsOf == null) {
+                            //left hand side
+                            KVariable frame = null;
+                            List<K> elementsLeft = new ArrayList<K>();
+                            List<K> elementsRight = new ArrayList<K>();
+                            boolean isRight = false;
+                            for (K component : components) {
+                                if (component instanceof KVariable) {
+                                    if (frame != null) {
+                                        throw KEMException.internalError("Unsupported associative matching on List. Found variables " + component + " and " + frame, k);
+                                    }
+                                    frame = (KVariable) component;
+                                    isRight = true;
+                                } else if (component instanceof KApply) {
+                                    KApply kapp = (KApply) component;
+                                    if (kapp.klabel().equals(KLabel(m.attributesFor().apply(k.klabel()).<String>get("element").get()))) {
+                                        if (kapp.klist().size() != 1) {
+                                            throw KEMException.internalError("Unexpected arity of list element: " + kapp.klist().size(), kapp);
+                                        }
+                                        (isRight ? elementsRight : elementsLeft).add(kapp.klist().items().get(0));
+                                    } else {
+                                        throw KEMException.internalError("Unexpected term in list, not a list element.", kapp);
+                                    }
+                                }
+                            }
+                            KVariable list = newDotVariable();
+                            if (frame != null) {
+                                state.add(KApply(KLabel("#match"), frame, KApply(KLabel("List:range"), list,
+                                        KToken(Sorts.Int(), Integer.toString(elementsLeft.size()))),
+                                        KToken(Sorts.Int(), Integer.toString(elementsRight.size()))));
+                            }
+                            for (int i = 0; i < elementsLeft.size(); i++) {
+                                K element = elementsLeft.get(i);
+                                state.add(KApply(KLabel("#match"), RewriteToTop.toLeft(element), KApply(KLabel("List:get"), list, KToken(Sorts.Int(), Integer.toString(i)))));
+                            }
+                            for (int i = 0; i < elementsRight.size(); i++) {
+                                K element = elementsRight.get(i);
+                                state.add(KApply(KLabel("#match"), RewriteToTop.toLeft(element), KApply(KLabel("List:get"), list, KToken(Sorts.Int(), Integer.toString(-i - 1)))));
+                            }
+                            if (lhsOf == null) {
+                                return KRewrite(list, RewriteToTop.toRight(k));
+                            } else {
+                                return list;
+                            }
+                        } else {
+                            return super.apply(k);
+                        }
                     }
                 } else {
                     return super.apply(k);
