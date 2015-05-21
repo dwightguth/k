@@ -7,6 +7,7 @@ import org.kframework.POSet
 import org.kframework.attributes.{Source, Location, Att}
 import org.kframework.kore.Unapply.{KLabel, KApply}
 import org.kframework.kore._
+import org.kframework.kore.KORE.KLabel
 import org.kframework.utils.errorsystem.KEMException
 
 import scala.collection.JavaConverters._
@@ -170,6 +171,27 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
   }
 
   lazy val subsorts: POSet[Sort] = POSet(subsortRelations)
+
+  lazy val freshFunctionFor: Map[Sort, KLabel] =
+    productions.groupBy(_.sort).mapValues(_.filter(_.att.contains("freshGenerator")) )
+      .filter(_._2.nonEmpty).mapValues(_.map(p => p.klabel.get)).mapValues { set => {
+      if (set.size > 1)
+        throw KEMException.compilerError("Found more than one fresh generator for sort " + sortFor(set.head)
+          + ". Found: " + set)
+      else
+        set.head
+    }}
+
+  lazy val collectionFor: Map[KLabel, KLabel] = productions.filter(_.att.contains("assoc")).flatMap { p => {
+    var set : Set[Tuple2[KLabel, KLabel]] = Set(Tuple2(p.klabel.get, p.klabel.get))
+    if (p.att.contains("unit")) {
+      set = set + Tuple2(KORE.KLabel(p.att.get("unit").get), p.klabel.get)
+    }
+    if (p.att.contains("element")) {
+      set = set + Tuple2(KORE.KLabel(p.att.get("element").get), p.klabel.get)
+    }
+    set
+  }} toMap
 
   // check that non-terminals have a defined sort
   private val nonTerminalsWithUndefinedSort = sentences flatMap {

@@ -24,6 +24,7 @@ import org.kframework.kore.Sort;
 import org.kframework.kore.compile.ConcretizeCells;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
 import org.kframework.kore.compile.ResolveAnonVar;
+import org.kframework.kore.compile.ResolveFreshConstants;
 import org.kframework.kore.compile.ResolveSemanticCasts;
 import org.kframework.kore.compile.SortInfo;
 import org.kframework.parser.Term;
@@ -114,6 +115,7 @@ public class Kompile {
                 heatingCooling
                         .andThen(resolveAnonVars)
                         .andThen(resolveSemanticCasts)
+                        .andThen(func(this::resolveFreshConstants))
                         .andThen(func(this::concretizeTransformer))
                         .andThen(func(this::addSemanticsModule))
                         .andThen(func(this::addProgramModule));
@@ -138,6 +140,11 @@ public class Kompile {
         java.util.Set<Module> allModules = mutable(d.modules());
         allModules.add(withKSeq);
         return Definition(withKSeq, d.mainSyntaxModule(), immutable(allModules));
+    }
+
+    public Definition resolveFreshConstants(Definition input) {
+        return DefinitionTransformer.from(new ResolveFreshConstants(input)::resolve, "resolving !Var variables")
+                .apply(input);
     }
 
     public Definition addProgramModule(Definition d) {

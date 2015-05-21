@@ -244,7 +244,8 @@ public class GenerateSentencesFromConfigDecl {
                     .add(Attribute.ASSOCIATIVE_KEY, "")
                     .add("element", "<" + cellName + ">")
                     .add(Attribute.UNIT_KEY, "." + bagSort.name())
-                    .add(Attribute.HOOK_KEY, type + ":__");
+                    .add(Attribute.HOOK_KEY, type + ":__")
+                    .add(Attribute.FUNCTION_KEY);
             String unitHook = type + ":." + type, elementHook = type + ":" + type + "Item";
             switch(type) {
             case "Set":
@@ -257,8 +258,8 @@ public class GenerateSentencesFromConfigDecl {
                 throw KEMException.compilerError("Unexpected type for multiplicity * cell: " + cellName + ". Should be one of: Set, Bag, List");
             }
             Sentence bagSubsort = Production(bagSort, Seq(NonTerminal(sort)), Att());
-            Sentence bagUnit = Production("." + bagSort.name(), bagSort, Seq(Terminal("." + bagSort.name())), Att().add(Attribute.HOOK_KEY, unitHook));
-            cellProduction = Production(cellProduction.sort(), cellProduction.items(), cellProduction.att().add(Attribute.HOOK_KEY, elementHook));
+            Sentence bagUnit = Production("." + bagSort.name(), bagSort, Seq(Terminal("." + bagSort.name())), Att().add(Attribute.HOOK_KEY, unitHook).add(Attribute.FUNCTION_KEY));
+            cellProduction = Production(cellProduction.sort(), cellProduction.items(), cellProduction.att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY));
             Sentence bag = Production("_" + bagSort + "_", bagSort, Seq(NonTerminal(bagSort), NonTerminal(bagSort)),
                     bagAtt);
             // rule initCell => .CellBag

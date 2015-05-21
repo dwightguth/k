@@ -58,7 +58,7 @@ user of \K sees.  We recommend the beginner user to first check the
 language definitions discussed in the \K tutorial.} */
 
 
-module SIMPLE-UNTYPED-SYNTAX
+module SIMPLE-UNTYPED-CORE-SYNTAX
   imports BOOL-SYNTAX
   imports STRING-SYNTAX
   imports INT-SYNTAX
@@ -240,9 +240,13 @@ the declaration. */
 
 endmodule
 
+module SIMPLE-UNTYPED-SYNTAX
+  imports SIMPLE-UNTYPED-CORE-SYNTAX
+  imports ID
+endmodule
 
 module SIMPLE-UNTYPED
-  imports SIMPLE-UNTYPED-SYNTAX
+  imports SIMPLE-UNTYPED-CORE-SYNTAX
   imports INT
   imports STRING
   imports BOOL
@@ -283,7 +287,7 @@ languages, we finally tell the tool that values are \K results. */
   syntax Vals ::= List{Val,","} [left]
   syntax Exps ::= Vals
   syntax Exp ::= Val
-  syntax KResult ::= Val
+  syntax KResult ::= Val | Vals
 
 /*@ The inclusion of values in expressions follows the methodology of
 syntactic definitions (like, e.g., in SOS): extend the syntax of the language
