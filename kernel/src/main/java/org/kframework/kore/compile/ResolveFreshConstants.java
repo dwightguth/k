@@ -42,7 +42,7 @@ public class ResolveFreshConstants {
                     if (!s.isPresent()) {
                         throw KEMException.compilerError("Fresh constant used without a declared sort.", k);
                     }
-                    return KApply(KLabel("#fresh"), KToken(Sorts.String(), StringUtil.enquoteKString(s.get())));
+                    return KApply(KLabel("#fresh"), KToken(StringUtil.enquoteKString(s.get()), Sorts.String()));
                 }
                 return super.apply(k);
             }

@@ -39,7 +39,6 @@ module KSEQ
                  | K "~>" K  [klabel(#KSequence), left, assoc, unit(#EmptyK), hook(org.kframework.kore.KSequence)]
   syntax left #KSequence
   syntax KBott     ::= "`" K "`"    [bracket]
-  syntax KBott     ::= "HOLE"       [klabel([])]
   syntax KConfigVar
 endmodule
 
@@ -156,5 +155,6 @@ module K
   imports AUTO-FOLLOW
   syntax KBott     ::= K "=>" K     [klabel(#KRewrite), hook(org.kframework.kore.KRewrite), non-assoc]
   syntax non-assoc #KRewrite
+  syntax KBott     ::= "HOLE"       [klabel([])]
 
 endmodule
