@@ -106,7 +106,7 @@ public class KOREtoBackendKIL extends org.kframework.kore.AbstractConstructors<o
     }
 
     public Term convertInternal(org.kframework.kore.K k) {
-        else if (k instanceof org.kframework.kore.KToken)
+        if (k instanceof org.kframework.kore.KToken)
             return KToken(((org.kframework.kore.KToken) k).s(), ((org.kframework.kore.KToken) k).sort(), k.att());
         else if (k instanceof org.kframework.kore.KApply)
             return KApply1(((KApply) k).klabel(), ((KApply) k).klist(), k.att());

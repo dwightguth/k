@@ -85,7 +85,7 @@ public class DefinitionToOcaml {
         String ocaml = convert.convert(def);
         FileUtil.testFileUtil().saveToWorkingDirectory("def.ml", ocaml);
 
-        String pgm = convert.convert(new KRun(kem, FileUtil.testFileUtil()).plugConfigVars(def, Collections.singletonMap(KToken(Sorts.KConfigVar(), "$PGM"), program)));
+        String pgm = convert.convert(new KRun(kem, FileUtil.testFileUtil()).plugConfigVars(def, Collections.singletonMap(KToken("$PGM", Sorts.KConfigVar()), program)));
         FileUtil.testFileUtil().saveToWorkingDirectory("pgm.ml", pgm);
 
     }

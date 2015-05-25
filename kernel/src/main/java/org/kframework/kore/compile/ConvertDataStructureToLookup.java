@@ -267,16 +267,16 @@ public class ConvertDataStructureToLookup {
                             KVariable list = newDotVariable();
                             if (frame != null) {
                                 state.add(KApply(KLabel("#match"), frame, KApply(KLabel("List:range"), list,
-                                        KToken(Sorts.Int(), Integer.toString(elementsLeft.size())),
-                                        KToken(Sorts.Int(), Integer.toString(elementsRight.size())))));
+                                        KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
+                                        KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
                             }
                             for (int i = 0; i < elementsLeft.size(); i++) {
                                 K element = elementsLeft.get(i);
-                                state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Sorts.Int(), Integer.toString(i)))));
+                                state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(i), Sorts.Int()))));
                             }
                             for (int i = 0; i < elementsRight.size(); i++) {
                                 K element = elementsRight.get(i);
-                                state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Sorts.Int(), Integer.toString(-i - 1)))));
+                                state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(-i - 1), Sorts.Int()))));
                             }
                             if (lhsOf == null) {
                                 return KRewrite(list, RewriteToTop.toRight(k));
