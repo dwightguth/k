@@ -15,8 +15,8 @@ public class ResolveHeatCoolAttribute {
     private Rule resolve(Rule rule) {
         return Rule(
                 rule.body(),
-                rule.requires(),
-                transform(rule.ensures(), rule.att()),
+                transform(rule.requires(), rule.att()),
+                rule.ensures(),
                 rule.att());
     }
 
@@ -31,9 +31,9 @@ public class ResolveHeatCoolAttribute {
         String sort = att.<String>getOptional("result").orElse("KResult");
         K predicate = KApply(KLabel("is" + sort), KVariable("HOLE"));
         if (att.contains("heat")) {
-            return BooleanUtils.and(requires, predicate);
-        } else if (att.contains("cool")) {
             return BooleanUtils.and(requires, BooleanUtils.not(predicate));
+        } else if (att.contains("cool")) {
+            return BooleanUtils.and(requires, predicate);
         }
         throw new AssertionError("unreachable");
     }

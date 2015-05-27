@@ -74,7 +74,9 @@ public class KOREtoBackendKIL extends org.kframework.kore.AbstractConstructors<o
 
     @Override
     public Variable KVariable(String name, Att att) {
-        return new Variable(name, Sort.of(att.<String>getOptional(Attribute.SORT_KEY).orElse("K")));
+        Variable var = new Variable(name, Sort.of(att.<String>getOptional(Attribute.SORT_KEY).orElse("K")));
+        var.setAttributes(new KOREtoKIL().convertAttributes(att));
+        return var;
     }
 
     @Override

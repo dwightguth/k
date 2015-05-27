@@ -37,19 +37,7 @@ public class ResolveContexts {
                 .filter(s -> s instanceof Context)
                 .map(s -> (Context) s)
                 .flatMap(c -> this.resolve(c, input)).collect(Collectors.toSet());
-        return Module(input.name(), input.imports(), (scala.collection.immutable.Set<Sentence>) input.localSentences().$bar(immutable(rulesToAdd)), input.att());
-    }
-
-    private K transform(K term, K holeVar) {
-        return new TransformKORE() {
-            @Override
-            public K apply(KApply k) {
-                if(k.klabel().name().equals("[]")) {
-                    return holeVar;
-                }
-                return super.apply(k);
-            }
-        }.apply(term);
+        return Module(input.name(), input.imports(), (scala.collection.immutable.Set<Sentence>) stream(input.localSentences()).filter(s -> !(s instanceof Context)).collect(Collections.toSet()).$bar(immutable(rulesToAdd)), input.att());
     }
 
     private Set<KLabel> klabels = new HashSet<>();
@@ -76,9 +64,8 @@ public class ResolveContexts {
             throw KEMException.criticalError("Cannot compile a context which is not a KApply.", context);
         }
         Holder h = new Holder();
-        K holeVar = KVariable("HOLE");
-        K body = transform(context.body(), holeVar);
-        K requires = transform(context.requires(), holeVar);
+        K body = context.body();
+        K requires = context.requires();
         new VisitKORE() {
             @Override
             public Void apply(KRewrite k) {
@@ -91,14 +78,14 @@ public class ResolveContexts {
 
             @Override
             public Void apply(KVariable k) {
-                if (!k.equals(holeVar)) {
+                if (!k.name().equals("HOLE")) {
                     h.vars.add(k);
                 }
                 return super.apply(k);
             }
         }.apply(body);
         if (h.heated == null) {
-            h.heated = holeVar;
+            h.heated = ResolveStrict.HOLE;
         }
         K cooled = RewriteToTop.toLeft(body);
         // TODO(dwightguth): generate freezers better for pretty-printing purposes
@@ -112,14 +99,8 @@ public class ResolveContexts {
         }
         items.remove(items.size() - 1);
         items.add(Terminal(")"));
-        Production freezer = Production(freezerLabel.name(), input.sortFor().apply(((KApply)context.body()).klabel()), immutable(items), Att());
+        Production freezer = Production(freezerLabel.name(), input.sortFor().apply(((KApply) context.body()).klabel()), immutable(items), Att());
         K frozen = KApply(freezerLabel, h.vars.stream().map(v -> (K) v).collect(Collections.toList()));
-        KApply isKItem = KApply(KLabel("isKItem"), KVariable("HOLE"));
-        if (requires.equals(BooleanUtils.TRUE)) {
-            requires = isKItem;
-        } else {
-            requires = BooleanUtils.and(requires, isKItem);
-        }
         return Stream.of(freezer,
                 Rule(KRewrite(cooled, KSequence(h.heated, frozen)), requires, BooleanUtils.TRUE, context.att().add("heat")),
                 Rule(KRewrite(KSequence(h.heated, frozen), cooled), requires, BooleanUtils.TRUE, context.att().add("cool")));

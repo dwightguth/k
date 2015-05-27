@@ -42,7 +42,7 @@ public class ResolveStrict {
         return sentences;
     }
 
-    public static final KApply HOLE = KApply(KLabel("[]"));
+    public static final KApply HOLE = KApply(KLabel("#SemanticCastToKItem"), KVariable("HOLE"));
 
     public Set<Sentence> resolve(Production production, boolean sequential) {
         long arity = stream(production.items()).filter(i -> i instanceof NonTerminal).count();

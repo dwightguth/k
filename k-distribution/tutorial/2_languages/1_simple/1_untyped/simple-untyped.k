@@ -158,6 +158,7 @@ the constructs above). */
 
   syntax Ids  ::= List{Id,","}
   syntax Exps ::= List{Exp,","}          [strict]  // automatically hybrid now
+  syntax right '_,_
 
 /*@ \subsection{Statements}
 Most of the statement constructs are standard for imperative languages.

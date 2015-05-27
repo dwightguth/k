@@ -155,6 +155,5 @@ module K
   imports AUTO-FOLLOW
   syntax KBott     ::= K "=>" K     [klabel(#KRewrite), hook(org.kframework.kore.KRewrite), non-assoc]
   syntax non-assoc #KRewrite
-  syntax KBott     ::= "HOLE"       [klabel([])]
 
 endmodule
