@@ -158,7 +158,7 @@ public class ConvertDataStructureToLookup {
                                         frame = (KVariable) component;
                                     } else if (component instanceof KApply) {
                                         KApply kapp = (KApply) component;
-                                        if (kapp.klabel().equals(KLabel(m.attributesFor().apply(k.klabel()).<String>get("element").get()))) {
+                                        if (kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get()))) {
                                             K stack = lhsOf;
                                             lhsOf = kapp;
                                             elements.add(super.apply(kapp));
@@ -205,7 +205,7 @@ public class ConvertDataStructureToLookup {
                                         frame = (KVariable) component;
                                     } else if (component instanceof KApply) {
                                         KApply kapp = (KApply) component;
-                                        if (kapp.klabel().equals(KLabel(m.attributesFor().apply(k.klabel()).<String>get("element").get()))) {
+                                        if (kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get()))) {
                                             if (kapp.klist().size() != 2) {
                                                 throw KEMException.internalError("Unexpected arity of map element: " + kapp.klist().size(), kapp);
                                             }
@@ -251,7 +251,7 @@ public class ConvertDataStructureToLookup {
                                     isRight = true;
                                 } else if (component instanceof KApply) {
                                     KApply kapp = (KApply) component;
-                                    if (kapp.klabel().equals(KLabel(m.attributesFor().apply(k.klabel()).<String>get("element").get()))) {
+                                    if (kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get()))) {
                                         if (kapp.klist().size() != 1) {
                                             throw KEMException.internalError("Unexpected arity of list element: " + kapp.klist().size(), kapp);
                                         }
