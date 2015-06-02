@@ -400,6 +400,7 @@ module STRING
 
   syntax Bool ::= String "=/=String" String      [function, left, hook(#STRING:_=/=String_)]
   rule S1:String =/=String S2:String => notBool `S1 ==String S2`
+  rule S1:String ==String S2:String => S1 ==K S2
 
   syntax Bool ::= String  "<String" String [function, hook(#STRING:_<String_)]
                 | String "<=String" String [function, hook(#STRING:_<=String_)]
@@ -457,6 +458,8 @@ module K-EQUAL
 
   syntax priorities equalEqualK notEqualEqualK > boolOperation
   rule K1:K =/=K K2:K => notBool `K1 ==K K2`
+
+  rule K1:Bool ==Bool K2:Bool => K1 ==K K2
 
   syntax K ::= "#if" Bool "#then" K "#else" K "#fi"   [function, hook(KEqual:ite)]
   rule #if true #then K:K #else _:K #fi => K

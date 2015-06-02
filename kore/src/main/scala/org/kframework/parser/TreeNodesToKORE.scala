@@ -47,7 +47,7 @@ object TreeNodesToKORE {
       InjectedKLabel(downKLabel(items(0)), t.att)
 
     case t@KApply(KLabel("#KToken"), items) =>
-      def removeQuotes(s: String) = s.drop(1).dropRight(1)
+      def removeQuotes(s: String) = s.drop(1).dropRight(1).replace("\\\"", "\"")
 
       KToken(removeQuotes(items.head.asInstanceOf[KToken].s), Sort(removeQuotes(items.tail.head.asInstanceOf[KToken].s)))
 

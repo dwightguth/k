@@ -113,7 +113,7 @@ public final class KRunOptions {
         public Map<String, Pair<String, String>> configVars(String mainModuleName) {
             Map<String, Pair<String, String>> result = new HashMap<>();
             for (Map.Entry<String, String> entry : configVars.entrySet()) {
-                String cfgParser = "kast --kore -e -m " + mainModuleName;
+                String cfgParser = "kast --kore -m " + mainModuleName + " -e";
                 if (configVarParsers.get(entry.getKey()) != null) {
                     cfgParser = configVarParsers.get(entry.getKey());
                 }

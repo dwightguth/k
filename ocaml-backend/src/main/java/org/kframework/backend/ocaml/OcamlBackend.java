@@ -35,7 +35,7 @@ public class OcamlBackend implements Consumer<CompiledDefinition> {
         files.saveToKompiled("def.ml", ocaml);
         try {
             Process ocamlopt = files.getProcessBuilder()
-                    .command((DefinitionToOcaml.fastCompilation ? "ocamlc.opt" : "ocamlopt.opt"), "-c", "def.ml")
+                    .command((DefinitionToOcaml.fastCompilation ? "ocamlc.opt" : "ocamlopt.opt"), "-c", "-I", "+zarith", "def.ml")
                     .directory(files.resolveKompiled("."))
                     .inheritIO()
                     .start();
