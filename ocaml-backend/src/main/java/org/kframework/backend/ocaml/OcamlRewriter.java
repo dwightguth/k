@@ -56,7 +56,7 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
                 try {
                     ProcessBuilder pb = files.getProcessBuilder();
                     if (DefinitionToOcaml.fastCompilation) {
-                        pb = pb.command("ocamlc.opt", "zarith.cma", "str.cma", files.resolveKompiled("def.cmo").getAbsolutePath(), "-I", "+zarith", "-I", files.resolveKompiled(".").getAbsolutePath(), "pgm.ml");
+                        pb = pb.command("ocamlc.opt", "-g", "zarith.cma", "str.cma", files.resolveKompiled("def.cmo").getAbsolutePath(), "-I", "+zarith", "-I", files.resolveKompiled(".").getAbsolutePath(), "pgm.ml");
                     } else {
                         pb = pb.command("ocamlopt.opt", "zarith.cmxa", "str.cmxa", files.resolveKompiled("def.cmx").getAbsolutePath(), "-I", "+zarith", "-I", files.resolveKompiled(".").getAbsolutePath(), "pgm.ml");
                     }

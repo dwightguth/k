@@ -329,6 +329,7 @@ public class DefinitionToOcaml {
     public String convert(K k, int depth) {
         StringBuilder sb = new StringBuilder();
         sb.append("open Def\nopen K\n");
+        sb.append("let debug_printer k = print_string(print_k k)\n");
         sb.append("let _ = print_string(print_k(try(run(");
         convert(sb, true, HashMultimap.create(), false).apply(new LiftToKSequence().convert(expandMacros.expand(k)));
         sb.append(") (").append(depth).append(")) with Stuck c' -> c'))");
@@ -479,7 +480,7 @@ public class DefinitionToOcaml {
         sb.append("let rec lookups_step (c: k) (guards: Guard.t) : k = match c with \n");
         i = 0;
         for (Rule r : sortedRules.get(true)) {
-            if (!functionRules.values().contains(r)) {
+            if (!functionRules.values().contains(r) && !r.att().contains(Attribute.MACRO_KEY)) {
                 convert(r, sb, false, i++, "lookups_step");
                 if (fastCompilation) {
                     sb.append("| _ -> match c with \n");
@@ -489,7 +490,7 @@ public class DefinitionToOcaml {
         sb.append("| _ -> raise (Stuck c)\n");
         sb.append("let step (c: k) : k = match c with \n");
         for (Rule r : sortedRules.get(false)) {
-            if (!functionRules.values().contains(r)) {
+            if (!functionRules.values().contains(r) && !r.att().contains(Attribute.MACRO_KEY)) {
                 convert(r, sb, false, i++, "step");
                 if (fastCompilation) {
                     sb.append("| _ -> match c with \n");
@@ -690,8 +691,10 @@ public class DefinitionToOcaml {
                     sb.append(" -> (match ");
                     convert(sb, true, vars, false).apply(k.klist().items().get(1));
                     sb.append(" with \n");
+                    String reapply = "(" + functionName + " c (Guard.add (GuardElt.Guard " + ruleNum + ") guards))";
+                    sb.append("| [Bottom] -> ").append(reapply).append("\n| ");
                     convert(sb, false, vars, false).apply(k.klist().items().get(0));
-                    suffix.add("| _ -> (" + functionName + " c (Guard.add (GuardElt.Guard " + ruleNum + ") guards)))");
+                    suffix.add("| _ -> " + reapply + ")");
                     h.i++;
                 } else if (k.klabel().name().equals("#setChoice")) {
                     if (k.klist().items().size() != 2) {

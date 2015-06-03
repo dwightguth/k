@@ -186,7 +186,7 @@ public class ConvertDataStructureToLookup {
                                 }
                                 K stack = lhsOf;
                                 lhsOf = kapp;
-                                (isRight ? elementsRight : elementsLeft).add(super.apply(kapp.klist().items().get(0)));
+                                (isRight ? elementsRight : elementsLeft).add(super.apply(kapp));
                                 lhsOf = stack;
                             } else {
                                 throw KEMException.internalError("Unexpected term in list, not a list element.", kapp);
