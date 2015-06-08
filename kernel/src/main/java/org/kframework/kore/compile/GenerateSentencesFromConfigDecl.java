@@ -242,7 +242,8 @@ public class GenerateSentencesFromConfigDecl {
             Sort bagSort = Sort(sortName + type);
             Att bagAtt = Att()
                     .add(Attribute.ASSOCIATIVE_KEY, "")
-                    .add("element", "<" + cellName + ">")
+                    .add("element", bagSort.name() + "Item")
+                    .add("infer", "<" + cellName + ">")
                     .add(Attribute.UNIT_KEY, "." + bagSort.name())
                     .add(Attribute.HOOK_KEY, type + ":__")
                     .add(Attribute.FUNCTION_KEY);
@@ -257,16 +258,16 @@ public class GenerateSentencesFromConfigDecl {
             default:
                 throw KEMException.compilerError("Unexpected type for multiplicity * cell: " + cellName + ". Should be one of: Set, Bag, List");
             }
-            Sentence bagSubsort = Production(bagSort, Seq(NonTerminal(sort)), Att());
+            Sentence bagSubsort = Production(bagSort, Seq(NonTerminal(sort)));
+            Sentence bagElement = Production(bagSort.name() + "Item", bagSort, Seq(Terminal(bagSort.name() + "Item"), Terminal("("), NonTerminal(sort), Terminal(")")), Att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY));
             Sentence bagUnit = Production("." + bagSort.name(), bagSort, Seq(Terminal("." + bagSort.name())), Att().add(Attribute.HOOK_KEY, unitHook).add(Attribute.FUNCTION_KEY));
-            cellProduction = Production(cellProduction.sort(), cellProduction.items(), cellProduction.att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY));
             Sentence bag = Production("_" + bagSort + "_", bagSort, Seq(NonTerminal(bagSort), NonTerminal(bagSort)),
                     bagAtt);
             // rule initCell => .CellBag
             // -or-
             // rule initCell(Init) => <cell> Context[$var] </cell>
-            K rhs = optionalCellInitializer(hasConfigurationVariable, initLabel);
-            return Tuple3.apply(Set(initializer, initializerRule, cellProduction, bagSubsort, bagUnit, bag), bagSort, rhs);
+            K rhs = optionalCellInitializer(hasConfigurationVariable, cellProperties, initLabel);
+            return Tuple3.apply(Set(initializer, initializerRule, cellProduction, bagSubsort, bagUnit, bagElement, bag), bagSort, rhs);
         } else if (multiplicity == Multiplicity.OPTIONAL) {
             // syntax Cell ::= ".Cell"
             Production cellUnit = Production("." + sortName, sort, Seq(Terminal("." + sortName)));
@@ -274,7 +275,7 @@ public class GenerateSentencesFromConfigDecl {
             // rule initCell => .CellBag
             // -or-
             // rule initCell(Init) => <cell> Context[$var] </cell>
-            K rhs = optionalCellInitializer(hasConfigurationVariable, initLabel);
+            K rhs = optionalCellInitializer(hasConfigurationVariable, cellProperties, initLabel);
             return Tuple3.apply(Set(initializer, initializerRule, cellProduction, cellUnit), sort, rhs);
         } else {
             // rule initCell => <cell> initChildren... </cell>
@@ -294,9 +295,11 @@ public class GenerateSentencesFromConfigDecl {
      * Returns the term used to initialize an optinoal cell. An optional cell is initialized to the empty bag if
      * it contains no configuration variables, and to a single cell if it contains configuration variables.
      */
-    private static KApply optionalCellInitializer(boolean initializeOptionalCell, String initLabel) {
+    private static KApply optionalCellInitializer(boolean initializeOptionalCell, Att cellProperties, String initLabel) {
         if (initializeOptionalCell) {
             return KApply(KLabel(initLabel), KVariable("Init"));
+        } else if (cellProperties.contains("initial")) {
+            return KApply(KLabel(initLabel));
         } else {
             return KApply(KLabel("#cells"));
         }

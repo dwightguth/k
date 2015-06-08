@@ -133,14 +133,32 @@ public class ConvertDataStructureToLookup {
         return newLabel;
     }
 
-    private
+    private K infer(K term, KLabel collectionLabel) {
+        Optional<String> infer = m.attributesFor().apply(collectionLabel).<String>getOptional("infer");
+        if (infer.isPresent()) {
+            KLabel inferLabel = KLabel(infer.get());
+            return new TransformKORE() {
+                @Override
+                public K apply(KApply k) {
+                    if (k.klabel().equals(inferLabel)) {
+                        KLabel elementLabel = KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get());
+                        return KApply(elementLabel, super.apply(k));
+                    }
+                    return super.apply(k);
+                }
+            }.apply(term);
+        } else {
+            return term;
+        }
+    }
 
-    K transform(K body, K requires) {
+    private K transform(K body, K requires) {
         return new TransformKORE() {
             @Override
             public K apply(KApply k) {
                 if (m.collectionFor().contains(k.klabel())) {
                     KLabel collectionLabel = m.collectionFor().apply(k.klabel());
+                    k = (KApply) infer(k, collectionLabel);
                     Att att = m.attributesFor().apply(collectionLabel);
                     //assumed assoc
                     KApply left = (KApply) RewriteToTop.toLeft(k);
@@ -186,7 +204,7 @@ public class ConvertDataStructureToLookup {
                                 }
                                 K stack = lhsOf;
                                 lhsOf = kapp;
-                                (isRight ? elementsRight : elementsLeft).add(super.apply(kapp));
+                                (isRight ? elementsRight : elementsLeft).add(super.apply(kapp.klist().items().get(0)));
                                 lhsOf = stack;
                             } else {
                                 throw KEMException.internalError("Unexpected term in list, not a list element.", kapp);
@@ -196,6 +214,10 @@ public class ConvertDataStructureToLookup {
                     KVariable list = newDotVariable();
                     if (frame != null) {
                         state.add(KApply(KLabel("#match"), frame, KApply(KLabel("List:range"), list,
+                                KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
+                                KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
+                    } else {
+                        state.add(KApply(KLabel("_==K_"), KApply(KLabel(".List")), KApply(KLabel("List:range"), list,
                                 KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
                                 KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
                     }
@@ -268,6 +290,7 @@ public class ConvertDataStructureToLookup {
                     //left hand side
                     KVariable frame = null;
                     Set<K> elements = new LinkedHashSet<>();
+                    KLabel elementLabel = KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get());
                     for (K component : components) {
                         if (component instanceof KVariable) {
                             if (frame != null) {
@@ -276,10 +299,13 @@ public class ConvertDataStructureToLookup {
                             frame = (KVariable) component;
                         } else if (component instanceof KApply) {
                             KApply kapp = (KApply) component;
-                            if (kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get()))) {
+                            if (kapp.klabel().equals(elementLabel)) {
+                                if (kapp.klist().size() != 1) {
+                                    throw KEMException.internalError("Unexpected arity of set element: " + kapp.klist().size(), kapp);
+                                }
                                 K stack = lhsOf;
                                 lhsOf = kapp;
-                                elements.add(super.apply(kapp));
+                                elements.add(super.apply(kapp.klist().items().get(0)));
                                 lhsOf = stack;
                             } else {
                                 throw KEMException.internalError("Unexpected term in set, not a set element.", kapp);
@@ -298,7 +324,7 @@ public class ConvertDataStructureToLookup {
                         }
                     }
                     if (frame != null) {
-                        K removeElements = elements.stream().reduce(KApply(KLabel(".Set")), (k1, k2) -> KApply(KLabel("_Set_"), k1, k2));
+                        K removeElements = elements.stream().reduce(KApply(KLabel(".Set")), (k1, k2) -> KApply(KLabel("_Set_"), KApply(elementLabel, k1), KApply(elementLabel, k2)));
                         state.add(KApply(KLabel("#match"), frame, KApply(KLabel("_-Set_"), set, removeElements)));
                     }
                     if (lhsOf == null) {

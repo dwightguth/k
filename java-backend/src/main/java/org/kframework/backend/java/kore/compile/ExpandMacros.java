@@ -6,6 +6,7 @@ import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.symbolic.InitializeRewriter;
 import org.kframework.backend.java.symbolic.JavaExecutionOptions;
 import org.kframework.backend.java.symbolic.MacroExpander;
+import org.kframework.builtin.BooleanUtils;
 import org.kframework.definition.Context;
 import org.kframework.definition.Module;
 import org.kframework.definition.Rule;
@@ -25,6 +26,7 @@ import org.kframework.kore.compile.TransformKORE;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.ioserver.filesystem.portable.PortableFileSystem;
 import org.kframework.main.GlobalOptions;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 
@@ -64,7 +66,14 @@ public class ExpandMacros {
         Set<Sentence> sentences = new HashSet<>();
         sentences.addAll(mutable(mod.productions()));
         sentences.addAll(mutable(mod.sortDeclarations()));
-        Set<Rule> macroRules = stream(mod.rules()).filter(r -> r.att().contains(Attribute.MACRO_KEY)).collect(Collectors.toSet());
+        Set<Rule> macroRules = stream(mod.rules())
+                .filter(r -> r.att().contains(Attribute.MACRO_KEY))
+                .collect(Collectors.toSet());
+        for (Rule r : macroRules) {
+            if (!r.requires().equals(BooleanUtils.TRUE) || !r.ensures().equals(BooleanUtils.TRUE)) {
+                throw KEMException.compilerError("Side conditions are not allowed in macro rules. If you are typing a variable, use ::.", r);
+            }
+        }
         sentences.addAll(macroRules);
         return Module(mod.name(), Set(), immutable(sentences), mod.att());
     }
