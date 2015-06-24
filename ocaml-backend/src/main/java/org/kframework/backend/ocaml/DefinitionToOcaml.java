@@ -122,6 +122,8 @@ public class DefinitionToOcaml {
             "  type m = K.t KHash.t\n" +
             "  and s = unit KHash.t\n" +
             "  and " + kType +
+            "  let equal_klabel (kl1: klabel) (kl2: klabel) = kl1 = kl2\n" +
+            "  and equal_sort (s1: sort) (s2: sort) = s1 = s2\n" +
             "  let rec equal c1 c2 = match (c1, c2) with\n" +
             "    | [], [] -> true\n" +
             "    | (hd1 :: tl1), (hd2 :: tl2) -> (equal_kitem hd1 hd2) && (equal tl1 tl2)\n" +
@@ -130,9 +132,9 @@ public class DefinitionToOcaml {
             "    | (KApply(kl1, k1)), (KApply(kl2, k2)) -> (equal_klabel kl1 kl2) && (equal_klist k1 k2)\n" +
             "    | (KToken(s1, st1)), (KToken(s2, st2)) -> (equal_sort s1 s2) && (st1 = st2)\n" +
             "    | (InjectedKLabel kl1), (InjectedKLabel kl2) -> equal_klabel kl1 kl2\n" +
-            "    | (Map (s1,m1)), (Map (s2,m2)) -> (equal_sort s1 s2) && (KHash.length m1) = (KHash.length m2) && (try KHash.fold (fun k v res -> res && (equal (KHash.find m2 k) v)) m1 true with Not_found -> false)\n" +
+            "    | (Map (s1,m1)), (Map (s2,m2)) -> (equal_sort s1 s2) && (KHash.length m1) = (KHash.length m2) && (try KHash.iter (fun k v -> if not (equal (KHash.find m2 k) v) then raise Not_found else ()) m1; true with Not_found -> false)\n" +
             "    | (List (s1,l1)), (List (s2,l2)) -> (equal_sort s1 s2) && (equal_klist l1 l2)\n" +
-            "    | (Set (sort1,s1)), (Set (sort2,s2)) -> (equal_sort sort1 sort2) && (KHash.length s1) = (KHash.length s2) && (try KHash.fold (fun k v res -> res && (KHash.mem s2 k)) s1 true with Not_found -> false)\n" +
+            "    | (Set (sort1,s1)), (Set (sort2,s2)) -> (equal_sort sort1 sort2) && (KHash.length s1) = (KHash.length s2) && (try KHash.iter (fun k v -> if not (KHash.mem s2 k) then raise Not_found else ()) s1; true with Not_found -> false)\n" +
             "    | (Int i1), (Int i2) -> Z.equal i1 i2\n" +
             "    | (Float (f1,e1,p1)), (Float (f2,e2,p2)) -> e1 = e2 && p1 = p2 && (FR.compare f1 f2) = 0\n" +
             "    | (String s1), (String s2) -> s1 = s2\n" +
@@ -143,9 +145,7 @@ public class DefinitionToOcaml {
             "    | [], [] -> true\n" +
             "    | (hd1 :: tl1), (hd2 :: tl2) -> (equal hd1 hd2) && (equal_klist tl1 tl2)\n" +
             "    | _ -> false\n" +
-            "  and equal_klabel kl1 kl2 = kl1 = kl2\n" +
-            "  and equal_sort s1 s2 = s1 = s2\n" +
-            "  and hash = Hashtbl.hash\n" +
+            "  and hash c = Hashtbl.hash c\n" +
             "end\n" +
             "\n" +
             "open K\n" +
@@ -607,17 +607,22 @@ public class DefinitionToOcaml {
         }
     }
 
-    private boolean hasLookups(Rule r) {
-        class Holder { boolean b; }
+    private int numLookups(Rule r) {
+        class Holder { int i = 0; }
         Holder h = new Holder();
         new VisitKORE() {
             @Override
             public Void apply(KApply k) {
-                h.b |= isLookupKLabel(k);
+                if (isLookupKLabel(k))
+                    h.i++;
                 return super.apply(k);
             }
         }.apply(r.requires());
-        return h.b;
+        return h.i;
+    }
+
+    private boolean hasLookups(Rule r) {
+        return numLookups(r) > 0;
     }
 
     private int sortFunctionRules(Rule a1, Rule a2) {
@@ -696,7 +701,7 @@ public class DefinitionToOcaml {
         Map<AttCompare, List<Rule>> grouping = rules.stream().collect(
                 Collectors.groupingBy(r -> new AttCompare(t.normalize(RewriteToTop.toLeft(r.body())), "sort")));
         int ruleNum = 0;
-        for (Map.Entry<AttCompare, List<Rule>> entry : grouping.entrySet()) {
+        for (Map.Entry<AttCompare, List<Rule>> entry : grouping.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().size(), e1.getValue().size())).collect(Collectors.toList())) {
             K left = entry.getKey().get();
             Map<Tuple2<KLabel, AttCompare>, List<Rule>> groupByFirstPrefix = entry.getValue().stream()
                     .collect(Collectors.groupingBy(r -> {
@@ -707,12 +712,13 @@ public class DefinitionToOcaml {
                         K normal = t.normalize(t.applyNormalization(lookup.klist().items().get(1), left2));
                         return Tuple2.apply(lookup.klabel(), new AttCompare(normal, "sort"));
                     }));
-            for (Map.Entry<Tuple2<KLabel, AttCompare>, List<Rule>> entry2 : groupByFirstPrefix.entrySet()) {
+            for (Map.Entry<Tuple2<KLabel, AttCompare>, List<Rule>> entry2 : groupByFirstPrefix.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue().size(), e1.getValue().size())).collect(Collectors.toList())) {
                 SetMultimap<KVariable, String> globalVars = HashMultimap.create();
                 sb.append("| ");
                 convertLHS(sb, ruleType, left, globalVars);
                 K lookup;
                 sb.append(" when not (Guard.mem (GuardElt.Guard ").append(ruleNum).append(") guards)");
+                stepEltCounter++;
                 if (entry2.getValue().size() == 1) {
                     Rule r = entry2.getValue().get(0);
                     convertComment(r, sb);
@@ -731,7 +737,7 @@ public class DefinitionToOcaml {
                             KToken("dummy", Sort("Dummy")), entry2.getKey()._2().get()),
                             globalVars, functionName, ruleNum++, true).get(0);
                     sb.append(head.prefix);
-                    for (Rule r : entry2.getValue()) {
+                    for (Rule r : entry2.getValue().stream().sorted((r1, r2) -> Integer.compare(numLookups(r1), numLookups(r2))).collect(Collectors.toList())) {
                         convertComment(r, sb);
 
                         //reconstruct the denormalization for this particular rule
@@ -884,6 +890,8 @@ public class DefinitionToOcaml {
         }
     }
 
+    int stepEltCounter = 0;
+
     private List<Lookup> convertLookups(K requires, SetMultimap<KVariable, String> vars, String functionName, int ruleNum, boolean hasMultiple) {
         List<Lookup> results = new ArrayList<>();
         Holder h = new Holder();
@@ -927,15 +935,15 @@ public class DefinitionToOcaml {
                 sb.append(" with \n");
                 sb.append(choiceString);
                 if (h.first) {
-                    sb.append("let rec stepElt = fun guards -> ");
+                    sb.append("let rec stepElt" + stepEltCounter + " = fun guards -> ");
                 }
                 sb.append("if result = [Bottom] then (match e with ");
                 String prefix = sb.toString();
                 sb = new StringBuilder();
-                String suffix2 = "| _ -> [Bottom]) else result" + (h.first ? " in stepElt Guard.empty" : "") + ") collection [Bottom]) in if choice = [Bottom] then " + h.reapply + " else choice";
+                String suffix2 = "| _ -> [Bottom]) else result" + (h.first ? " in stepElt" + stepEltCounter + " Guard.empty" : "") + ") collection [Bottom]) in if choice = [Bottom] then " + h.reapply + " else choice";
                 String suffix = suffix2 + "| _ -> " + h.reapply + ")";
                 if (h.first) {
-                    h.reapply = "(stepElt (Guard.add (GuardElt.Guard " + ruleNum + ") guards))";
+                    h.reapply = "(stepElt" + stepEltCounter + " (Guard.add (GuardElt.Guard " + ruleNum + ") guards))";
                 } else {
                     h.reapply = "[Bottom]";
                 }
