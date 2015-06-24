@@ -92,7 +92,7 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
         try {
             ProcessBuilder pb = files.getProcessBuilder();
             if (DefinitionToOcaml.ocamlopt) {
-                pb = pb.command("ocamlopt.opt", "-o", "a.out", "gmp.cmxa", "str.cmxa", "unix.cmxa", "-safe-string", files.resolveKompiled("def.cmx").getAbsolutePath(), "-I", "+gmp", "-I", files.resolveKompiled(".").getAbsolutePath(), name);
+                pb = pb.command("ocamlopt.opt", "-o", "a.out", "-g", "gmp.cmxa", "str.cmxa", "unix.cmxa", "-safe-string", files.resolveKompiled("def.cmx").getAbsolutePath(), "-I", "+gmp", "-I", files.resolveKompiled(".").getAbsolutePath(), name);
             } else {
                 pb = pb.command("ocamlc.opt", "-o", "a.out", "-g", "gmp.cma", "str.cma", "unix.cma", "-safe-string", files.resolveKompiled("def.cmo").getAbsolutePath(), "-I", "+gmp", "-I", files.resolveKompiled(".").getAbsolutePath(), name);
             }

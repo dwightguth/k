@@ -82,14 +82,14 @@ public class DefinitionToOcaml {
         this.kompileOptions = kompileOptions;
     }
     public static final boolean ocamlopt = true;
-    public static final boolean fastCompilation = true;
+    public static final boolean fastCompilation = false;
     public static final Pattern identChar = Pattern.compile("[A-Za-z0-9_]");
 
     public static final String kType = "t = kitem list\n" +
             " and kitem = KApply of klabel * t list\n" +
             "           | KToken of sort * string\n" +
             "           | InjectedKLabel of klabel\n" +
-            "           | Map of sort * t m\n" +
+            "           | Map of sort * m\n" +
             "           | List of sort * t list\n" +
             "           | Set of sort * s\n" +
             "           | Int of Z.t\n" +
@@ -97,7 +97,6 @@ public class DefinitionToOcaml {
             "           | String of string\n" +
             "           | Bool of bool\n" +
             "           | Bottom\n";
-
     public static final String TRUE = "(Bool true)";
     public static final String BOOL = encodeStringToIdentifier(Sort("Bool"));
     public static final String STRING = encodeStringToIdentifier(Sort("String"));
@@ -108,72 +107,50 @@ public class DefinitionToOcaml {
     public static final String prelude = "open Gmp\n" +
             "module type S =\n" +
             "sig\n" +
-            "  type 'a m\n" +
+            "  type m\n" +
             "  type s\n" +
             "  type " + kType +
-            "  val compare : t -> t -> int\n" +
-            "  val compare_sort : sort -> sort -> int\n" +
+            "  val equal : t -> t -> bool\n" +
+            "  val hash : t -> int\n" +
+            "  val equal_sort : sort -> sort -> bool\n" +
             "end \n" +
             "\n" +
             "\n" +
-            "module rec K : (S with type 'a m = 'a Map.Make(K).t and type s = Set.Make(K).t)  = \n" +
+            "module rec K : (S with type m = K.t Hashtbl.Make(K).t and type s = unit Hashtbl.Make(K).t)  = \n" +
             "struct\n" +
-            "  module KMap = Map.Make(K)\n" +
-            "  module KSet = Set.Make(K)\n" +
-            "  type 'a m = 'a KMap.t\n" +
-            "  and s = KSet.t\n" +
+            "  module KHash = Hashtbl.Make(K)\n" +
+            "  type m = K.t KHash.t\n" +
+            "  and s = unit KHash.t\n" +
             "  and " + kType +
-            "  let rec compare c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare_kitem hd1 hd2 in if v = 0 then compare tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "  and compare_kitem c1 c2 = match (c1, c2) with\n" +
-            "    | (KApply(kl1, k1)), (KApply(kl2, k2)) -> let v = compare_klabel kl1 kl2 in if v = 0 then compare_klist k1 k2 else v\n" +
-            "    | (KToken(s1, st1)), (KToken(s2, st2)) -> let v = compare_sort s1 s2 in if v = 0 then Pervasives.compare st1 st2 else v\n" +
-            "    | (InjectedKLabel kl1), (InjectedKLabel kl2) -> compare_klabel kl1 kl2\n" +
-            "    | (Map (s1,m1)), (Map (s2,m2)) -> let v = compare_sort s1 s2 in if v = 0 then (KMap.compare) compare m1 m2 else v\n" +
-            "    | (List (s1,l1)), (List (s2,l2)) -> let v = compare_sort s1 s2 in if v = 0 then compare_klist l1 l2 else v\n" +
-            "    | (Set (sort1,s1)), (Set (sort2,s2)) -> let v = compare_sort sort1 sort2 in if v = 0 then (KSet.compare) s1 s2 else v\n" +
-            "    | (Int i1), (Int i2) -> Z.compare i1 i2\n" +
-            "    | (Float (f1,e1,p1)), (Float (f2,e2,p2)) -> let v = e2 - e1 in if v = 0 then let v2 = p2 - p1 in if v2 = 0 then FR.compare f1 f2 else v2 else v\n" +
-            "    | (String s1), (String s2) -> Pervasives.compare s1 s2\n" +
-            "    | (Bool b1), (Bool b2) -> if b1 = b2 then 0 else if b1 then -1 else 1\n" +
-            "    | Bottom, Bottom -> 0\n" +
-            "    | KApply(_, _), _ -> -1\n" +
-            "    | _, KApply(_, _) -> 1\n" +
-            "    | KToken(_, _), _ -> -1\n" +
-            "    | _, KToken(_, _) -> 1\n" +
-            "    | InjectedKLabel(_), _ -> -1\n" +
-            "    | _, InjectedKLabel(_) -> 1\n" +
-            "    | Map(_), _ -> -1\n" +
-            "    | _, Map(_) -> 1\n" +
-            "    | List(_), _ -> -1\n" +
-            "    | _, List(_) -> 1\n" +
-            "    | Set(_), _ -> -1\n" +
-            "    | _, Set(_) -> 1\n" +
-            "    | Int(_), _ -> -1\n" +
-            "    | _, Int(_) -> 1\n" +
-            "    | Float(_), _ -> -1\n" +
-            "    | _, Float(_) -> 1\n" +
-            "    | String(_), _ -> -1\n" +
-            "    | _, String(_) -> 1\n" +
-            "    | Bool(_), _ -> -1\n" +
-            "    | _, Bool(_) -> 1\n" +
-            "  and compare_klist c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare hd1 hd2 in if v = 0 then compare_klist tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "  and compare_klabel kl1 kl2 = (order_klabel kl2) - (order_klabel kl1)\n" +
-            "  and compare_sort s1 s2 = (order_sort s2) - (order_sort s1)\n" +
+            "  let rec equal c1 c2 = match (c1, c2) with\n" +
+            "    | [], [] -> true\n" +
+            "    | (hd1 :: tl1), (hd2 :: tl2) -> (equal_kitem hd1 hd2) && (equal tl1 tl2)\n" +
+            "    | _ -> false\n" +
+            "  and equal_kitem c1 c2 = match (c1, c2) with\n" +
+            "    | (KApply(kl1, k1)), (KApply(kl2, k2)) -> (equal_klabel kl1 kl2) && (equal_klist k1 k2)\n" +
+            "    | (KToken(s1, st1)), (KToken(s2, st2)) -> (equal_sort s1 s2) && (st1 = st2)\n" +
+            "    | (InjectedKLabel kl1), (InjectedKLabel kl2) -> equal_klabel kl1 kl2\n" +
+            "    | (Map (s1,m1)), (Map (s2,m2)) -> (equal_sort s1 s2) && (KHash.length m1) = (KHash.length m2) && (try KHash.fold (fun k v res -> res && (equal (KHash.find m2 k) v)) m1 true with Not_found -> false)\n" +
+            "    | (List (s1,l1)), (List (s2,l2)) -> (equal_sort s1 s2) && (equal_klist l1 l2)\n" +
+            "    | (Set (sort1,s1)), (Set (sort2,s2)) -> (equal_sort sort1 sort2) && (KHash.length s1) = (KHash.length s2) && (try KHash.fold (fun k v res -> res && (KHash.mem s2 k)) s1 true with Not_found -> false)\n" +
+            "    | (Int i1), (Int i2) -> Z.equal i1 i2\n" +
+            "    | (Float (f1,e1,p1)), (Float (f2,e2,p2)) -> e1 = e2 && p1 = p2 && (FR.compare f1 f2) = 0\n" +
+            "    | (String s1), (String s2) -> s1 = s2\n" +
+            "    | (Bool b1), (Bool b2) -> b1 = b2\n" +
+            "    | Bottom, Bottom -> true\n" +
+            "    | _ -> false\n" +
+            "  and equal_klist c1 c2 = match (c1, c2) with\n" +
+            "    | [], [] -> true\n" +
+            "    | (hd1 :: tl1), (hd2 :: tl2) -> (equal hd1 hd2) && (equal_klist tl1 tl2)\n" +
+            "    | _ -> false\n" +
+            "  and equal_klabel kl1 kl2 = kl1 = kl2\n" +
+            "  and equal_sort s1 s2 = s1 = s2\n" +
+            "  and hash = Hashtbl.hash\n" +
             "end\n" +
             "\n" +
-            "  module KMap = Map.Make(K)\n" +
-            "  module KSet = Set.Make(K)\n" +
-            "\n" +
             "open K\n" +
-            "type k = K.t" +
+            "type k = K.t\n" +
+            "module KHash = Hashtbl.Make(K)\n" +
             "\n" +
             "exception Stuck of k\n" +
             "module GuardElt = struct\n" +
@@ -210,8 +187,8 @@ public class DefinitionToOcaml {
             "| Float(f,_,_) -> print_kitem(KToken(" + FLOAT + ", float_to_string(f)))\n" +
             "| Bottom -> \"`#Bottom`(.KList)\"\n" +
             "| List(_,l) -> List.fold_left (fun s k -> \"`_List_`(`ListItem`(\" ^ print_k(k) ^ \"),\" ^ s ^ \")\") \"`.List`(.KList)\" l\n" +
-            "| Set(_,s) -> KSet.fold (fun k s -> \"`_Set_`(`SetItem`(\" ^ print_k(k) ^ \"), \" ^ s ^ \")\") s \"`.Set`(.KList)\"\n" +
-            "| Map(_,m) -> KMap.fold (fun k v s -> \"`_Map_`(`_|->_`(\" ^ print_k(k) ^ \", \" ^ print_k(v) ^ \"), \" ^ s ^ \")\") m \"`.Map`(.KList)\"\n" +
+            "| Set(_,s) -> KHash.fold (fun k v s -> \"`_Set_`(`SetItem`(\" ^ print_k(k) ^ \"), \" ^ s ^ \")\") s \"`.Set`(.KList)\"\n" +
+            "| Map(_,m) -> KHash.fold (fun k v s -> \"`_Map_`(`_|->_`(\" ^ print_k(k) ^ \", \" ^ print_k(v) ^ \"), \" ^ s ^ \")\") m \"`.Map`(.KList)\"\n" +
             "module Subst = Map.Make(String)\n" +
             "let print_subst (out: out_channel) (c: k Subst.t) : unit = \n" +
             "  output_string out \"1\\n\"; Subst.iter (fun v k -> output_string out (v ^ \"\\n\" ^ (print_k k) ^ \"\\n\")) c\n" +
@@ -235,33 +212,33 @@ public class DefinitionToOcaml {
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("Map:_|->_", "k1 :: k2 :: [] -> [Map (sort,(KMap.singleton k1 k2))]");
-        builder.put("Map:.Map", "[] -> [Map (sort,KMap.empty)]");
-        builder.put("Map:__", "([Map (s1,k1)]) :: ([Map (s2,k2)]) :: [] when compare_sort s1 s2 = 0 -> [Map (s1,(KMap.merge (fun k a b -> match a, b with None, None -> None | None, Some v | Some v, None -> Some v | Some v1, Some v2 when v1 = v2 -> Some v1) k1 k2))]");
-        builder.put("Map:lookup", "[Map (_,k1)] :: k2 :: [] -> (try KMap.find k2 k1 with Not_found -> [Bottom])");
-        builder.put("Map:update", "[Map (s,k1)] :: k :: v :: [] -> [Map (s,(KMap.add k v k1))]");
-        builder.put("Map:remove", "[Map (s,k1)] :: k2 :: [] -> [Map (s,(KMap.remove k2 k1))]");
-        builder.put("Map:keys", "[Map (_,k1)] :: [] -> [Set (" + SET + ",(KMap.fold (fun k v -> KSet.add k) k1 KSet.empty))]");
-        builder.put("Map:values", "[Map (_,k1)] :: [] -> [Set (" + SET + ",(KMap.fold (fun key -> KSet.add) k1 KSet.empty))]");
-        builder.put("Map:choice", "[Map (_,k1)] :: [] -> match KMap.choose k1 with (k, _) -> k");
-        builder.put("Map:updateAll", "([Map (s1,k1)]) :: ([Map (s2,k2)]) :: [] when compare_sort s1 s2 = 0 -> [Map (s1,(KMap.merge (fun k a b -> match a, b with None, None -> None | None, Some v | Some v, None | Some _, Some v -> Some v) k1 k2))]");
-        builder.put("Set:in", "k1 :: [Set (_,k2)] :: [] -> [Bool (KSet.mem k1 k2)]");
-        builder.put("Set:.Set", "[] -> [Set (sort,KSet.empty)]");
-        builder.put("Set:SetItem", "k :: [] -> [Set (sort,(KSet.singleton k))]");
-        builder.put("Set:__", "[Set (sort1,s1)] :: [Set (sort2,s2)] :: [] when compare_sort sort1 sort2 = 0 -> [Set (sort1,(KSet.union s1 s2))]");
-        builder.put("Set:difference", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when compare_sort s1 s2 = 0 -> [Set (s1,(KSet.diff k1 k2))]");
-        builder.put("Set:inclusion", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when compare_sort s1 s2 = 0 -> [Bool (KSet.subset k1 k2)]");
-        builder.put("Set:intersection", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when compare_sort s1 s2 = 0 -> [Set (s1,(KSet.inter k1 k2))]");
-        builder.put("Set:choice", "[Set (_,k1)] :: [] -> KSet.choose k1");
+        builder.put("Map:_|->_", "k1 :: k2 :: [] -> let h = KHash.create 1 in KHash.add h k1 k2; [Map (sort,h)]");
+        builder.put("Map:.Map", "[] -> [Map (sort,KHash.create 1)]");
+        builder.put("Map:__", "([Map (s1,k1)]) :: ([Map (s2,k2)]) :: [] when equal_sort s1 s2 -> let h = KHash.copy k2 in KHash.iter (fun k v -> KHash.add h k v) k1; [Map (s1,h)]");
+        builder.put("Map:lookup", "[Map (_,k1)] :: k2 :: [] -> (try KHash.find k1 k2 with Not_found -> [Bottom])");
+        builder.put("Map:update", "[Map (s,k1)] :: k :: v :: [] -> let h = KHash.copy k1 in KHash.replace h k v; [Map (s,h)]");
+        builder.put("Map:remove", "[Map (s,k1)] :: k2 :: [] -> let h = KHash.copy k1 in KHash.remove h k2; [Map (s,h)]");
+        builder.put("Map:keys", "[Map (_,k1)] :: [] -> let h = KHash.create (KHash.length k1) in KHash.iter (fun k v -> KHash.add h k ()) k1; [Set (" + SET + ",h)]");
+        builder.put("Map:values", "[Map (_,k1)] :: [] -> let h = KHash.create (KHash.length k1) in KHash.iter (fun k v -> KHash.add h v ()) k1; [Set(" + SET + ",h)]");
+        builder.put("Map:choice", "[Map (_,k1)] :: [] -> KHash.fold (fun k v res -> k) k1 [Bottom]");
+        builder.put("Map:updateAll", "([Map (s1,k1)]) :: ([Map (s2,k2)]) :: [] when equal_sort s1 s2 -> let h = KHash.copy k1 in KHash.iter (fun k v -> KHash.replace h k v) k2; [Map (s1,h)]");
+        builder.put("Set:in", "k1 :: [Set (_,k2)] :: [] -> [Bool (KHash.mem k2 k1)]");
+        builder.put("Set:.Set", "[] -> [Set (sort,KHash.create 1)]");
+        builder.put("Set:SetItem", "k :: [] -> let h = KHash.create 1 in KHash.add h k (); [Set (sort,h)]");
+        builder.put("Set:__", "[Set (sort1,s1)] :: [Set (sort2,s2)] :: [] when equal_sort sort1 sort2 -> let h = KHash.copy s2 in KHash.iter (fun k v -> KHash.add h k v) s1; [Set (sort1,h)]");
+        builder.put("Set:difference", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when equal_sort s1 s2 -> let h = KHash.copy k1 in KHash.iter (fun k v -> KHash.remove h k) k2; [Set (s1,h)]");
+        builder.put("Set:inclusion", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when equal_sort s1 s2 -> [Bool (KHash.fold (fun k v res -> res && KHash.mem k2 k) k1 true)]");
+        builder.put("Set:intersection", "[Set (s1,k1)] :: [Set (s2,k2)] :: [] when equal_sort s1 s2 -> let h = KHash.copy k1 in KHash.iter (fun k v -> if not (KHash.mem k2 k) then KHash.remove h k else ()) k1; [Set (s1,h)]");
+        builder.put("Set:choice", "[Set (_,k1)] :: [] -> KHash.fold (fun k v res -> k) k1 [Bottom]");
         builder.put("List:.List", "[] -> [List (sort,[])]");
         builder.put("List:ListItem", "k :: [] -> [List (sort,[k])]");
-        builder.put("List:__", "[List (s1,l1)] :: [List (s2,l2)] :: [] when compare_sort s1 s2 = 0 -> [List (s1,(l1 @ l2))]");
+        builder.put("List:__", "[List (s1,l1)] :: [List (s2,l2)] :: [] when equal_sort s1 s2 -> [List (s1,(l1 @ l2))]");
         builder.put("List:in", "k1 :: [List (_,k2)] :: [] -> [Bool (List.mem k1 k2)]");
         builder.put("List:get", "[List (_,l1)] :: [Int i] :: [] -> let i = Z.to_int i in (try if i >= 0 then List.nth l1 i else List.nth l1 ((List.length l1) + i) with Failure \"nth\" -> [Bottom] | Invalid_argument \"List.nth\" -> [Bottom])");
         builder.put("List:range", "[List (s,l1)] :: [Int i1] :: [Int i2] :: [] -> (try [List (s,(list_range (l1, (Z.to_int i1), (List.length(l1) - (Z.to_int i2) - (Z.to_int i1)))))] with Failure \"list_range\" -> [Bottom])");
         builder.put("Collection:size", "[List (_,l)] :: [] -> [Int (Z.of_int (List.length l))] " +
-                "| [Map (_,m)] :: [] -> [Int (Z.of_int (KMap.cardinal m))] " +
-                "| [Set (_,s)] :: [] -> [Int (Z.of_int (KSet.cardinal s))]");
+                "| [Map (_,m)] :: [] -> [Int (Z.of_int (KHash.length m))] " +
+                "| [Set (_,s)] :: [] -> [Int (Z.of_int (KHash.length s))]");
         builder.put("MetaK:#sort", "[KToken (sort, s)] :: [] -> [String (print_sort(sort))] " +
                 "| [Int _] :: [] -> [String \"Int\"] " +
                 "| [String _] :: [] -> [String \"String\"] " +
@@ -383,9 +360,9 @@ public class DefinitionToOcaml {
         builder.put("#FLOAT", "[Float _] :: [] -> [Bool true]");
         builder.put("#STRING", "[String _] :: [] -> [Bool true]");
         builder.put("#BOOL", "[Bool _] :: [] -> [Bool true]");
-        builder.put("Map", "[Map (s,_)] :: [] when compare_sort s pred_sort = 0 -> [Bool true]");
-        builder.put("Set", "[Set (s,_)] :: [] when compare_sort s pred_sort = 0 -> [Bool true]");
-        builder.put("List", "[List (s,_)] :: [] when compare_sort s pred_sort = 0 -> [Bool true]");
+        builder.put("Map", "[Map (s,_)] :: [] when equal_sort s pred_sort -> [Bool true]");
+        builder.put("Set", "[Set (s,_)] :: [] when equal_sort s pred_sort -> [Bool true]");
+        builder.put("List", "[List (s,_)] :: [] when equal_sort s pred_sort -> [Bool true]");
         predicateRules = builder.build();
     }
 
@@ -933,9 +910,9 @@ public class DefinitionToOcaml {
                     results.add(new Lookup(prefix, pattern, suffix));
                     h.first = false;
                 } else if (k.klabel().name().equals("#setChoice")) {
-                    choose(k, "| [Set (_,collection)] -> let choice = (KSet.fold (fun e result -> ");
+                    choose(k, "| [Set (_,collection)] -> let choice = (KHash.fold (fun e v result -> ");
                 } else if (k.klabel().name().equals("#mapChoice")) {
-                    choose(k, "| [Map (_,collection)] -> let choice = (KMap.fold (fun e v result -> ");
+                    choose(k, "| [Map (_,collection)] -> let choice = (KHash.fold (fun e v result -> ");
                 }
                 return super.apply(k);
             }
