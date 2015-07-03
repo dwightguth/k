@@ -53,6 +53,7 @@ import org.kframework.utils.file.FileUtil;
 import scala.Function1;
 import scala.Tuple3;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,13 +72,13 @@ import static org.kframework.Collections.*;
 import static org.kframework.kore.KORE.*;
 import static scala.compat.java8.JFunction.*;
 
-public class DefinitionToOcaml {
+public class DefinitionToOcaml implements Serializable {
 
-    private final KExceptionManager kem;
-    private final FileUtil files;
-    private final GlobalOptions globalOptions;
-    private final KompileOptions kompileOptions;
-    private ExpandMacros expandMacros;
+    private transient final KExceptionManager kem;
+    private transient final FileUtil files;
+    private transient final GlobalOptions globalOptions;
+    private transient final KompileOptions kompileOptions;
+    private transient ExpandMacros expandMacros;
 
     public DefinitionToOcaml(KExceptionManager kem, FileUtil files, GlobalOptions globalOptions, KompileOptions kompileOptions) {
         this.kem = kem;
@@ -343,11 +344,11 @@ public class DefinitionToOcaml {
         builder.put("#FLOAT:sub", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [round_to_range(Float ((FR.sub_prec p1 GMP_RNDN f1 f2),e1,p1))]");
         builder.put("#FLOAT:mul", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [round_to_range(Float ((FR.mul_prec p1 GMP_RNDN f1 f2),e1,p1))]");
         builder.put("#FLOAT:div", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [round_to_range(Float ((FR.div_prec p1 GMP_RNDN f1 f2),e1,p1))]");
-        builder.put("#FLOAT:eq", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [Bool (FR.equal f1 f2)]");
-        builder.put("#FLOAT:lt", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [Bool (FR.less f1 f2)]");
-        builder.put("#FLOAT:le", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [Bool (FR.lessequal f1 f2)]");
-        builder.put("#FLOAT:gt", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [Bool (FR.greater f1 f2)]");
-        builder.put("#FLOAT:ge", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] when e1 = e2 && p1 = p2 -> [Bool (FR.greaterequal f1 f2)]");
+        builder.put("#FLOAT:eq", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] -> [Bool (FR.equal f1 f2)]");
+        builder.put("#FLOAT:lt", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] -> [Bool (FR.less f1 f2)]");
+        builder.put("#FLOAT:le", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] -> [Bool (FR.lessequal f1 f2)]");
+        builder.put("#FLOAT:gt", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] -> [Bool (FR.greater f1 f2)]");
+        builder.put("#FLOAT:ge", "[Float (f1,e1,p1)] :: [Float (f2,e2,p2)] :: [] -> [Bool (FR.greaterequal f1 f2)]");
         builder.put("#FLOAT:precision", "[Float (_,_,p)] :: [] -> [Int (Z.from_int p)]");
         builder.put("#FLOAT:exponentBits", "[Float (_,e,_)] :: [] -> [Int (Z.from_int e)]");
         builder.put("#CONVERSION:float2Int", "[Float (f,_,_)] :: [] -> [Int (FR.to_z_f f)]");
@@ -368,7 +369,7 @@ public class DefinitionToOcaml {
             Pair<BigFloat, Integer> f = FloatBuiltin.parseKFloat(s);
             return "(round_to_range(Float ((FR.from_string_prec_base " + f.getLeft().precision() + " GMP_RNDN 10 \"" + f.getLeft().toString() + "\"), " + f.getRight() + ", " + f.getLeft().precision() + ")))";
         });
-        builder.put("#STRING", s -> "(String " + StringUtil.enquoteCString(StringUtil.unquoteKString(StringUtil.unquoteKString("\"" + s + "\""))) + ")");
+        builder.put("#STRING", s -> "(String " + enquoteString(StringUtil.unquoteKString(StringUtil.unquoteKString("\"" + s + "\""))) + ")");
         sortHooks = builder.build();
     }
 
@@ -402,6 +403,14 @@ public class DefinitionToOcaml {
     private Module mainModule;
     private Map<KLabel, KLabel> collectionFor;
 
+    public void initialize(DefinitionToOcaml serialized, CompiledDefinition def) {
+        mainModule = serialized.mainModule;
+        collectionFor = serialized.collectionFor;
+        functions = serialized.functions;
+        anywhereKLabels = serialized.anywhereKLabels;
+        expandMacros = new ExpandMacros(def.executionModule(), kem, files, globalOptions, kompileOptions);
+    }
+
     public String convert(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = func(new GenerateSortPredicateRules(def.kompiledDefinition)::gen);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(new ConvertDataStructureToLookup(def.executionModule(), true)::convert, "convert data structures to lookups");
@@ -434,10 +443,42 @@ public class DefinitionToOcaml {
     Set<KLabel> functions;
     Set<KLabel> anywhereKLabels;
 
+    public static String enquoteString(String value) {
+        char delimiter = '"';
+        final int length = value.length();
+        StringBuilder result = new StringBuilder();
+        result.append(delimiter);
+        for (int offset = 0, codepoint; offset < length; offset += Character.charCount(codepoint)) {
+            codepoint = value.codePointAt(offset);
+            if (codepoint > 0xFF) {
+                throw KEMException.compilerError("Unsupported: unicode characters in strings in Ocaml backend.");
+            } else if (codepoint == delimiter) {
+                result.append("\\" + delimiter);
+            } else if (codepoint == '\\') {
+                result.append("\\\\");
+            } else if (codepoint == '\n') {
+                result.append("\\n");
+            } else if (codepoint == '\t') {
+                result.append("\\t");
+            } else if (codepoint == '\r') {
+                result.append("\\r");
+            } else if (codepoint == '\b') {
+                result.append("\\b");
+            } else if (codepoint >= 32 && codepoint < 127) {
+                result.append((char)codepoint);
+            } else if (codepoint <= 0xff) {
+                result.append("\\");
+                result.append(String.format("%03d", codepoint));
+            }
+        }
+        result.append(delimiter);
+        return result.toString();
+    }
+
     public String execute(K k, int depth, String file) {
         StringBuilder sb = new StringBuilder();
         sb.append("open Def\nopen K\nopen Gmp\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out " + StringUtil.enquoteCString(file) + " in output_string out (print_k(try(run(");
+        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " in output_string out (print_k(try(run(");
         convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
         sb.append(") (").append(depth).append(")) with Stuck c' -> c'))");
         return sb.toString();
@@ -449,9 +490,21 @@ public class DefinitionToOcaml {
         sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
         convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out " + StringUtil.enquoteCString(file) + "in (try print_subst out (try_match(");
+        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + "in (try print_subst out (try_match(");
         convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
         sb.append(")) with Stuck c -> output_string out \"0\\n\")");
+        return sb.toString();
+    }
+
+    public String executeAndMatch(K k, int depth, Rule r, String file, String substFile) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("open Def\nopen K\nopen Gmp\n");
+        sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
+        convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
+        sb.append("| _ -> raise(Stuck c)\n");
+        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " and subst = open_out " + enquoteString(substFile) + " in (try print_subst subst (try_match(let res = run(");
+        convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
+        sb.append(") (").append(depth).append(") in output_string out (print_k(res)); res)) with Stuck c -> output_string subst \"0\\n\")");
         return sb.toString();
     }
 
@@ -488,7 +541,7 @@ public class DefinitionToOcaml {
             sb.append("|");
             encodeStringToIdentifier(sb, s);
             sb.append(" -> ");
-            sb.append(StringUtil.enquoteCString(s.name()));
+            sb.append(enquoteString(s.name()));
             sb.append("\n");
         }
         sb.append("let print_klabel(c: klabel) : string = match c with \n");
@@ -496,7 +549,7 @@ public class DefinitionToOcaml {
             sb.append("|");
             encodeStringToIdentifier(sb, label);
             sb.append(" -> ");
-            sb.append(StringUtil.enquoteCString(ToKast.apply(label)));
+            sb.append(enquoteString(ToKast.apply(label)));
             sb.append("\n");
         }
         sb.append("let collection_for (c: klabel) : klabel = match c with \n");
@@ -605,7 +658,7 @@ public class DefinitionToOcaml {
             encodeStringToFunction(sb, freshFunction.name());
             sb.append(" ([Int counter] :: []) config Guard.empty)\n");
         }
-        sb.append("and eval (c: kitem) (config: k) : k = match c with KApply(lbl, kl) -> match lbl with \n");
+        sb.append("and eval (c: kitem) (config: k) : k = match c with KApply(lbl, kl) -> (match lbl with \n");
         for (KLabel label : Sets.union(functions, anywhereKLabels)) {
             sb.append("|");
             encodeStringToIdentifier(sb, label);
@@ -613,6 +666,7 @@ public class DefinitionToOcaml {
             encodeStringToFunction(sb, label.name());
             sb.append(" kl config Guard.empty\n");
         }
+        sb.append("| _ -> [c])\n");
         sb.append("| _ -> [c]\n");
         sb.append("let rec lookups_step (c: k) (config: k) (guards: Guard.t) : k = match c with \n");
         List<Rule> sortedRules = stream(mainModule.rules())
@@ -625,7 +679,7 @@ public class DefinitionToOcaml {
                 .collect(Collectors.toList());
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(this::hasLookups));
-        convert(groupedByLookup.get(true), sb, "lookups_step", RuleType.REGULAR);
+        convert(groupedByLookup.get(true), sb, "lookups_step", RuleType.REGULAR, 0);
         sb.append("| _ -> raise (Stuck c)\n");
         sb.append("let step (c: k) : k = let config = c in match c with \n");
         if (groupedByLookup.containsKey(false)) {
@@ -642,9 +696,10 @@ public class DefinitionToOcaml {
     }
 
     private void convertFunction(List<Rule> rules, StringBuilder sb, String functionName, RuleType type) {
+        int ruleNum = 0;
         for (Rule r : rules) {
             if (hasLookups(r)) {
-                convert(Collections.singletonList(r), sb, functionName, type);
+                ruleNum = convert(Collections.singletonList(r), sb, functionName, type, ruleNum);
             } else {
                 convert(r, sb, type);
             }
@@ -760,11 +815,10 @@ public class DefinitionToOcaml {
         }
     }
 
-    private void convert(List<Rule> rules, StringBuilder sb, String functionName, RuleType ruleType) {
+    private int convert(List<Rule> rules, StringBuilder sb, String functionName, RuleType ruleType, int ruleNum) {
         NormalizeVariables t = new NormalizeVariables();
         Map<AttCompare, List<Rule>> grouping = rules.stream().collect(
                 Collectors.groupingBy(r -> new AttCompare(t.normalize(RewriteToTop.toLeft(r.body())), "sort")));
-        int ruleNum = 0;
         Map<Tuple3<AttCompare, KLabel, AttCompare>, List<Rule>> groupByFirstPrefix = new HashMap<>();
         for (Map.Entry<AttCompare, List<Rule>> entry : grouping.entrySet()) {
             AttCompare left = entry.getKey();
@@ -849,6 +903,7 @@ public class DefinitionToOcaml {
             convertRHS(sb, ruleType, RewriteToTop.toRight(r.body()), globalVars, suffix);
             ruleNum++;
         }
+        return ruleNum;
     }
 
     private boolean indexesPoorly(Rule r) {
@@ -1352,7 +1407,7 @@ public class DefinitionToOcaml {
             sb.append("KToken (");
             apply(k.sort());
             sb.append(", ");
-            sb.append(StringUtil.enquoteCString(k.s()));
+            sb.append(enquoteString(k.s()));
             sb.append(")");
             return null;
         }
