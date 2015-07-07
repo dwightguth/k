@@ -118,6 +118,7 @@ public class DefinitionToOcaml implements Serializable {
             "  type s\n" +
             "  type " + kType +
             "  val compare : t -> t -> int\n" +
+            "  val compare_kitem : kitem -> kitem -> int\n" +
             "end \n" +
             "\n" +
             "\n" +
@@ -184,7 +185,6 @@ public class DefinitionToOcaml implements Serializable {
             "end\n" +
             "module Guard = Set.Make(GuardElt)\n" +
             "let freshCounter : Z.t ref = ref Z.zero\n" +
-            "let eq k1 k2 = k1 = k2\n" +
             "let isTrue(c: k) : bool = match c with\n" +
             "| ([" + TRUE + "]) -> true\n" +
             "| _ -> false\n" +
@@ -281,7 +281,7 @@ public class DefinitionToOcaml implements Serializable {
                 "| _ -> [String \"\"]");
         builder.put("MetaK:getKLabel", "[KApply (lbl, _)] :: [] -> [InjectedKLabel lbl] | _ -> [Bottom]");
         builder.put("MetaK:#configuration", "[] -> config");
-        builder.put("#K-EQUAL:_==K_", "k1 :: k2 :: [] -> [Bool (eq k1 k2)]");
+        builder.put("#K-EQUAL:_==K_", "k1 :: k2 :: [] -> [Bool ((compare k1 k2) = 0)]");
         builder.put("#IO:#close", "[Int i] :: [] -> Unix.close (Hashtbl.find file_descriptors i); []");
         builder.put("#IO:#getc", "[Int i] :: [] -> let b = Bytes.create 1 in Unix.read (Hashtbl.find file_descriptors i) b 0 1; [Int (Z.from_int (Char.code (Bytes.get b 0)))]");
         builder.put("#IO:#open", "[String path] :: [String flags] :: [] -> let fd = Unix.openfile path (convert_open_flags flags) default_file_perm in " +
@@ -492,7 +492,7 @@ public class DefinitionToOcaml implements Serializable {
         sb.append("| _ -> raise(Stuck c)\n");
         sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + "in (try print_subst out (try_match(");
         convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
-        sb.append(")) with Stuck c -> output_string out \"0\\n\")");
+        sb.append("\n)) with Stuck c -> output_string out \"0\\n\")");
         return sb.toString();
     }
 
@@ -504,7 +504,7 @@ public class DefinitionToOcaml implements Serializable {
         sb.append("| _ -> raise(Stuck c)\n");
         sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " and subst = open_out " + enquoteString(substFile) + " in (try print_subst subst (try_match(let res = run(");
         convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
-        sb.append(") (").append(depth).append(") in output_string out (print_k(res)); res)) with Stuck c -> output_string subst \"0\\n\")");
+        sb.append("\n) (").append(depth).append(") in output_string out (print_k(res)); res)) with Stuck c -> output_string out (print_k(c)); output_string subst \"0\\n\")");
         return sb.toString();
     }
 
@@ -544,6 +544,9 @@ public class DefinitionToOcaml implements Serializable {
             sb.append(enquoteString(s.name()));
             sb.append("\n");
         }
+        if (fastCompilation) {
+            sb.append("| Sort s -> raise (Invalid_argument s)\n");
+        }
         sb.append("let print_klabel(c: klabel) : string = match c with \n");
         for (KLabel label : iterable(mainModule.definedKLabels())) {
             sb.append("|");
@@ -551,6 +554,9 @@ public class DefinitionToOcaml implements Serializable {
             sb.append(" -> ");
             sb.append(enquoteString(ToKast.apply(label)));
             sb.append("\n");
+        }
+        if (fastCompilation) {
+            sb.append("| KLabel s -> raise (Invalid_argument s)\n");
         }
         sb.append("let collection_for (c: klabel) : klabel = match c with \n");
         for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
@@ -801,7 +807,7 @@ public class DefinitionToOcaml implements Serializable {
 
     private static class VarInfo {
         final SetMultimap<KVariable, String> vars;
-        final Map<KVariable, KLabel> listVars;
+        final Map<String, KLabel> listVars;
 
         VarInfo() { this(HashMultimap.create(), new HashMap<>()); }
 
@@ -809,7 +815,7 @@ public class DefinitionToOcaml implements Serializable {
             this(HashMultimap.create(vars.vars), new HashMap<>(vars.listVars));
         }
 
-        VarInfo(SetMultimap<KVariable, String> vars, Map<KVariable, KLabel> listVars) {
+        VarInfo(SetMultimap<KVariable, String> vars, Map<String, KLabel> listVars) {
             this.vars = vars;
             this.listVars = listVars;
         }
@@ -1136,9 +1142,10 @@ public class DefinitionToOcaml implements Serializable {
         return results;
     }
 
-    private static String convert(VarInfo vars) {
+    private String convert(VarInfo vars) {
         StringBuilder sb = new StringBuilder();
-        for (Collection<String> nonLinearVars : vars.vars.asMap().values()) {
+        for (Map.Entry<KVariable, Collection<String>> entry : vars.vars.asMap().entrySet()) {
+            Collection<String> nonLinearVars = entry.getValue();
             if (nonLinearVars.size() < 2) {
                 continue;
             }
@@ -1147,11 +1154,15 @@ public class DefinitionToOcaml implements Serializable {
             while (iter.hasNext()) {
                 //handle nonlinear variables in pattern
                 String next = iter.next();
-                sb.append("(eq ");
-                sb.append(last);
+                if (!isList(entry.getKey(), false, true, vars)) {
+                    sb.append("((compare_kitem ");
+                } else{
+                    sb.append("((compare ");
+                }
+                applyVarRhs(last, sb, vars.listVars.get(last));
                 sb.append(" ");
-                sb.append(next);
-                sb.append(")");
+                applyVarRhs(next, sb, vars.listVars.get(next));
+                sb.append(") = 0)");
                 last = next;
                 sb.append(" && ");
             }
@@ -1161,16 +1172,20 @@ public class DefinitionToOcaml implements Serializable {
     }
 
     private void applyVarRhs(KVariable v, StringBuilder sb, VarInfo vars) {
-        if (vars.listVars.containsKey(v)) {
+        applyVarRhs(vars.vars.get(v).iterator().next(), sb, vars.listVars.get(vars.vars.get(v).iterator().next()));
+    }
+
+    private void applyVarRhs(String varOccurrance, StringBuilder sb, KLabel listVar) {
+        if (listVar != null) {
             sb.append("(List (");
-            encodeStringToIdentifier(sb, mainModule.sortFor().apply(vars.listVars.get(v)));
+            encodeStringToIdentifier(sb, mainModule.sortFor().apply(listVar));
             sb.append(", ");
-            encodeStringToIdentifier(sb, vars.listVars.get(v));
+            encodeStringToIdentifier(sb, listVar);
             sb.append(", ");
-            sb.append(vars.vars.get(v).iterator().next());
+            sb.append(varOccurrance);
             sb.append("))");
         } else {
-            sb.append(vars.vars.get(v).iterator().next());
+            sb.append(varOccurrance);
         }
     }
 
@@ -1310,7 +1325,7 @@ public class DefinitionToOcaml implements Serializable {
                                 KVariable var = (KVariable)component;
                                 String varName = encodeStringToVariable(var.name());
                                 vars.vars.put(var, varName);
-                                vars.listVars.put(var, collectionLabel);
+                                vars.listVars.put(varName, collectionLabel);
                                 sb.append(varName);
                                 frame = true;
                             } else if (component instanceof KApply) {
@@ -1489,8 +1504,11 @@ public class DefinitionToOcaml implements Serializable {
     }
 
     public static String getSortOfVar(KVariable k, VarInfo vars) {
-        if (vars.listVars.containsKey(k)) {
-            return vars.listVars.get(k).name();
+        if (vars.vars.containsKey(k)) {
+            String varName = vars.vars.get(k).iterator().next();
+            if (vars.listVars.containsKey(varName)) {
+                return vars.listVars.get(varName).name();
+            }
         }
         return k.att().<String>getOptional(Attribute.SORT_KEY).orElse("K");
     }

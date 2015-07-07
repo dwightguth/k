@@ -2,6 +2,7 @@
 package org.kframework.kore.compile;
 
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import org.kframework.TopologicalSort;
 import org.kframework.attributes.Att;
@@ -250,6 +251,7 @@ public class ConvertDataStructureToLookup {
                     KVariable frame = null;
                     List<K> elementsLeft = new ArrayList<K>();
                     List<K> elementsRight = new ArrayList<K>();
+                    KLabel elementLabel = KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get());
                     boolean isRight = false; // true for components later than the frame variable.
                     //build the components of the list from the flattened KApply.
                     for (K component : components) {
@@ -262,7 +264,7 @@ public class ConvertDataStructureToLookup {
                         } else if (component instanceof KApply) {
                             KApply kapp = (KApply) component;
                             boolean needsWrapper = false;
-                            if (kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("element").get()))
+                            if (kapp.klabel().equals(elementLabel)
                                     || (needsWrapper = kapp.klabel().equals(KLabel(m.attributesFor().apply(collectionLabel).<String>get("wrapElement").get())))) {
                                 if (kapp.klist().size() != 1 && !needsWrapper) {
                                     throw KEMException.internalError("Unexpected arity of list element: " + kapp.klist().size(), kapp);
@@ -280,33 +282,41 @@ public class ConvertDataStructureToLookup {
                             }
                         }
                     }
+                    K list;
                     if (elementsRight.size() == 0 && matchOnConsList) {
-                        return infer(super.apply(k), collectionLabel);
-                    }
-                    KVariable list = newDotVariable();
-                    // Ctx[ListItem(5) Frame ListItem(X) ListItem(foo(Y))] => Ctx [L]
-                    // requires Frame := range(L, 1, 2)
-                    // andBool 5 := L[0]
-                    // andBool X := L[-2]
-                    // andBool foo(Y) := L[-1]
-                    if (frame != null) {
-                        state.add(KApply(KLabel("#match"), frame, KApply(KLabel("List:range"), list,
-                                KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
-                                KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
+                        K tail;
+                        if (frame == null) {
+                            tail = KApply(KLabel(m.attributesFor().apply(collectionLabel).<String>get(Attribute.UNIT_KEY).get()));
+                        } else {
+                            tail = frame;
+                        }
+                        list = Lists.reverse(elementsLeft).stream().map(e -> (K)KApply(elementLabel, e)).reduce(tail, (res, el) -> KApply(collectionLabel, el, res));
                     } else {
-                        KLabel unit = KLabel(m.attributesFor().apply(collectionLabel).<String>get("unit").get());
-                        // Ctx[.List] => Ctx[L] requires L ==K range(L, 0, 0)
-                        state.add(KApply(KLabel("_==K_"), KApply(unit), KApply(KLabel("List:range"), list,
-                                KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
-                                KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
-                    }
-                    for (int i = 0; i < elementsLeft.size(); i++) {
-                        K element = elementsLeft.get(i);
-                        state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(i), Sorts.Int()))));
-                    }
-                    for (int i = 0; i < elementsRight.size(); i++) {
-                        K element = elementsRight.get(i);
-                        state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(i-elementsRight.size()), Sorts.Int()))));
+                        list = newDotVariable();
+                        // Ctx[ListItem(5) Frame ListItem(X) ListItem(foo(Y))] => Ctx [L]
+                        // requires Frame := range(L, 1, 2)
+                        // andBool 5 := L[0]
+                        // andBool X := L[-2]
+                        // andBool foo(Y) := L[-1]
+                        if (frame != null) {
+                            state.add(KApply(KLabel("#match"), frame, KApply(KLabel("List:range"), list,
+                                    KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
+                                    KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
+                        } else {
+                            KLabel unit = KLabel(m.attributesFor().apply(collectionLabel).<String>get("unit").get());
+                            // Ctx[.List] => Ctx[L] requires L ==K range(L, 0, 0)
+                            state.add(KApply(KLabel("_==K_"), KApply(unit), KApply(KLabel("List:range"), list,
+                                    KToken(Integer.toString(elementsLeft.size()), Sorts.Int()),
+                                    KToken(Integer.toString(elementsRight.size()), Sorts.Int()))));
+                        }
+                        for (int i = 0; i < elementsLeft.size(); i++) {
+                            K element = elementsLeft.get(i);
+                            state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(i), Sorts.Int()))));
+                        }
+                        for (int i = 0; i < elementsRight.size(); i++) {
+                            K element = elementsRight.get(i);
+                            state.add(KApply(KLabel("#match"), element, KApply(KLabel("List:get"), list, KToken(Integer.toString(i - elementsRight.size()), Sorts.Int()))));
+                        }
                     }
                     if (lhsOf == null) {
                         // An outermost list may contain nested rewrites, so the term

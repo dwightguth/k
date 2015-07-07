@@ -325,7 +325,7 @@ public class SortCells {
                             if (item instanceof KVariable) {
                                 return KVariable(((KVariable) item).name(), item.att().remove(Attribute.SORT_KEY));
                             }
-                            return item;
+                            return BooleanUtils.TRUE;
                         }
                         return split.entrySet().stream().map(e -> (K)KApply(KLabel("is" + e.getKey()), e.getValue())).reduce(BooleanUtils.TRUE, BooleanUtils::and);
                     }

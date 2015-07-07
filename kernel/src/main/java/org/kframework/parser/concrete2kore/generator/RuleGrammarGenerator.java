@@ -147,10 +147,10 @@ public class RuleGrammarGenerator {
                     extensionProds.addAll(temp);
                 }
             }
-            temp = makeCasts(Sorts.KLabel(), Sorts.KLabel(), Sorts.KLabel()); prods.addAll(temp); extensionProds.addAll(temp);
-            temp = makeCasts(Sorts.KList(), Sorts.KList(), Sorts.KList());    prods.addAll(temp); extensionProds.addAll(temp);
-            temp = makeCasts(Sorts.KBott(), Sorts.K(), Sorts.KItem());        prods.addAll(temp); extensionProds.addAll(temp);
-            temp = makeCasts(Sorts.KBott(), Sorts.K(), Sorts.K());            prods.addAll(temp); extensionProds.addAll(temp);
+            prods.addAll(makeCasts(Sorts.KLabel(), Sorts.KLabel(), Sorts.KLabel()));
+            prods.addAll(makeCasts(Sorts.KList(), Sorts.KList(), Sorts.KList()));
+            prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.KItem()));
+            prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.K()));
         }
         if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
@@ -169,6 +169,7 @@ public class RuleGrammarGenerator {
                 }
             }
         }
+        extensionProds.addAll(prods);
         Set<Sentence> parseProds;
         if (baseK.getModule(RULE_CELLS).isDefined() && mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
             parseProds = Stream.concat(prods.stream(), stream(mod.sentences())).flatMap(s -> {
