@@ -111,127 +111,6 @@ public class DefinitionToOcaml implements Serializable {
     public static final String SET = encodeStringToIdentifier(Sort("Set"));
     public static final String SET_CONCAT = encodeStringToIdentifier(KLabel("_Set_"));
 
-    public static final String prelude = "open Gmp\n" +
-            "module type S =\n" +
-            "sig\n" +
-            "  type 'a m\n" +
-            "  type s\n" +
-            "  type " + kType +
-            "  val compare : t -> t -> int\n" +
-            "  val compare_kitem : kitem -> kitem -> int\n" +
-            "end \n" +
-            "\n" +
-            "\n" +
-            "module rec K : (S with type 'a m = 'a Map.Make(K).t and type s = Set.Make(K).t)  = \n" +
-            "struct\n" +
-            "  module KMap = Map.Make(K)\n" +
-            "  module KSet = Set.Make(K)\n" +
-            "  type 'a m = 'a KMap.t\n" +
-            "  and s = KSet.t\n" +
-            "  and " + kType +
-            "  let rec compare c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare_kitem hd1 hd2 in if v = 0 then compare tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "  and compare_kitem c1 c2 = match (c1, c2) with\n" +
-            "    | (KApply(kl1, k1)), (KApply(kl2, k2)) -> let v = Pervasives.compare kl1 kl2 in if v = 0 then compare_klist k1 k2 else v\n" +
-            "    | (KToken(s1, st1)), (KToken(s2, st2)) -> let v = Pervasives.compare s1 s2 in if v = 0 then Pervasives.compare st1 st2 else v\n" +
-            "    | (InjectedKLabel kl1), (InjectedKLabel kl2) -> Pervasives.compare kl1 kl2\n" +
-            "    | (Map (_,k1,m1)), (Map (_,k2,m2)) -> let v = Pervasives.compare k1 k2 in if v = 0 then (KMap.compare) compare m1 m2 else v\n" +
-            "    | (List (_,k1,l1)), (List (_,k2,l2)) -> let v = Pervasives.compare k1 k2 in if v = 0 then compare_klist l1 l2 else v\n" +
-            "    | (Set (_,k1,s1)), (Set (_,k2,s2)) -> let v = Pervasives.compare k1 k2 in if v = 0 then (KSet.compare) s1 s2 else v\n" +
-            "    | (Int i1), (Int i2) -> Z.compare i1 i2\n" +
-            "    | (Float (f1,e1,p1)), (Float (f2,e2,p2)) -> let v = e2 - e1 in if v = 0 then let v2 = p2 - p1 in if v2 = 0 then FR.compare f1 f2 else v2 else v\n" +
-            "    | (String s1), (String s2) -> Pervasives.compare s1 s2\n" +
-            "    | (Bool b1), (Bool b2) -> if b1 = b2 then 0 else if b1 then -1 else 1\n" +
-            "    | Bottom, Bottom -> 0\n" +
-            "    | KApply(_, _), _ -> -1\n" +
-            "    | _, KApply(_, _) -> 1\n" +
-            "    | KToken(_, _), _ -> -1\n" +
-            "    | _, KToken(_, _) -> 1\n" +
-            "    | InjectedKLabel(_), _ -> -1\n" +
-            "    | _, InjectedKLabel(_) -> 1\n" +
-            "    | Map(_), _ -> -1\n" +
-            "    | _, Map(_) -> 1\n" +
-            "    | List(_), _ -> -1\n" +
-            "    | _, List(_) -> 1\n" +
-            "    | Set(_), _ -> -1\n" +
-            "    | _, Set(_) -> 1\n" +
-            "    | Int(_), _ -> -1\n" +
-            "    | _, Int(_) -> 1\n" +
-            "    | Float(_), _ -> -1\n" +
-            "    | _, Float(_) -> 1\n" +
-            "    | String(_), _ -> -1\n" +
-            "    | _, String(_) -> 1\n" +
-            "    | Bool(_), _ -> -1\n" +
-            "    | _, Bool(_) -> 1\n" +
-            "  and compare_klist c1 c2 = match (c1, c2) with\n" +
-            "    | [], [] -> 0\n" +
-            "    | (hd1 :: tl1), (hd2 :: tl2) -> let v = compare hd1 hd2 in if v = 0 then compare_klist tl1 tl2 else v\n" +
-            "    | (hd1 :: tl1), _ -> -1\n" +
-            "    | _ -> 1\n" +
-            "end\n\n" +
-            "module KMap = Map.Make(K)\n" +
-            "module KSet = Set.Make(K)\n" +
-            "\n" +
-            "open K\n" +
-            "type k = K.t" +
-            "\n" +
-            "exception Stuck of k\n" +
-            "module GuardElt = struct\n" +
-            "  type t = Guard of int\n" +
-            "  let compare c1 c2 = match c1 with Guard(i1) -> match c2 with Guard(i2) -> i2 - i1\n" +
-            "end\n" +
-            "module Guard = Set.Make(GuardElt)\n" +
-            "let freshCounter : Z.t ref = ref Z.zero\n" +
-            "let isTrue(c: k) : bool = match c with\n" +
-            "| ([" + TRUE + "]) -> true\n" +
-            "| _ -> false\n" +
-            "let rec list_range (c: k list * int * int) : k list = match c with\n" +
-            "| (_, 0, 0) -> []\n" +
-            "| (head :: tail, 0, len) -> head :: list_range(tail, 0, len - 1)\n" +
-            "| (_ :: tail, n, len) -> list_range(tail, n - 1, len)\n" +
-            "| ([], _, _) -> raise(Failure \"list_range\")\n" +
-            "let float_to_string (f: FR.t) : string = if FR.is_nan f then \"NaN\" else if FR.is_inf f then if FR.sgn f > 0 then \"Infinity\" else \"-Infinity\" else FR.to_string f\n" +
-            "let k_of_list lbl l = match l with \n" +
-            "  [] -> KApply((unit_for lbl),[])\n" +
-            "| hd :: tl -> List.fold_left (fun list el -> KApply(lbl, [list] :: [KApply((el_for lbl),[el])] :: [])) (KApply((el_for lbl),[hd])) tl\n" +
-            "let k_of_set lbl s = if (KSet.cardinal s) = 0 then KApply((unit_for lbl),[]) else \n" +
-            "  let hd = KSet.choose s in KSet.fold (fun el set -> KApply(lbl, [set] :: [KApply((el_for lbl),[el])] :: [])) (KSet.remove hd s) (KApply((el_for lbl),[hd]))\n" +
-            "let k_of_map lbl m = if (KMap.cardinal m) = 0 then KApply((unit_for lbl),[]) else \n" +
-            "  let (k,v) = KMap.choose m in KMap.fold (fun k v map -> KApply(lbl, [map] :: [KApply((el_for lbl),[k;v])] :: [])) (KMap.remove k m) (KApply((el_for lbl),[k;v]))\n" +
-            "let rec print_klist(c: k list) : string = match c with\n" +
-            "| [] -> \".KList\"\n" +
-            "| e::[] -> print_k(e)\n" +
-            "| e1::e2::l -> print_k(e1) ^ \", \" ^ print_klist(e2::l)\n" +
-            "and print_k(c: k) : string = match c with\n" +
-            "| [] -> \".K\"\n" +
-            "| e::[] -> print_kitem(e)\n" +
-            "| e1::e2::l -> print_kitem(e1) ^ \" ~> \" ^ print_k(e2::l)\n" +
-            "and print_kitem(c: kitem) : string = match c with\n" +
-            "| KApply(klabel, klist) -> print_klabel(klabel) ^ \"(\" ^ print_klist(klist) ^ \")\"\n" +
-            "| KToken(sort, s) -> \"#token(\\\"\" ^ (String.escaped s) ^ \"\\\", \\\"\" ^ print_sort(sort) ^ \"\\\")\"\n" +
-            "| InjectedKLabel(klabel) -> \"#klabel(\" ^ print_klabel(klabel) ^ \")\"\n" +
-            "| Bool(b) -> print_kitem(KToken(" + BOOL + ", string_of_bool(b)))\n" +
-            "| String(s) -> print_kitem(KToken(" + STRING + ", \"\\\"\" ^ (String.escaped s) ^ \"\\\"\"))\n" +
-            "| Int(i) -> print_kitem(KToken(" + INT + ", Z.to_string(i)))\n" +
-            "| Float(f,_,_) -> print_kitem(KToken(" + FLOAT + ", float_to_string(f)))\n" +
-            "| Bottom -> \"`#Bottom`(.KList)\"\n" +
-            "| List(_,lbl,l) -> print_kitem(k_of_list lbl l)\n" +
-            "| Set(_,lbl,s) -> print_kitem(k_of_set lbl s)\n" +
-            "| Map(_,lbl,m) -> print_kitem(k_of_map lbl m)\n" +
-            "module Subst = Map.Make(String)\n" +
-            "let print_subst (out: out_channel) (c: k Subst.t) : unit = \n" +
-            "  output_string out \"1\\n\"; Subst.iter (fun v k -> output_string out (v ^ \"\\n\" ^ (print_k k) ^ \"\\n\")) c\n" +
-            "let emin (exp: int) (prec: int) : int = (- (1 lsl exp - 1)) + 4 - prec\n" +
-            "let emax (exp: int) : int = 1 lsl exp - 1\n" +
-            "let round_to_range (c: kitem) : kitem = match c with Float(f,e,p) -> let (cr, t) = (FR.check_range p GMP_RNDN (emin e p) (emax e) f) in Float((FR.subnormalize cr t GMP_RNDN),e,p)\n" +
-            "let curr_fd : Z.t ref = ref (Z.of_int 3)\n" +
-            "let file_descriptors = let m = Hashtbl.create 5 in Hashtbl.add m (Z.from_int 0) Unix.stdin; Hashtbl.add m (Z.from_int 1) Unix.stdout; Hashtbl.add m (Z.from_int 2) Unix.stderr; m\n" +
-            "let default_file_perm = let v = Unix.umask 0 in Unix.umask v; (lnot v) land 0o777\n" +
-            "let convert_open_flags (s: string) : Unix.open_flag list = match s with \"r\" -> [Unix.O_RDONLY] | \"w\" -> [Unix.O_WRONLY] | \"rw\" -> [Unix.O_RDWR]\n";
-
     public static final String postlude = "let run c n=\n" +
             "  try let rec go c n = if n = 0 then c else go (step c) (n - 1)\n" +
             "      in go c n\n" +
@@ -411,7 +290,7 @@ public class DefinitionToOcaml implements Serializable {
         expandMacros = new ExpandMacros(def.executionModule(), kem, files, globalOptions, kompileOptions);
     }
 
-    public String convert(CompiledDefinition def) {
+    public void initialize(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = func(new GenerateSortPredicateRules(def.kompiledDefinition)::gen);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(new ConvertDataStructureToLookup(def.executionModule(), true)::convert, "convert data structures to lookups");
         ModuleTransformer liftToKSequence = ModuleTransformer.fromSentenceTransformer(new LiftToKSequence()::lift, "lift K into KSequence");
@@ -425,7 +304,6 @@ public class DefinitionToOcaml implements Serializable {
                 .andThen(liftToKSequence);
         mainModule = pipeline.apply(def.executionModule());
         collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
-        return compile();
     }
 
     public Rule convert(Rule r) {
@@ -477,7 +355,7 @@ public class DefinitionToOcaml implements Serializable {
 
     public String execute(K k, int depth, String file) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Def\nopen K\nopen Gmp\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
         sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " in output_string out (print_k(try(run(");
         convert(sb, true, new VarInfo(), false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
         sb.append(") (").append(depth).append(")) with Stuck c' -> c'))");
@@ -486,7 +364,7 @@ public class DefinitionToOcaml implements Serializable {
 
     public String match(K k, Rule r, String file) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Def\nopen K\nopen Gmp\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
         sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
         convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
@@ -498,7 +376,7 @@ public class DefinitionToOcaml implements Serializable {
 
     public String executeAndMatch(K k, int depth, Rule r, String file, String substFile) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Def\nopen K\nopen Gmp\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
         sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
         convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
@@ -508,7 +386,7 @@ public class DefinitionToOcaml implements Serializable {
         return sb.toString();
     }
 
-    private String compile() {
+    public String constants() {
         StringBuilder sb = new StringBuilder();
         sb.append("type sort = \n");
         if (fastCompilation) {
@@ -582,7 +460,16 @@ public class DefinitionToOcaml implements Serializable {
             encodeStringToIdentifier(sb, KLabel(mainModule.attributesFor().apply(label).<String>get("element").get()));
             sb.append("\n");
         }
-        sb.append(prelude);
+        sb.append("let boolSort = ").append(BOOL);
+        sb.append("\n and stringSort = ").append(STRING);
+        sb.append("\n and intSort = ").append(INT);
+        sb.append("\n and floatSort = ").append(FLOAT);
+        return sb.toString();
+    }
+
+    public String definition() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\n");
         SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
         ListMultimap<KLabel, Rule> anywhereRules = ArrayListMultimap.create();
         anywhereKLabels = new HashSet<>();
