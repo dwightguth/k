@@ -402,7 +402,7 @@ module STRING
   syntax String ::= "replaceAll" "(" String "," String "," String ")"      [function, hook(STRING.replaceAll)]
   syntax String ::= "replace" "(" String "," String "," String "," Int ")" [function, hook(STRING.replace)]
   syntax String ::= "replaceFirst" "(" String "," String "," String ")"    [function, hook(STRING.replaceFirst)]
-  syntax Int ::= "countAllOccurences" "(" String "," String ")"            [function, hook(STRING.countAllOccurences)]
+  syntax Int ::= "countAllOccurrences" "(" String "," String ")"            [function, hook(STRING.countAllOccurrences)]
 
   syntax Bool ::= String "=/=String" String      [function, left, hook(STRING.ne)]
   rule S1:String =/=String S2:String => notBool `S1 ==String S2`
