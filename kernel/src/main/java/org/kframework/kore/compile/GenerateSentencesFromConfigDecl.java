@@ -246,9 +246,9 @@ public class GenerateSentencesFromConfigDecl {
                     .add("element", bagSort.name() + "Item")
                     .add("wrapElement", "<" + cellName + ">")
                     .add(Attribute.UNIT_KEY, "." + bagSort.name())
-                    .add(Attribute.HOOK_KEY, type + ":__")
+                    .add(Attribute.HOOK_KEY, type.toUpperCase() + ".concat")
                     .add(Attribute.FUNCTION_KEY);
-            String unitHook = type + ":." + type, elementHook = type + ":" + type + "Item";
+            String unitHook = type.toUpperCase() + ".unit", elementHook = type.toUpperCase() + ".element";
             switch(type) {
             case "Set":
                 bagAtt = bagAtt.add(Attribute.IDEMPOTENT_KEY, "");

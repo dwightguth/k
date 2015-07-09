@@ -5,6 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
@@ -116,13 +117,14 @@ public class DefinitionToOcaml implements Serializable {
             "      in go c n\n" +
             "  with Stuck c' -> c'\n";
 
-    public static final ImmutableMap<String, String> hooks;
+    public static final ImmutableSet<String> hookNamespaces;
     public static final ImmutableMap<String, Function<String, String>> sortHooks;
     public static final ImmutableMap<String, Function<Sort, String>> sortVarHooks;
     public static final ImmutableMap<String, String> predicateRules;
 
     static {
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+/*        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         builder.put("Map:_|->_", "k1 :: k2 :: [] -> [Map (sort,(collection_for lbl),(KMap.singleton k1 k2))]");
         builder.put("Map:.Map", "[] -> [Map (sort,(collection_for lbl),KMap.empty)]");
         builder.put("Map:__", "([Map (s,l1,k1)]) :: ([Map (_,l2,k2)]) :: [] when (l1 = l2) -> [Map (s,l1,(KMap.merge (fun k a b -> match a, b with None, None -> None | None, Some v | Some v, None -> Some v | Some v1, Some v2 when v1 = v2 -> Some v1) k1 k2))]");
@@ -236,45 +238,47 @@ public class DefinitionToOcaml implements Serializable {
         builder.put("#CONVERSION:string2int", "[String s] :: [] -> [Int (Z.from_string s)]");
         builder.put("#CONVERSION:string2base", "[String s] :: [Int i] :: [] -> [Int (Z.from_string_base (Z.to_int i) s)]");
         builder.put("#CONVERSION:base2string", "[Int i] :: [Int base] :: [] -> [String (Z.to_string_base (Z.to_int base) i)]");
-        builder.put("#FRESH:fresh", "[String sort] :: [] -> let res = freshFunction sort config !freshCounter in freshCounter := Z.add !freshCounter Z.one; res");
-        hooks = builder.build();
+        builder.put("#FRESH:fresh", "[String sort] :: [] -> let res = freshFunction sort config !freshCounter in freshCounter := Z.add !freshCounter Z.one; res");*/
+        builder.add("BOOL").add("FLOAT").add("INT").add("IO").add("K").add("KEQUAL").add("KREFLECTION").add("LIST");
+        builder.add("MAP").add("MINT").add("SET").add("STRING");
+        hookNamespaces = builder.build();
     }
 
     static {
         ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
-        builder.put("#BOOL", s -> "(Bool " + s + ")");
-        builder.put("#INT", s -> "(Int (Z.from_string \"" + s + "\"))");
-        builder.put("#FLOAT", s -> {
+        builder.put("BOOL.Bool", s -> "(Bool " + s + ")");
+        builder.put("INT.Int", s -> "(Int (Z.from_string \"" + s + "\"))");
+        builder.put("FLOAT.Float", s -> {
             Pair<BigFloat, Integer> f = FloatBuiltin.parseKFloat(s);
             return "(round_to_range(Float ((FR.from_string_prec_base " + f.getLeft().precision() + " GMP_RNDN 10 \"" + f.getLeft().toString() + "\"), " + f.getRight() + ", " + f.getLeft().precision() + ")))";
         });
-        builder.put("#STRING", s -> "(String " + enquoteString(StringUtil.unquoteKString(StringUtil.unquoteKString("\"" + s + "\""))) + ")");
+        builder.put("STRING.String", s -> "(String " + enquoteString(StringUtil.unquoteKString(StringUtil.unquoteKString("\"" + s + "\""))) + ")");
         sortHooks = builder.build();
     }
 
     static {
         ImmutableMap.Builder<String, Function<Sort, String>> builder = ImmutableMap.builder();
-        builder.put("#BOOL", s -> "Bool _");
-        builder.put("#INT", s -> "Int _");
-        builder.put("#FLOAT", s -> "Float _");
-        builder.put("#STRING", s -> "String _");
-        builder.put("List", s -> "List (" + encodeStringToIdentifier(s) + ",_,_)");
-        builder.put("Map", s -> "Map (" + encodeStringToIdentifier(s) + ",_,_)");
-        builder.put("Set", s -> "Set (" + encodeStringToIdentifier(s) + ",_,_)");
+        builder.put("BOOL.Bool", s -> "Bool _");
+        builder.put("INT.Int", s -> "Int _");
+        builder.put("FLOAT.Float", s -> "Float _");
+        builder.put("STRING.String", s -> "String _");
+        builder.put("LIST.List", s -> "List (" + encodeStringToIdentifier(s) + ",_,_)");
+        builder.put("MAP.Map", s -> "Map (" + encodeStringToIdentifier(s) + ",_,_)");
+        builder.put("SET.Set", s -> "Set (" + encodeStringToIdentifier(s) + ",_,_)");
         sortVarHooks = builder.build();
     }
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("org.kframework.kore.K", "k1 :: [] -> [Bool true]");
-        builder.put("org.kframework.kore.KItem", "[k1] :: [] -> [Bool true]");
-        builder.put("#INT", "[Int _] :: [] -> [Bool true]");
-        builder.put("#FLOAT", "[Float _] :: [] -> [Bool true]");
-        builder.put("#STRING", "[String _] :: [] -> [Bool true]");
-        builder.put("#BOOL", "[Bool _] :: [] -> [Bool true]");
-        builder.put("Map", "[Map (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
-        builder.put("Set", "[Set (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
-        builder.put("List", "[List (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
+        builder.put("K.K", "k1 :: [] -> [Bool true]");
+        builder.put("K.KItem", "[k1] :: [] -> [Bool true]");
+        builder.put("INT.Int", "[Int _] :: [] -> [Bool true]");
+        builder.put("FLOAT.Float", "[Float _] :: [] -> [Bool true]");
+        builder.put("STRING.String", "[String _] :: [] -> [Bool true]");
+        builder.put("BOOL.Bool", "[Bool _] :: [] -> [Bool true]");
+        builder.put("MAP.Map", "[Map (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
+        builder.put("SET.Set", "[Set (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
+        builder.put("LIST.List", "[List (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
         predicateRules = builder.build();
     }
 
@@ -464,6 +468,8 @@ public class DefinitionToOcaml implements Serializable {
         sb.append("\n and stringSort = ").append(STRING);
         sb.append("\n and intSort = ").append(INT);
         sb.append("\n and floatSort = ").append(FLOAT);
+        sb.append("\n and setSort = ").append(SET);
+        sb.append("\n and setConcatLabel = ").append(SET_CONCAT);
         return sb.toString();
     }
 
@@ -514,12 +520,13 @@ public class DefinitionToOcaml implements Serializable {
                 }
             }
             sb.append(" in match c with \n");
-            String hook = mainModule.attributesFor().apply(functionLabel).<String>getOptional(Attribute.HOOK_KEY).orElse("");
-            if (hooks.containsKey(hook)) {
-                sb.append("| ");
-                sb.append(hooks.get(hook));
-                sb.append("\n");
-            } else if (!hook.isEmpty()) {
+            String hook = mainModule.attributesFor().apply(functionLabel).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
+            String namespace = hook.substring(0, hook.indexOf('.'));
+            String function = hook.substring(namespace.length() + 1);
+            if (hookNamespaces.contains(namespace)) {
+                sb.append("| _ -> try ").append(namespace).append(".hook_").append(function).append(" c lbl sort config freshFunction\n");
+                sb.append("with Not_implemented -> match c with \n");
+            } else if (!hook.equals(".")) {
                 kem.registerCompilerWarning("missing entry for hook " + hook);
             }
             if (predicateRules.containsKey(sortHook)) {
@@ -1150,7 +1157,7 @@ public class DefinitionToOcaml implements Serializable {
             boolean stack = inBooleanExp;
             String hook = mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
             // use native &&, ||, not where possible
-            if (useNativeBooleanExp && (hook.equals("#BOOL:_andBool_") || hook.equals("#BOOL:_andThenBool_"))) {
+            if (useNativeBooleanExp && (hook.equals("BOOL.and") || hook.equals("BOOL.andThen"))) {
                 assert k.klist().items().size() == 2;
                 if (!stack) {
                     sb.append("[Bool ");
@@ -1164,7 +1171,7 @@ public class DefinitionToOcaml implements Serializable {
                 if (!stack) {
                     sb.append("]");
                 }
-            } else if (useNativeBooleanExp && (hook.equals("#BOOL:_orBool_") || hook.equals("#BOOL:_orElseBool_"))) {
+            } else if (useNativeBooleanExp && (hook.equals("BOOL.or") || hook.equals("BOOL.orElse"))) {
                 assert k.klist().items().size() == 2;
                 if (!stack) {
                     sb.append("[Bool ");
@@ -1178,7 +1185,7 @@ public class DefinitionToOcaml implements Serializable {
                 if (!stack) {
                     sb.append("]");
                 }
-            } else if (useNativeBooleanExp && hook.equals("#BOOL:notBool_")) {
+            } else if (useNativeBooleanExp && hook.equals("BOOL.not")) {
                 assert k.klist().items().size() == 1;
                 if (!stack) {
                     sb.append("[Bool ");
