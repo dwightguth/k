@@ -114,7 +114,7 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
                         "-I", files.resolveKBase("include/ocaml/").getAbsolutePath(),
                         files.resolveKBase("include/ocaml/prelude.cmx").getAbsolutePath(), name);
             } else {
-                pb = pb.command("ocamlc.opt", "-o", "a.out", "gmp.cma", "str.cma", "unix.cma", "-safe-string",
+                pb = pb.command("ocamlc.opt", "-g", "-o", "a.out", "gmp.cma", "str.cma", "unix.cma", "-safe-string",
                         files.resolveKompiled("constants.cmo").getAbsolutePath(), files.resolveKBase("include/ocaml/prelude.cmo").getAbsolutePath(),
                         files.resolveKompiled("def.cmo").getAbsolutePath(),
                         "-I", "+gmp", "-I", files.resolveKompiled(".").getAbsolutePath(),
