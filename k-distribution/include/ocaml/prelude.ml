@@ -178,7 +178,7 @@ struct
     | _ -> raise Not_implemented
   let hook_difference c lbl sort config ff = match c with
       [Map (s,l1,k1)] :: [Map (_,l2,k2)] :: []
-        when (l1 = l2) -> [Map (s,l1,(KMap.filter (fun k v -> try (compare (KMap.find k k2) v) != 0 with Not_found -> true) k1))]
+        when (l1 = l2) -> [Map (s,l1,(KMap.filter (fun k v -> try (compare (KMap.find k k2) v) <> 0 with Not_found -> true) k1))]
     | _ -> raise Not_implemented
   let hook_keys c lbl sort config ff = match c with 
       [Map (_,_,k1)] :: [] -> [Set (Constants.setSort, Constants.setConcatLabel,(KMap.fold (fun k v -> KSet.add k) k1 KSet.empty))]
@@ -298,7 +298,7 @@ struct
       k1 :: k2 :: [] -> [Bool ((compare k1 k2) = 0)]
     | _ -> raise Not_implemented
   let hook_ne c lbl sort config ff = match c with
-      k1 :: k2 :: [] -> [Bool ((compare k1 k2) != 0)]
+      k1 :: k2 :: [] -> [Bool ((compare k1 k2) <> 0)]
     | _ -> raise Not_implemented
   let hook_ite c lbl sort config ff = match c with
       [Bool t] :: k1 :: k2 :: [] -> if t then k1 else k2
@@ -360,7 +360,7 @@ struct
       [Bool b1] :: [Bool b2] :: [] -> [Bool ((not b1) || b2)]
     | _ -> raise Not_implemented
   let hook_ne c lbl sort config ff = match c with
-      [Bool b1] :: [Bool b2] :: [] -> [Bool (b1 != b2)]
+      [Bool b1] :: [Bool b2] :: [] -> [Bool (b1 <> b2)]
     | _ -> raise Not_implemented
   let hook_eq c lbl sort config ff = match c with
       [Bool b1] :: [Bool b2] :: [] -> [Bool (b1 = b2)]
@@ -389,7 +389,7 @@ struct
       [String s1] :: [String s2] :: [] -> [Bool (s1 = s2)]
     | _ -> raise Not_implemented
   let hook_ne c lbl sort config ff = match c with
-      [String s1] :: [String s2] :: [] -> [Bool (s1 != s2)]
+      [String s1] :: [String s2] :: [] -> [Bool (s1 <> s2)]
     | _ -> raise Not_implemented
   let hook_chr c lbl sort config ff = match c with
       [Int i] :: [] -> [String (String.make 1 (Char.chr (Z.to_int i)))]
@@ -453,7 +453,7 @@ struct
       [Int a] :: [Int b] :: [] -> [Bool ((Z.compare a b) = 0)]
     | _ -> raise Not_implemented
   let hook_ne c lbl sort config ff = match c with
-      [Int a] :: [Int b] :: [] -> [Bool ((Z.compare a b) != 0)]
+      [Int a] :: [Int b] :: [] -> [Bool ((Z.compare a b) <> 0)]
     | _ -> raise Not_implemented
   let hook_and c lbl sort config ff = match c with
       [Int a] :: [Int b] :: [] -> [Int (Z.band a b)]
