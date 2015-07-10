@@ -135,8 +135,8 @@ and print_kitem(c: kitem) : string = match c with
 module Subst = Map.Make(String)
 let print_subst (out: out_channel) (c: k Subst.t) : unit = 
   output_string out "1\n"; Subst.iter (fun v k -> output_string out (v ^ "\n" ^ (print_k k) ^ "\n")) c
-let emin (exp: int) (prec: int) : int = (- (1 lsl exp - 1)) + 4 - prec
-let emax (exp: int) : int = 1 lsl exp - 1
+let emin (exp: int) (prec: int) : int = (- (1 lsl (exp - 1))) + 4 - prec
+let emax (exp: int) : int = 1 lsl (exp - 1)
 let round_to_range (c: kitem) : kitem = match c with 
     Float(f,e,p) -> let (cr, t) = (FR.check_range p GMP_RNDN (emin e p) (emax e) f) in Float((FR.subnormalize cr t GMP_RNDN),e,p)
   | _ -> raise (Invalid_argument "round_to_range")
@@ -184,7 +184,7 @@ struct
       [Map (_,_,k1)] :: [] -> [Set (Constants.setSort, Constants.setConcatLabel,(KMap.fold (fun k v -> KSet.add k) k1 KSet.empty))]
     | _ -> raise Not_implemented
   let hook_values c lbl sort config ff = match c with 
-      [Map (_,_,k1)] :: [] -> [Set (Constants.setSort, Constants.setConcatLabel,(KMap.fold (fun key -> KSet.add) k1 KSet.empty))]
+      [Map (_,_,k1)] :: [] -> [List (Constants.listSort, Constants.listConcatLabel,(match List.split (KMap.bindings k1) with (_,vs) -> vs))]
     | _ -> raise Not_implemented
   let hook_choice c lbl sort config ff = match c with 
       [Map (_,_,k1)] :: [] -> (match KMap.choose k1 with (k, _) -> k)
@@ -513,12 +513,12 @@ struct
       [Float (f,_,_)] :: [] -> [Bool (FR.is_nan f)]
     | _ -> raise Not_implemented
   let hook_maxValue c lbl sort config ff = match c with
-      [Int prec] :: [Int exp] :: [] -> 
-        [round_to_range(Float ((FR.nexttoward (FR.from_string_prec_base (Z.to_int prec) GMP_RNDN 10 "inf") FR.zero),(Z.to_int exp),(Z.to_int prec)))]
+      [Int prec] :: [Int exp] :: [] -> let e = Z.to_int exp and p = Z.to_int prec in
+        [round_to_range(Float ((FR.nexttoward (emin e p) (emax e) (FR.from_string_prec_base p GMP_RNDN 10 "inf") FR.zero),e,p))]
     | _ -> raise Not_implemented
   let hook_minValue c lbl sort config ff = match c with
-      [Int prec] :: [Int exp] :: [] -> 
-        [round_to_range(Float ((FR.nexttoward FR.zero (FR.from_string_prec_base (Z.to_int prec) GMP_RNDN 10 "inf")),(Z.to_int exp),(Z.to_int prec)))]
+      [Int prec] :: [Int exp] :: [] -> let e = Z.to_int exp and p = Z.to_int prec in
+        [round_to_range(Float ((FR.nexttoward (emin e p) (emax e) FR.zero (FR.from_string_prec_base p GMP_RNDN 10 "inf")),e,p))]
     | _ -> raise Not_implemented
   let hook_round c lbl sort config ff = match c with
       [Float (f,_,_)] :: [Int prec] :: [Int exp] :: [] ->
@@ -553,6 +553,9 @@ struct
     | _ -> raise Not_implemented
   let hook_exp c lbl sort config ff = match c with
       [Float (f,e,p)] :: [] -> [round_to_range(Float ((FR.exp_prec p GMP_RNDN f),e,p))]
+    | _ -> raise Not_implemented
+  let hook_log c lbl sort config ff = match c with
+      [Float (f,e,p)] :: [] -> [round_to_range(Float ((FR.log_prec p GMP_RNDN f),e,p))]
     | _ -> raise Not_implemented
   let hook_neg c lbl sort config ff = match c with
       [Float (f,e,p)] :: [] -> [round_to_range(Float ((FR.neg_prec p GMP_RNDN f),e,p))]
@@ -612,6 +615,5 @@ struct
   let hook_sign c lbl sort config ff = raise Not_implemented
   let hook_significand c lbl sort config ff = raise Not_implemented
   let hook_atan2 c lbl sort config ff = raise Not_implemented
-  let hook_log c lbl sort config ff = raise Not_implemented
   let hook_exponent c lbl sort config ff = raise Not_implemented
 end

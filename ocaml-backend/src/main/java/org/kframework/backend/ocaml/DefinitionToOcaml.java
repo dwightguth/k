@@ -111,6 +111,8 @@ public class DefinitionToOcaml implements Serializable {
     public static final String FLOAT = encodeStringToIdentifier(Sort("Float"));
     public static final String SET = encodeStringToIdentifier(Sort("Set"));
     public static final String SET_CONCAT = encodeStringToIdentifier(KLabel("_Set_"));
+    public static final String LIST = encodeStringToIdentifier(Sort("List"));
+    public static final String LIST_CONCAT = encodeStringToIdentifier(KLabel("_List_"));
 
     public static final String postlude = "let run c n=\n" +
             "  try let rec go c n = if n = 0 then c else go (step c) (n - 1)\n" +
@@ -355,6 +357,8 @@ public class DefinitionToOcaml implements Serializable {
         sb.append("\n and floatSort = ").append(FLOAT);
         sb.append("\n and setSort = ").append(SET);
         sb.append("\n and setConcatLabel = ").append(SET_CONCAT);
+        sb.append("\n and listSort = ").append(LIST);
+        sb.append("\n and listConcatLabel = ").append(LIST_CONCAT);
         return sb.toString();
     }
 

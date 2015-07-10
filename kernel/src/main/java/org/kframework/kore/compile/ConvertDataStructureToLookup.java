@@ -141,7 +141,10 @@ public class ConvertDataStructureToLookup {
         } else if (requires.equals(BooleanUtils.TRUE) && sideCondition.isPresent()) {
             return sideCondition.get();
         } else {
-            return BooleanUtils.and(requires, sideCondition.get());
+            // we order lookups before the requires clause so that the fresh constant
+            // matching side condition remains last. This is necessary in order to
+            // ensure that fresh constants in rule RHSs are consecutive
+            return BooleanUtils.and(sideCondition.get(), requires);
         }
     }
 
@@ -168,8 +171,10 @@ public class ConvertDataStructureToLookup {
                 gatherVars(k2.klist().items().get(0), lhsVars);
                 for (KVariable var : rhsVars) {
                     if (lhsVars.contains(var)) {
-                        edges.add(Tuple2.apply(k2, k1));
-                        break;
+                        if (k1 != k2) {
+                            edges.add(Tuple2.apply(k2, k1));
+                            break;
+                        }
                     }
                 }
             }
@@ -435,6 +440,7 @@ public class ConvertDataStructureToLookup {
                         }
                     }
                     KVariable set = newDotVariable();
+                    K accum = set;
                     // Ctx[SetItem(K1) K2] => Ctx[S] requires K1 := choice(S) andBool K2 := S -Set SetItem(K1)
                     // Ctx[SetItem(5) SetItem(6) K] => Ctx[S] requires 5 in S andBool 6 in S andBool K := S -Set SetItem(5) SetItem(6)
                     for (K element : elements) {
@@ -442,18 +448,18 @@ public class ConvertDataStructureToLookup {
                         Multiset<KVariable> vars = HashMultiset.create();
                         gatherVars(element, vars);
                         if (vars.isEmpty()) {
-                            state.add(KApply(KLabel("_in_"), element, set));
+                            state.add(KApply(KLabel("_in_"), element, accum));
                         } else {
                             //set choice
-                            state.add(KApply(KLabel("#setChoice"), element, set));
+                            state.add(KApply(KLabel("#setChoice"), element, accum));
                         }
+                        accum = KApply(KLabel("_-Set_"), accum, KApply(elementLabel, element));
                     }
                     KLabel unit = KLabel(m.attributesFor().apply(collectionLabel).<String>get("unit").get());
-                    K removeElements = elements.stream().reduce(KApply(unit), (k1, k2) -> KApply(KLabel("_Set_"), KApply(elementLabel, k1), KApply(elementLabel, k2)));
                     if (frame != null) {
-                        state.add(KApply(KLabel("#match"), frame, KApply(KLabel("_-Set_"), set, removeElements)));
+                        state.add(KApply(KLabel("#match"), frame, accum));
                     } else {
-                        state.add(KApply(KLabel("_==K_"), KApply(unit), KApply(KLabel("_-Set_"), set, removeElements)));
+                        state.add(KApply(KLabel("_==K_"), KApply(unit), accum));
                     }
                     if (lhsOf == null) {
                         // An outermost set may contain nested rewrites, so the term
