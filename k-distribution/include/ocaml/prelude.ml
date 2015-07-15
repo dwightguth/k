@@ -40,7 +40,7 @@ struct
            | String of string
            | Bool of bool
            | Bottom
-    let compare c1 c2 = Pervasives.compare c1.tag c2.tag
+    let compare c1 c2 = c2.tag - c1.tag
 end
 
 module KMap = Map.Make(K)
@@ -50,11 +50,11 @@ module KCompare : (HashedType with type t = K.kitem list) =
 struct
   open K
   type t = kitem list
-  let rec equal c1 c2 = match (c1, c2) with
+  let rec equal_klist c1 c2 = match (c1, c2) with
   | [], [] -> true
-  | hd1 :: tl1, hd2 :: tl2 -> equal_kitem hd1 hd2 && equal tl1 tl2
+  | hd1 :: tl1, hd2 :: tl2 -> hd1.tag = hd2.tag && equal_klist tl1 tl2
   | _ -> false
-  and equal_kitem c1 c2 = match (c1, c2) with
+  let equal_kitem c1 c2 = match (c1, c2) with
   | KApply (kl1, k1), KApply (kl2, k2) -> kl1 = kl2 && equal_klist k1 k2
   | KToken (s1, st1), KToken (s2, st2) -> s1 = s2 && st1 = st2
   | InjectedKLabel kl1, InjectedKLabel kl2 -> kl1 = kl2
@@ -67,11 +67,28 @@ struct
   | Bool b1, Bool b2 -> b1 = b2
   | Bottom, Bottom -> true
   | _ -> false
-  and equal_klist c1 c2 = match (c1, c2) with
+  let rec equal c1 c2 = match (c1, c2) with
   | [], [] -> true
-  | hd1 :: tl1, hd2 :: tl2 -> hd1.tag = hd2.tag && equal_klist tl1 tl2
+  | hd1 :: tl1, hd2 :: tl2 -> equal_kitem hd1 hd2 && equal tl1 tl2
   | _ -> false
-  let hash c = Hashtbl.hash c
+  let rec hash_klist c = match c with
+  | [] -> 1
+  | hd :: tl -> (hash_klist tl) * 31 + hd.hkey
+  let hash_kitem c = match c with
+  | KApply (kl, k) -> (Hashtbl.hash kl) * 37 + (hash_klist k)
+  | KToken (s, st) -> (Hashtbl.hash s) * 41 + (Hashtbl.hash st)
+  | InjectedKLabel kl -> Hashtbl.hash kl
+  | Map (_, l, m) -> (Hashtbl.hash l) * 43 + (KMap.fold (fun k v sum -> sum + (k.hkey lxor v.hkey)) m 0)
+  | List (_, lbl, l) -> (Hashtbl.hash l) * 47 + (hash_klist l)
+  | Set (_, l, s) -> (Hashtbl.hash l) * 53 + (KSet.fold (fun k sum -> sum + k.hkey)) s 0
+  | Int i -> Hashtbl.hash i
+  | Float (f,e,p) -> ((Hashtbl.hash e) * 59 + Hashtbl.hash p) * 59 + Hashtbl.hash f
+  | String s -> Hashtbl.hash s
+  | Bool b -> Hashtbl.hash b
+  | Bottom -> 2
+  let rec hash c = match c with
+  | [] -> 1
+  | hd :: tl -> (hash tl) * 31 + (hash_kitem hd)
 end
 
 module KHashCons = Hashcons.Make(KCompare)

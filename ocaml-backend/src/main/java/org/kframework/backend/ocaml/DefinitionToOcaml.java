@@ -587,15 +587,15 @@ public class DefinitionToOcaml implements Serializable {
         FUNCTION, ANYWHERE, REGULAR, PATTERN
     }
 
-    private static Map<K, String> CONSTANT_CACHES = ImmutableMap.of(KSequence(BooleanUtils.TRUE), "true_k", KSequence(BooleanUtils.FALSE), "false_k");
+    private Map<K, String> constants = ImmutableMap.of(KSequence(BooleanUtils.TRUE), "true_k", KSequence(BooleanUtils.FALSE), "false_k");
 
-    private static class VarInfo {
+    private class VarInfo {
         final SetMultimap<KVariable, String> vars;
         final Map<String, KLabel> listVars;
         final Set<K> kitemListVars;
         final Map<K, String> ksequenceCache;
 
-        VarInfo() { this(HashMultimap.create(), new HashMap<>(), new HashSet<>(), new HashMap<>(CONSTANT_CACHES)); }
+        VarInfo() { this(HashMultimap.create(), new HashMap<>(), new HashSet<>(), new HashMap<>(constants)); }
 
         VarInfo(VarInfo vars) {
             this(HashMultimap.create(vars.vars), new HashMap<>(vars.listVars), new HashSet<>(vars.kitemListVars), new HashMap<>(vars.ksequenceCache));
