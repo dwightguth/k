@@ -45,7 +45,7 @@ public class OcamlBackend implements Consumer<CompiledDefinition> {
             FileUtils.copyFile(files.resolveKBase("include/ocaml/prelude.ml"), files.resolveKompiled("prelude.ml"));
             Process ocamlopt = files.getProcessBuilder()
                     .command((DefinitionToOcaml.ocamlopt ? "ocamlopt.opt" : "ocamlc.opt"), "-c", "-g", "-I", "+gmp",
-                            "-safe-string", "-w", "-26-11",
+                            "-I", "+hashcons", "-safe-string", "-w", "-26-11",
                             "constants.ml", "prelude.ml", "def.ml")
                     .directory(files.resolveKompiled("."))
                     .inheritIO()

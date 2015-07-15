@@ -104,7 +104,6 @@ public class DefinitionToOcaml implements Serializable {
             "           | Bool of bool\n" +
             "           | Bottom\n";
 
-    public static final String TRUE = "(Bool true)";
     public static final String BOOL = encodeStringToIdentifier(Sort("Bool"));
     public static final String STRING = encodeStringToIdentifier(Sort("String"));
     public static final String INT = encodeStringToIdentifier(Sort("Int"));
@@ -157,15 +156,15 @@ public class DefinitionToOcaml implements Serializable {
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("K.K", "k1 :: [] -> [Bool true]");
-        builder.put("K.KItem", "[k1] :: [] -> [Bool true]");
-        builder.put("INT.Int", "[Int _] :: [] -> [Bool true]");
-        builder.put("FLOAT.Float", "[Float _] :: [] -> [Bool true]");
-        builder.put("STRING.String", "[String _] :: [] -> [Bool true]");
-        builder.put("BOOL.Bool", "[Bool _] :: [] -> [Bool true]");
-        builder.put("MAP.Map", "[Map (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
-        builder.put("SET.Set", "[Set (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
-        builder.put("LIST.List", "[List (s,_,_)] :: [] when (s = pred_sort) -> [Bool true]");
+        builder.put("K.K", "k1 :: [] -> h [Bool true]");
+        builder.put("K.KItem", "{node=[k1]} :: [] -> h [Bool true]");
+        builder.put("INT.Int", "{node=[Int _]} :: [] -> h [Bool true]");
+        builder.put("FLOAT.Float", "{node=[Float _]} :: [] -> h [Bool true]");
+        builder.put("STRING.String", "{node=[String _]} :: [] -> h [Bool true]");
+        builder.put("BOOL.Bool", "{node=[Bool _]} :: [] -> h [Bool true]");
+        builder.put("MAP.Map", "{node=[Map (s,_,_)]} :: [] when (s = pred_sort) -> h [Bool true]");
+        builder.put("SET.Set", "{node=[Set (s,_,_)]} :: [] when (s = pred_sort) -> h [Bool true]");
+        builder.put("LIST.List", "{node=[List (s,_,_)]} :: [] when (s = pred_sort) -> h [Bool true]");
         predicateRules = builder.build();
     }
 
@@ -246,20 +245,20 @@ public class DefinitionToOcaml implements Serializable {
 
     public String execute(K k, int depth, String file) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " in output_string out (print_k(try(run(");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\nopen Hashcons\n");
+        sb.append("let _ = let config = bottom in let out = open_out " + enquoteString(file) + " in output_string out (print_k((try(run(");
         convert(sb, true, new VarInfo(), false, false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
-        sb.append(") (").append(depth).append(")) with Stuck c' -> c'))");
+        sb.append(") (").append(depth).append(")) with Stuck c' -> c').node))");
         return sb.toString();
     }
 
     public String match(K k, Rule r, String file) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\nopen Hashcons\n");
         sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
         convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + "in (try print_subst out (try_match(");
+        sb.append("let _ = let config = bottom in let out = open_out " + enquoteString(file) + "in (try print_subst out (try_match(");
         convert(sb, true, new VarInfo(), false, false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
         sb.append("\n)) with Stuck c -> output_string out \"0\\n\")");
         return sb.toString();
@@ -267,13 +266,13 @@ public class DefinitionToOcaml implements Serializable {
 
     public String executeAndMatch(K k, int depth, Rule r, String file, String substFile) {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Def\nopen Hashcons\n");
         sb.append("let try_match (c: k) : k Subst.t = let config = c in match c with \n");
         convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out " + enquoteString(file) + " and subst = open_out " + enquoteString(substFile) + " in (try print_subst subst (try_match(let res = run(");
+        sb.append("let _ = let config = bottom in let out = open_out " + enquoteString(file) + " and subst = open_out " + enquoteString(substFile) + " in (try print_subst subst (try_match(let res = run(");
         convert(sb, true, new VarInfo(), false, false).apply(new LiftToKSequence().lift(expandMacros.expand(k)));
-        sb.append("\n) (").append(depth).append(") in output_string out (print_k(res)); res)) with Stuck c -> output_string out (print_k(c)); output_string subst \"0\\n\")");
+        sb.append("\n) (").append(depth).append(") in output_string out (print_k(res.node)); res)) with Stuck c -> output_string out (print_k(c.node)); output_string subst \"0\\n\")");
         return sb.toString();
     }
 
@@ -364,7 +363,7 @@ public class DefinitionToOcaml implements Serializable {
 
     public String definition() {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\n");
+        sb.append("open Prelude\nopen Constants\nopen Prelude.K\nopen Gmp\nopen Hashcons\n");
         SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
         ListMultimap<KLabel, Rule> anywhereRules = ArrayListMultimap.create();
         anywhereKLabels = new HashSet<>();
@@ -426,7 +425,7 @@ public class DefinitionToOcaml implements Serializable {
 
             convertFunction( functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList()),
                     sb, functionName, RuleType.FUNCTION);
-            sb.append("| _ -> raise (Stuck [KApply(lbl, c)])\n");
+            sb.append("| _ -> raise (Stuck (h [KApply(lbl, c)]))\n");
             conn = "and ";
         }
         for (KLabel functionLabel : anywhereKLabels) {
@@ -436,7 +435,7 @@ public class DefinitionToOcaml implements Serializable {
             encodeStringToIdentifier(sb, functionLabel);
             sb.append(" in match c with \n");
             convertFunction(anywhereRules.get(functionLabel), sb, functionName, RuleType.ANYWHERE);
-            sb.append("| _ -> [KApply(lbl, c)]\n");
+            sb.append("| _ -> h [KApply(lbl, c)]\n");
             conn = "and ";
         }
 
@@ -445,7 +444,7 @@ public class DefinitionToOcaml implements Serializable {
             sb.append("| \"").append(sort.name()).append("\" -> (");
             KLabel freshFunction = mainModule.freshFunctionFor().apply(sort);
             encodeStringToFunction(sb, freshFunction.name());
-            sb.append(" ([Int counter] :: []) config Guard.empty)\n");
+            sb.append(" ((h [Int counter]) :: []) config Guard.empty)\n");
         }
         sb.append("and eval (c: kitem) (config: k) : k = match c with KApply(lbl, kl) -> (match lbl with \n");
         for (KLabel label : Sets.union(functions, anywhereKLabels)) {
@@ -455,8 +454,8 @@ public class DefinitionToOcaml implements Serializable {
             encodeStringToFunction(sb, label.name());
             sb.append(" kl config Guard.empty\n");
         }
-        sb.append("| _ -> [c])\n");
-        sb.append("| _ -> [c]\n");
+        sb.append("| _ -> h [c])\n");
+        sb.append("| _ -> h [c]\n");
         sb.append("let rec lookups_step (c: k) (config: k) (guards: Guard.t) : k = match c with \n");
         List<Rule> sortedRules = stream(mainModule.rules())
                 .sorted((r1, r2) -> ComparisonChain.start()
@@ -588,19 +587,25 @@ public class DefinitionToOcaml implements Serializable {
         FUNCTION, ANYWHERE, REGULAR, PATTERN
     }
 
+    private static Map<K, String> CONSTANT_CACHES = ImmutableMap.of(KSequence(BooleanUtils.TRUE), "true_k", KSequence(BooleanUtils.FALSE), "false_k");
+
     private static class VarInfo {
         final SetMultimap<KVariable, String> vars;
         final Map<String, KLabel> listVars;
+        final Set<K> kitemListVars;
+        final Map<K, String> ksequenceCache;
 
-        VarInfo() { this(HashMultimap.create(), new HashMap<>()); }
+        VarInfo() { this(HashMultimap.create(), new HashMap<>(), new HashSet<>(), new HashMap<>(CONSTANT_CACHES)); }
 
         VarInfo(VarInfo vars) {
-            this(HashMultimap.create(vars.vars), new HashMap<>(vars.listVars));
+            this(HashMultimap.create(vars.vars), new HashMap<>(vars.listVars), new HashSet<>(vars.kitemListVars), new HashMap<>(vars.ksequenceCache));
         }
 
-        VarInfo(SetMultimap<KVariable, String> vars, Map<String, KLabel> listVars) {
+        VarInfo(SetMultimap<KVariable, String> vars, Map<String, KLabel> listVars, Set<K> kitemListVars, Map<K, String> ksequenceCache) {
             this.vars = vars;
             this.listVars = listVars;
+            this.kitemListVars = kitemListVars;
+            this.ksequenceCache = ksequenceCache;
         }
     }
 
@@ -810,11 +815,11 @@ public class DefinitionToOcaml implements Serializable {
                 sb.append("(Subst.add \"").append(var.name()).append("\" ");
                 boolean isList = isList(var, false, true, vars, false);
                 if (!isList) {
-                    sb.append("[");
+                    sb.append("(h [");
                 }
                 sb.append(vars.vars.get(var).iterator().next());
                 if (!isList) {
-                    sb.append("]");
+                    sb.append("])");
                 }
                 sb.append(" ");
             }
@@ -826,7 +831,7 @@ public class DefinitionToOcaml implements Serializable {
             convert(sb, true, vars, false, type == RuleType.ANYWHERE).apply(right);
         }
         if (type == RuleType.ANYWHERE) {
-            sb.append(" with [item] -> eval item config)");
+            sb.append(" with {node=[item]} -> eval item config)");
         }
         sb.append(suffix);
         sb.append("\n");
@@ -876,7 +881,7 @@ public class DefinitionToOcaml implements Serializable {
                     sb.append(" -> (let e = ");
                     convert(sb, true, vars, false, false).apply(k.klist().items().get(1));
                     sb.append(" in match e with \n");
-                    sb.append("| [Bottom] -> ").append(h.reapply).append("\n");
+                    sb.append("| {node=[Bottom]} -> ").append(h.reapply).append("\n");
                     String prefix = sb.toString();
                     sb = new StringBuilder();
                     sb.append("| ");
@@ -886,9 +891,9 @@ public class DefinitionToOcaml implements Serializable {
                     results.add(new Lookup(prefix, pattern, suffix));
                     h.first = false;
                 } else if (k.klabel().name().equals("#setChoice")) {
-                    choose(k, "| [Set (_,_,collection)] -> let choice = (KSet.fold (fun e result -> ");
+                    choose(k, "| {node=[Set (_,_,collection)]} -> let choice = (KSet.fold (fun e result -> ");
                 } else if (k.klabel().name().equals("#mapChoice")) {
-                    choose(k, "| [Map (_,_,collection)] -> let choice = (KMap.fold (fun e v result -> ");
+                    choose(k, "| {node=[Map (_,_,collection)]} -> let choice = (KMap.fold (fun e v result -> ");
                 }
                 return super.apply(k);
             }
@@ -905,15 +910,15 @@ public class DefinitionToOcaml implements Serializable {
                 if (h.first) {
                     sb.append("let rec stepElt = fun guards -> ");
                 }
-                sb.append("if (compare result [Bottom]) = 0 then (match e with ");
+                sb.append("if (compare result bottom) = 0 then (match e with ");
                 String prefix = sb.toString();
                 sb = new StringBuilder();
-                String suffix2 = "| _ -> [Bottom]) else result" + (h.first ? " in stepElt Guard.empty" : "") + ") collection [Bottom]) in if (compare choice [Bottom]) = 0 then " + h.reapply + " else choice";
+                String suffix2 = "| _ -> bottom) else result" + (h.first ? " in stepElt Guard.empty" : "") + ") collection bottom) in if (compare choice bottom) = 0 then " + h.reapply + " else choice";
                 String suffix = suffix2 + "| _ -> " + h.reapply + ")";
                 if (h.first) {
                     h.reapply = "(stepElt (Guard.add (GuardElt.Guard " + ruleNum + ") guards))";
                 } else {
-                    h.reapply = "[Bottom]";
+                    h.reapply = "bottom";
                 }
                 sb.append("| ");
                 convert(sb, false, vars, false, false).apply(k.klist().items().get(0));
@@ -987,6 +992,8 @@ public class DefinitionToOcaml implements Serializable {
         }
         sb.append(varName);
     }
+
+    private int ksequenceCounter = 0;
 
     private Visitor convert(StringBuilder sb, boolean rhs, VarInfo vars, boolean useNativeBooleanExp, boolean anywhereRule) {
         return new Visitor(sb, rhs, vars, useNativeBooleanExp, anywhereRule);
@@ -1218,15 +1225,18 @@ public class DefinitionToOcaml implements Serializable {
         @Override
         public Void apply(KVariable k) {
             if (useNativeBooleanExp && inBooleanExp) {
-                sb.append("(isTrue [");
+                sb.append("(isTrue (h [");
             }
             if (rhs) {
+                if (vars.kitemListVars.contains(k)) {
+                    sb.append("h ");
+                }
                 applyVarRhs(k, sb, vars);
             } else {
                 applyVarLhs(k, sb, vars);
             }
             if (useNativeBooleanExp && inBooleanExp) {
-                sb.append("])");
+                sb.append("]))");
             }
             return null;
         }
@@ -1259,24 +1269,61 @@ public class DefinitionToOcaml implements Serializable {
         }
 
         private void apply(List<K> items, boolean klist) {
-            for (int i = 0; i < items.size(); i++) {
-                K item = items.get(i);
-                boolean stack = topAnywherePre;
-                apply(item);
-                if (i != items.size() - 1) {
-                    if (isList(item, klist, rhs, vars, stack)) {
-                        sb.append(" @ ");
+            if (klist) {
+                for (int i = 0; i < items.size(); i++) {
+                    K item = items.get(i);
+                    apply(item);
+                    sb.append(" :: ");
+                }
+                sb.append("[]");
+            } else {
+                if (vars.ksequenceCache.containsKey(KSequence(items)) && rhs) {
+                    sb.append(vars.ksequenceCache.get(KSequence(items)));
+                    return;
+                }
+                boolean needsClosingBrace = false;
+                if (!rhs && !(items.size() == 1 && isList(items.get(0), klist, rhs, vars, topAnywherePre))) {
+                    needsClosingBrace = true;
+                    sb.append("({node=");
+                }
+                for (int i = 0; i < items.size(); i++) {
+                    K item = items.get(i);
+                    boolean stack = topAnywherePre;
+                    apply(item);
+                    if (i != items.size() - 1) {
+                        if (isList(item, klist, rhs, vars, stack)) {
+                            sb.append(" @! ");
+                        } else {
+                            if (rhs) {
+                                sb.append(" @!! ");
+                            } else {
+                                sb.append(" :: ");
+                            }
+                        }
                     } else {
-                        sb.append(" :: ");
-                    }
-                } else {
-                    if (!isList(item, klist, rhs, vars, stack)) {
-                        sb.append(" :: []");
+                        if (!isList(item, klist, rhs, vars, stack)) {
+                            if (rhs) {
+                                sb.append(" @!! dotk");
+                            } else {
+                                sb.append(" :: []");
+                            }
+                        } else if (!rhs && needsClosingBrace) {
+                            vars.kitemListVars.add(item);
+                        }
                     }
                 }
+                if (items.size() == 0) {
+                    if (rhs) {
+                        sb.append("dotk");
+                    } else {
+                        sb.append("[]");
+                    }
+                }
+                if (needsClosingBrace) {
+                    sb.append("} as ksequence").append(ksequenceCounter).append(")");
+                    vars.ksequenceCache.put(KSequence(items), "ksequence" + ksequenceCounter++);
+                }
             }
-            if (items.size() == 0)
-                sb.append("[]");
         }
 
         private void apply(Sort sort) {
