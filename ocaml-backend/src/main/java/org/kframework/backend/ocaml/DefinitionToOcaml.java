@@ -1277,14 +1277,10 @@ public class DefinitionToOcaml implements Serializable {
                 }
                 sb.append("[]");
             } else {
-                if (vars.ksequenceCache.containsKey(KSequence(items)) && rhs) {
-                    sb.append(vars.ksequenceCache.get(KSequence(items)));
-                    return;
-                }
                 boolean needsClosingBrace = false;
                 if (!rhs && !(items.size() == 1 && isList(items.get(0), klist, rhs, vars, topAnywherePre))) {
                     needsClosingBrace = true;
-                    sb.append("({node=");
+                    sb.append("{node=");
                 }
                 for (int i = 0; i < items.size(); i++) {
                     K item = items.get(i);
@@ -1320,8 +1316,7 @@ public class DefinitionToOcaml implements Serializable {
                     }
                 }
                 if (needsClosingBrace) {
-                    sb.append("} as ksequence").append(ksequenceCounter).append(")");
-                    vars.ksequenceCache.put(KSequence(items), "ksequence" + ksequenceCounter++);
+                    sb.append("}");
                 }
             }
         }
@@ -1336,6 +1331,23 @@ public class DefinitionToOcaml implements Serializable {
             } else {
                 encodeStringToIdentifier(sb, klabel);
             }
+        }
+
+        @Override
+        public Void apply(K k) {
+            if (vars.ksequenceCache.containsKey(k) && rhs && !vars.listVars.containsKey(k) && !vars.kitemListVars.contains(k) && !inBooleanExp) {
+                sb.append(vars.ksequenceCache.get(k));
+                return null;
+            }
+            if (!rhs) {
+                sb.append("(");
+            }
+            super.apply(k);
+            if (!rhs) {
+                sb.append(" as cached").append(ksequenceCounter).append(")");
+                vars.ksequenceCache.put(k, "cached" + ksequenceCounter++);
+            }
+            return null;
         }
     }
 
