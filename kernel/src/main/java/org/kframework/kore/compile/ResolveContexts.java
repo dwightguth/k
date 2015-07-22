@@ -98,6 +98,7 @@ public class ResolveContexts {
         items.add(Terminal(freezerLabel.name()));
         items.add(Terminal("("));
         for (int i = 0; i < h.vars.size(); i++) {
+
             items.add(NonTerminal(Sort("K")));
             items.add(Terminal(","));
         }
