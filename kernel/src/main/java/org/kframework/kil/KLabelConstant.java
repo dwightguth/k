@@ -2,6 +2,9 @@
 
 package org.kframework.kil;
 
+import java.util.HashMap;
+import java.util.Set;
+
 import org.kframework.compile.transformers.AddPredicates;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
@@ -9,9 +12,6 @@ import org.kframework.kil.visitors.Visitor;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.w3c.dom.Element;
-
-import java.util.HashMap;
-import java.util.Set;
 
 /**
  * AST representation of a KLabel constant.
@@ -54,14 +54,12 @@ public class KLabelConstant extends KLabel {
     public static KLabelConstant of(String label) {
         assert label != null;
 
-        synchronized(cache) {
-            KLabelConstant kLabelConstant = cache.get(label);
-            if (kLabelConstant == null) {
-                kLabelConstant = new KLabelConstant(label);
-                cache.put(label, kLabelConstant);
-            }
-            return kLabelConstant;
+        KLabelConstant kLabelConstant = cache.get(label);
+        if (kLabelConstant == null) {
+            kLabelConstant = new KLabelConstant(label);
+            cache.put(label, kLabelConstant);
         }
+        return kLabelConstant;
     }
 
     /**
