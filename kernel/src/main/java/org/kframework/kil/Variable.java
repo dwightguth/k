@@ -78,11 +78,11 @@ public class Variable extends Term {
         expectedSort = variable.expectedSort;
     }
 
-    public static Variable getAnonVar(Sort sort) {
+    public synchronized  static Variable getAnonVar(Sort sort) {
         return new Variable(GENERATED_ANON_VAR + nextVariableIndex++, sort);
     }
 
-    public static Variable getAnonVar(Sort sort, boolean freshVariable, boolean freshConstant) {
+    public synchronized static Variable getAnonVar(Sort sort, boolean freshVariable, boolean freshConstant) {
         return new Variable(GENERATED_ANON_VAR + nextVariableIndex++, sort, freshVariable, freshConstant);
     }
 
