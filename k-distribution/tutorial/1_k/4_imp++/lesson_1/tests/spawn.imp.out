@@ -1,9 +1,0 @@
-<T>
-    <k>
-        "x = " ~> HOLE, .AExps ~> print ( HOLE ) ; ~> x = read ( ) ; ~> 
-          spawn x = x / 2 ; ~> spawn x = x + 10 ; ~> print ( x, "\n" ) ;
-    </k>
-    <state>
-        x |-> 0
-    </state>
-</T>
