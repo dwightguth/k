@@ -148,7 +148,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
     public Context apply(org.kframework.kil.Context c) {
         if (syntactic)
-            return Context(KApply(KLabel("'context")), KToken(Sorts.Bool(), "true"),
+            return Context(KApply(KLabel("'context")), KToken("true", Sorts.Bool()),
                     inner.convertAttributes(c));
         return Context(inner.apply(c.getBody()), inner.applyOrTrue(c.getRequires()));
     }
@@ -160,7 +160,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
     public org.kframework.definition.Configuration apply(Configuration kilConfiguration) {
         if (syntactic)
-            return Configuration(KApply(KLabel("'configuration")), KToken(Sorts.Bool(), "true"),
+            return Configuration(KApply(KLabel("'configuration")), KToken("true", Sorts.Bool()),
                     inner.convertAttributes(kilConfiguration));
         Cell body = (Cell) kilConfiguration.getBody();
         return Configuration(inner.apply(body), inner.applyOrTrue(kilConfiguration.getEnsures()),
@@ -169,8 +169,8 @@ public class KILtoKORE extends KILTransformation<Object> {
 
     public Rule apply(org.kframework.kil.Rule r) {
         if (syntactic)
-            return Rule(KApply(KLabel("'rule")), KToken(Sorts.Bool(), "true"),
-                    KToken(Sorts.Bool(), "true"), inner.convertAttributes(r));
+            return Rule(KApply(KLabel("'rule")), KToken("true", Sorts.Bool()),
+                    KToken("true", Sorts.Bool()), inner.convertAttributes(r));
         K body = inner.apply(r.getBody());
 
         AbstractKORETransformer<Set<Tuple2<K, Sort>>> gatherSorts = new AbstractKORETransformer<Set<Tuple2<K, Sort>>>() {
@@ -196,7 +196,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
             @Override
             public Set<Tuple2<K, Sort>> apply(KVariable k) {
-                return (Set<Tuple2<K, Sort>>) k.att().<String>getOptional("sort")
+                return (Set<Tuple2<K, Sort>>) k.att().<String>getOptional(Attribute.SORT_KEY)
                         .map(x -> Sets.<Tuple2<K, Sort>>newHashSet(new Tuple2((K) k, Sort(x))))
                         .orElseGet(() -> Sets.<Tuple2<K, Sort>>newHashSet());
             }
@@ -220,7 +220,7 @@ public class KILtoKORE extends KILTransformation<Object> {
                 .stream()
                 .map(t -> (K) KApply(KLabel("is" + t._2().name()), KList(t._1())))
                 .reduce(makeAnd)
-                .orElseGet(() -> KToken(Sorts.Bool(), "true"));
+                .orElseGet(() -> KToken("true", Sorts.Bool()));
 
 
         return Rule(body, makeAnd.apply(inner.applyOrTrue(r.getRequires()), sortPredicates),
@@ -264,7 +264,7 @@ public class KILtoKORE extends KILTransformation<Object> {
     public Set<org.kframework.definition.Sentence> apply(Syntax s) {
         Set<org.kframework.definition.Sentence> res = new HashSet<>();
 
-        org.kframework.kore.Sort sort = apply(s.getDeclaredSort().getSort());
+        org.kframework.kore.Sort sort = apply(s.getDeclaredSort().getRealSort());
 
         // just a sort declaration
         if (s.getPriorityBlocks().size() == 0) {
@@ -294,12 +294,12 @@ public class KILtoKORE extends KILTransformation<Object> {
                 // Handle a special case first: List productions have only
                 // one item.
                 if (p.getItems().size() == 1 && p.getItems().get(0) instanceof UserList) {
-                    applyUserList(res, sort, p, (UserList) p.getItems().get(0), syntactic);
+                    applyUserList(res, sort, p, (UserList) p.getItems().get(0));
                 } else {
                     List<ProductionItem> items = new ArrayList<>();
                     for (org.kframework.kil.ProductionItem it : p.getItems()) {
                         if (it instanceof NonTerminal) {
-                            items.add(NonTerminal(apply(((NonTerminal) it).getSort())));
+                            items.add(NonTerminal(apply(((NonTerminal) it).getRealSort())));
                         } else if (it instanceof UserList) {
                             throw new AssertionError("Lists should have applied before.");
                         } else if (it instanceof Lexical) {
@@ -379,72 +379,28 @@ public class KILtoKORE extends KILTransformation<Object> {
     }
 
     public void applyUserList(Set<org.kframework.definition.Sentence> res,
-                              org.kframework.kore.Sort sort, Production p, UserList userList,
-                              boolean forPrograms) {
-        boolean nonEmpty = userList.getListType().equals(UserList.ONE_OR_MORE);
+                              org.kframework.kore.Sort sort, Production p, UserList userList) {
 
+        // Transform list declarations of the form Es ::= List{E, ","} into something representable in kore
         org.kframework.kore.Sort elementSort = apply(userList.getSort());
 
-        // TODO: we're splitting one syntax declaration into three, where to put
-        // attributes
-        // of original declaration?
-
-        // Using attributes to mark these three rules
-        // (to be used when translating those back to single KIL declaration)
-        org.kframework.attributes.Att attrs = inner.convertAttributes(p).add(KOREtoKIL.USER_LIST_ATTRIBUTE, p.getSort().getName());
+        org.kframework.attributes.Att attrs = inner.convertAttributes(p).add(KOREtoKIL.USER_LIST_ATTRIBUTE, userList.getListType());
         String kilProductionId = "" + System.identityHashCode(p);
         Att attrsWithKilProductionId = attrs.add(KILtoInnerKORE.PRODUCTION_ID, kilProductionId);
-        org.kframework.definition.Production prod1, prod2, prod3;
+        org.kframework.definition.Production prod1, prod3;
 
-        if (forPrograms) {
-            org.kframework.definition.Production prod4, prod5;
+        // Es ::= E "," Es
+        prod1 = Production(sort,
+                Seq(NonTerminal(elementSort), Terminal(userList.getSeparator()), NonTerminal(sort)),
+                attrsWithKilProductionId.add("klabel", dropQuote(p.getKLabel())).add("right"));
 
-            // IdsTerminator ::= "" [klabel('.Ids)]
-            prod1 = Production(dropQuote(p.getTerminatorKLabel()), Sort(sort.name() + "Terminator"), Seq(Terminal("")),
-                    attrsWithKilProductionId.add("#klabel", dropQuote(p.getTerminatorKLabel())));
-            // NeIds ::= Id "," NeIds [klabel('_,_)]
-            prod2 = Production(dropQuote(p.getKLabel()), Sort("Ne" + sort.name()),
-                    Seq(NonTerminal(elementSort), Terminal(userList.getSeparator()), NonTerminal(Sort("Ne" + sort.name()))),
-                    attrsWithKilProductionId.add("#klabel", dropQuote(p.getKLabel())));
-            // NeIds ::= Id IdsTerminator [klabel('_,_)]
-            prod3 = Production(dropQuote(p.getKLabel()), Sort("Ne" + sort.name()),
-                    Seq(NonTerminal(elementSort), NonTerminal(Sort(sort.name() + "Terminator"))),
-                    attrsWithKilProductionId.add("#klabel", p.getKLabel()));
-            // Ids ::= NeIds
-            prod4 = Production(sort, Seq(NonTerminal(Sort("Ne" + sort.name()))),
-                    attrsWithKilProductionId);
-            // Ids ::= IdsTerminator // if the list is *
-            prod5 = Production(sort, Seq(NonTerminal(Sort(sort.name() + "Terminator"))),
-                    attrsWithKilProductionId);
 
-            res.add(prod1);
-            res.add(prod2);
-            res.add(prod3);
-            res.add(prod4);
-            res.add(SyntaxSort(Sort(sort.name() + "Terminator")));
-            res.add(SyntaxSort(Sort("Ne" + sort.name())));
-            if (!nonEmpty) {
-                res.add(prod5);
-            }
-        } else {
-            // lst ::= lst sep lst
-            prod1 = Production(sort,
-                    Seq(NonTerminal(sort), Terminal(userList.getSeparator()), NonTerminal(sort)),
-                    attrsWithKilProductionId.add("#klabel", dropQuote(p.getKLabel())));
+        // Es ::= ".Es"
+        prod3 = Production(sort, Seq(Terminal("." + sort.toString())),
+                attrsWithKilProductionId.remove("strict").add("klabel", dropQuote(p.getTerminatorKLabel())));
 
-            // lst ::= elem
-            prod2 = Production(sort, Seq(NonTerminal(elementSort)), attrsWithKilProductionId.remove("strict"));
-
-            // lst ::= .UserList
-            prod3 = Production(sort, Seq(Terminal("." + sort.toString())),
-                    attrsWithKilProductionId.remove("strict").add("#klabel", dropQuote(p.getTerminatorKLabel())));
-
-            res.add(prod1);
-            res.add(prod2);
-            if (!nonEmpty) {
-                res.add(prod3);
-            }
-        }
+        res.add(prod1);
+        res.add(prod3);
     }
 
     public String dropQuote(String s) {

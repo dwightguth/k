@@ -43,13 +43,12 @@ import org.kframework.kil.FloatBuiltin;
 import org.kframework.kil.GenericToken;
 import org.kframework.kil.IntBuiltin;
 import org.kframework.kil.Module;
-import org.kframework.kil.Production;
 import org.kframework.kil.StringBuiltin;
 import org.kframework.kil.TermComment;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
 import org.kframework.utils.errorsystem.KExceptionManager;
-import org.kframework.utils.errorsystem.KExceptionManager.KEMException;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,8 +92,8 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
     @Inject
     public KILtoBackendJavaKILTransformer(
             Context context,
-            GlobalContext globalContext,
             @FreshRules boolean freshRules,
+            GlobalContext globalContext,
             IndexingTable.Data data,
             KExceptionManager kem) {
         super("Transform KIL into java backend KIL", context);
@@ -108,6 +107,10 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
         Definition transformedDef = (Definition) this.visitNode(node);
         globalContext.setDefinition(transformedDef);
 
+        return expandAndEvaluate(globalContext, kem);
+    }
+
+    public static Definition expandAndEvaluate(GlobalContext globalContext, KExceptionManager kem) {
         Definition expandedDefinition = new MacroExpander(TermContext.of(globalContext), kem).processDefinition();
         globalContext.setDefinition(expandedDefinition);
 
@@ -128,10 +131,12 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
         if (node instanceof BackendTerm) {
             return (Term)((BackendTerm)node).getValue();
         }
-        Term term = null;
-        term = new MacroExpander(TermContext.of(globalContext), kem).processTerm((Term) this.visitNode(node));
-        term = term.evaluate(TermContext.of(globalContext));
+        return expandAndEvaluate(globalContext, kem, (Term) this.visitNode(node));
+    }
 
+    public static Term expandAndEvaluate(GlobalContext globalContext, KExceptionManager kem, Term term) {
+        term = new MacroExpander(TermContext.of(globalContext), kem).processTerm((Term) term);
+        term = term.evaluate(TermContext.of(globalContext));
         return term;
     }
 
@@ -579,10 +584,11 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
             partiallyEvaluatedRules.clear();
             for (Rule rule : Iterables.concat(definition.functionRules().values(),
                     definition.anywhereRules().values())) {
-                Rule evaluatedRule = evaluateRule(rule, globalContext);
+                Rule freshRule = rule.getFreshRule(TermContext.of(globalContext));
+                Rule evaluatedRule = evaluateRule(freshRule, globalContext);
                 partiallyEvaluatedRules.add(evaluatedRule);
 
-                if (!evaluatedRule.equals(rule)) {
+                if (!evaluatedRule.equals(freshRule)) {
                     change = true;
                 }
             }

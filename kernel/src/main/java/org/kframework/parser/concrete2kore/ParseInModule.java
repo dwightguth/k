@@ -4,16 +4,11 @@ package org.kframework.parser.concrete2kore;
 import com.google.common.collect.Sets;
 import org.kframework.attributes.Source;
 import org.kframework.definition.Module;
+import org.kframework.kore.K;
+import org.kframework.kore.Sort;
 import org.kframework.parser.Term;
-import org.kframework.parser.concrete2kore.disambiguation.AmbFilter;
-import org.kframework.parser.concrete2kore.disambiguation.CorrectCastPriorityVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.CorrectKSeqPriorityVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.CorrectRewritePriorityVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.PreferAvoidVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.PriorityVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.RemoveBracketVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.TreeCleanerVisitor;
-import org.kframework.parser.concrete2kore.disambiguation.VariableTypeInferenceFilter;
+import org.kframework.parser.TreeNodesToKORE;
+import org.kframework.parser.concrete2kore.disambiguation.*;
 import org.kframework.parser.concrete2kore.kernel.Grammar;
 import org.kframework.parser.concrete2kore.kernel.KSyntax2GrammarStatesFilter;
 import org.kframework.parser.concrete2kore.kernel.Parser;
@@ -34,15 +29,51 @@ import java.util.Set;
  * Declarative disambiguation filters are also applied.
  */
 public class ParseInModule implements Serializable {
-    private final Module module;
-    private final Grammar grammar;
-    public ParseInModule(Module module) {
-        this.module = module;
-        this.grammar = KSyntax2GrammarStatesFilter.getGrammar(module);
+    private final Module seedModule;
+    private final Module extensionModule;
+    /**
+     * The module in which parsing will be done.
+     * Note that this module will be used for disambiguation, and the parsing module can be different.
+     * This allows for grammar rewriting and more flexibility in the implementation.
+     */
+    private final Module disambModule;
+    /**
+     * The exact module used for parsing. This can contain productions and sorts that are not
+     * necessarily representable in KORE (sorts like Ne#Ids, to avoid name collisions).
+     * In this case the modified production will be annotated with the information from the
+     * original production, so disambiguation can be done safely.
+     */
+    private final Module parsingModule;
+    private volatile Grammar grammar = null;
+    private final boolean strict;
+    ParseInModule(Module seedModule) {
+        this(seedModule, seedModule, seedModule, seedModule, true);
     }
 
-    public Module module() {
-        return module;
+    public ParseInModule(Module seedModule, Module extensionModule, Module disambModule, Module parsingModule, boolean strict) {
+        this.seedModule = seedModule;
+        this.extensionModule = extensionModule;
+        this.disambModule = disambModule;
+        this.parsingModule = parsingModule;
+        this.strict = strict;
+    }
+
+    /**
+     * The original module, which includes all the marker/flags imports.
+     * This can be used to invalidate caches.
+     * @return Module given by the user.
+     */
+    public Module seedModule() {
+        return seedModule;
+    }
+
+    /**
+     * An extension module of the seedModule which includes all productions, unmodified, and in addition,
+     * contains extra productions auto-defined, like casts.
+     * @return Module with extra productions defined during parser generator.
+     */
+    public Module getExtensionModule() {
+        return extensionModule;
     }
 
     /**
@@ -51,14 +82,51 @@ public class ParseInModule implements Serializable {
      * @param startSymbol    the start symbol from which to parse.
      * @return the Term representation of the parsed input.
      */
-    public Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
-            parseString(String input, String startSymbol, Source source) {
+    public Tuple2<Either<Set<ParseFailedException>, K>, Set<ParseFailedException>>
+            parseString(String input, Sort startSymbol, Source source) {
         return parseString(input, startSymbol, source, 1, 1);
     }
 
-    public Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
-            parseString(String input, String startSymbol, Source source, int startLine, int startColumn) {
-        Grammar.NonTerminal startSymbolNT = grammar.get(startSymbol);
+    private void getGrammar() {
+        Grammar g = grammar;
+        if (g == null) {
+            g = KSyntax2GrammarStatesFilter.getGrammar(this.parsingModule);
+            grammar = g;
+        }
+    }
+
+    public Tuple2<Either<Set<ParseFailedException>, K>, Set<ParseFailedException>>
+        parseString(String input, Sort startSymbol, Source source, int startLine, int startColumn) {
+        final Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> result
+                = parseStringTerm(input, startSymbol, source, startLine, startColumn);
+        Either<Set<ParseFailedException>, K> parseInfo;
+        if (result._1().isLeft()) {
+            parseInfo = Left.apply(result._1().left().get());
+        } else {
+            parseInfo = Right.apply(TreeNodesToKORE.apply(result._1().right().get()));
+        }
+        return new Tuple2<>(parseInfo, result._2());
+    }
+
+    /**
+     * Parse the given input. This function is private because the final disambiguation
+     * in {@link AmbFilter} eliminates ambiguities that will be equivalent only after
+     * calling {@link TreeNodesToKORE#apply(Term)}, but returns a result that is
+     * somewhat arbitrary as an actual parser {@link Term}.
+     * Fortunately all callers want the result as a K, and can use the public
+     * version of this method.
+     * @param input
+     * @param startSymbol
+     * @param source
+     * @param startLine
+     * @param startColumn
+     * @return
+     */
+    private Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
+            parseStringTerm(String input, Sort startSymbol, Source source, int startLine, int startColumn) {
+        getGrammar();
+
+        Grammar.NonTerminal startSymbolNT = grammar.get(startSymbol.name());
         Set<ParseFailedException> warn = new AmbFilter().warningUnit();
         if (startSymbolNT == null) {
             String msg = "Could not find start symbol: " + startSymbol;
@@ -86,16 +154,21 @@ public class ParseInModule implements Serializable {
         rez = new CorrectCastPriorityVisitor().apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        rez = new PriorityVisitor(module.priorities(), module.leftAssoc(), module.rightAssoc()).apply(rez.right().get());
+        rez = new ApplyTypeCheckVisitor(disambModule.subsorts()).apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(module.subsorts(), module.definedSorts()).apply(rez.right().get());
+        rez = new PriorityVisitor(disambModule.priorities(), disambModule.leftAssoc(), disambModule.rightAssoc()).apply(rez.right().get());
+        if (rez.isLeft())
+            return new Tuple2<>(rez, warn);
+        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(disambModule.subsorts(), disambModule.definedSorts(), disambModule.productionsFor(), strict).apply(rez.right().get());
         if (rez2._1().isLeft())
             return rez2;
         warn = rez2._2();
 
         Term rez3 = new PreferAvoidVisitor().apply(rez2._1().right().get());
         rez2 = new AmbFilter().apply(rez3);
+        warn = new AmbFilter().mergeWarnings(rez2._2(), warn);
+        rez2 = new AddEmptyLists(disambModule).apply(rez2._1().right().get());
         warn = new AmbFilter().mergeWarnings(rez2._2(), warn);
         rez3 = new RemoveBracketVisitor().apply(rez2._1().right().get());
 

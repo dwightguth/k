@@ -33,8 +33,22 @@ case class Att(att: Set[K]) extends AttributesToString {
           getK(key).map(Att.down).map { _.asInstanceOf[T] }.get
       }
 
+  def get[T](cls: Class[T]): Option[T] = get(cls.getName, cls)
+
   def getOptional[T](label: String): java.util.Optional[T] =
     get[T](label) match {
+      case Some(s) => java.util.Optional.of(s);
+      case None => java.util.Optional.empty[T]()
+    }
+
+  def getOptional[T](label: String, cls: Class[T]): java.util.Optional[T] =
+    get[T](label, cls) match {
+      case Some(s) => java.util.Optional.of(s);
+      case None => java.util.Optional.empty[T]()
+    }
+
+  def getOptional[T](cls: Class[T]): java.util.Optional[T] =
+    get[T](cls) match {
       case Some(s) => java.util.Optional.of(s);
       case None => java.util.Optional.empty[T]()
     }
@@ -75,7 +89,7 @@ object Att {
   val up = new Up(KORE, includes)
 
   implicit def asK(key: String, value: String) =
-    KORE.KApply(KORE.KLabel(key), KORE.KList(mutable(List(KORE.KToken(Sorts.KString, value, Att())))), Att())
+    KORE.KApply(KORE.KLabel(key), KORE.KList(mutable(List(KORE.KToken(value, Sorts.KString, Att())))), Att())
 }
 
 trait AttributesToString {
@@ -84,7 +98,7 @@ trait AttributesToString {
   override def toString() =
     "[" +
       (this.filteredAtt map {
-        case KApply(KLabel(keyName), KList(KToken(_, value))) => keyName + "(" + value + ")"
+        case KApply(KLabel(keyName), KList(KToken(value, _))) => keyName + "(" + value + ")"
         case x => x.toString
       }).toList.sorted.mkString(" ") +
       "]"

@@ -39,7 +39,7 @@
     </dependency>
     <dependency>
       <groupId>org.kframework.k</groupId>
-      <artifactId>tiny</artifactId>
+      <artifactId>ocaml-backend</artifactId>
       <version>${project.version}</version>
       <scope>runtime</scope>
     </dependency>

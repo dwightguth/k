@@ -10,10 +10,13 @@ import org.kframework.kil.Require;
 import org.kframework.kil.loader.CollectProductionsVisitor;
 import org.kframework.kil.loader.Context;
 import org.kframework.kore.K;
+import org.kframework.kore.Sort;
 import org.kframework.kore.convertors.KILtoKORE;
+import org.kframework.main.GlobalOptions;
 import org.kframework.parser.Term;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.outer.Outer;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 
@@ -35,13 +38,24 @@ import static org.kframework.definition.Constructors.*;
 public class ParserUtils {
 
     private final FileUtil files;
+    private final KExceptionManager kem;
+    private final GlobalOptions options;
 
-    public ParserUtils(FileUtil files) {
+    public ParserUtils(FileUtil files, KExceptionManager kem) {
         this.files = files;
+        this.kem = kem;
+        this.options = new GlobalOptions();
     }
+
+    public ParserUtils(FileUtil files, KExceptionManager kem, GlobalOptions options) {
+        this.files = files;
+        this.kem = kem;
+        this.options = options;
+    }
+
     public static K parseWithFile(String theTextToParse,
                                   String mainModule,
-                                  String startSymbol,
+                                  Sort startSymbol,
                                   File definitionFile) {
         String definitionText;
         try {
@@ -54,7 +68,7 @@ public class ParserUtils {
 
     public static K parseWithString(String theTextToParse,
                                     String mainModule,
-                                    String startSymbol,
+                                    Sort startSymbol,
                                     Source source,
                                     String definitionText) {
         Module kastModule = parseMainModuleOuterSyntax(definitionText, source, mainModule);
@@ -62,7 +76,7 @@ public class ParserUtils {
     }
 
     public static K parseWithModule(String theTextToParse,
-                                    String startSymbol,
+                                    Sort startSymbol,
                                     Source source,
                                     org.kframework.definition.Module kastModule) {
         ParseInModule parser = new ParseInModule(kastModule);
@@ -70,11 +84,10 @@ public class ParserUtils {
     }
 
     public static K parseWithModule(String theTextToParse,
-                                    String startSymbol,
+                                    Sort startSymbol,
                                     Source source,
                                     ParseInModule kastModule) {
-        Term cleaned = kastModule.parseString(theTextToParse, startSymbol, source)._1().right().get();
-        return TreeNodesToKORE.apply(cleaned);
+        return kastModule.parseString(theTextToParse, startSymbol, source)._1().right().get();
     }
 
     /**
@@ -104,7 +117,13 @@ public class ParserUtils {
             File currentDirectory,
             List<File> lookupDirectories) {
         List<DefinitionItem> items = Outer.parse(source, definitionText, null);
-
+        if (options.verbose) {
+            try {
+                System.out.println("Importing: " + new File(source.source()).getCanonicalPath());
+            } catch (IOException e) {
+                System.out.println("Importing: " + new File(source.source()).getAbsolutePath());
+            }
+        }
         List<org.kframework.kil.Module> results = new ArrayList<>();
 
         for (DefinitionItem di : items) {
@@ -176,8 +195,21 @@ public class ParserUtils {
             List<File> lookupDirectories,
             boolean dropQuote) {
         Set<Module> modules = loadModules(definitionText, source, currentDirectory, lookupDirectories, dropQuote);
-        Module mainModule = modules.stream().filter(m -> m.name().equals(mainModuleName)).findFirst().get();
-        Module syntaxModule = modules.stream().filter(m -> m.name().equals(syntaxModuleName)).findFirst().get();
+        Optional<Module> opt = modules.stream().filter(m -> m.name().equals(mainModuleName)).findFirst();
+        if (!opt.isPresent()) {
+            throw KEMException.compilerError("Could not find main module with name " + mainModuleName
+                    + " in definition. Use --main-module to specify one.");
+        }
+        Module mainModule = opt.get();
+        opt = modules.stream().filter(m -> m.name().equals(syntaxModuleName)).findFirst();
+        Module syntaxModule;
+        if (!opt.isPresent()) {
+            kem.registerCompilerWarning("Could not find main syntax module with name " + syntaxModuleName
+                    + " in definition.  Use --syntax-module to specify one. Using " + mainModuleName + " as default.");
+            syntaxModule = mainModule;
+        } else {
+            syntaxModule = opt.get();
+        }
         return org.kframework.definition.Definition.apply(mainModule, syntaxModule, immutable(modules), Att());
     }
 }

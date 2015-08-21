@@ -16,6 +16,7 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Rule.WrapLabelRule;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,10 +36,14 @@ import static org.kframework.Collections.*;
 public class KSyntax2GrammarStatesFilter {
 
     public static Grammar getGrammar(Module module) {
+        Automaton.setMinimization(Automaton.MINIMIZE_BRZOZOWSKI);
         Grammar grammar = new Grammar();
         Set<String> rejects = new HashSet<>();
         // create a NonTerminal for every declared sort
         for (Sort sort : iterable(module.definedSorts())) {
+            grammar.add(new NonTerminal(sort.name()));
+        }
+        for (Sort sort : iterable(module.usedCellSorts())) {
             grammar.add(new NonTerminal(sort.name()));
         }
 
@@ -97,7 +102,7 @@ public class KSyntax2GrammarStatesFilter {
                 if (prdItem instanceof org.kframework.definition.NonTerminal) {
                     org.kframework.definition.NonTerminal srt = (org.kframework.definition.NonTerminal) prdItem;
                     Grammar.NonTerminalState nts = new Grammar.NonTerminalState(sort + " ::= " + srt.sort(), nt,
-                            grammar.get(srt.sort().name()), false);
+                            grammar.get(srt.sort().name()));
                     previous.next.add(nts);
                     previous = nts;
                 } else if (prdItem instanceof TerminalLike) {
@@ -108,10 +113,8 @@ public class KSyntax2GrammarStatesFilter {
                             lx.precedePattern(),
                             lx.pattern(),
                             lx.followPattern());
-                    RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1));
                     previous.next.add(pstate);
-                    pstate.next.add(del);
-                    previous = del;
+                    previous = pstate;
                 } else {
                     assert false : "Didn't expect this ProductionItem type: "
                             + prdItem.getClass().getName();
@@ -135,6 +138,8 @@ public class KSyntax2GrammarStatesFilter {
                         if (prd.att().contains(Constants.REJECT2))
                             pattern = getAutomaton(prd.att().get(Constants.REJECT2).get().toString());
                     }
+                    if (prd.att().contains(Constants.ORIGINAL_PRD))
+                        prd = (Production) prd.att().get(Constants.ORIGINAL_PRD).get();
                     RuleState labelRule = new RuleState("AddLabelRS", nt, new WrapLabelRule(prd, pattern, rejects));
                     previous.next.add(labelRule);
                     previous = labelRule;
@@ -151,7 +156,7 @@ public class KSyntax2GrammarStatesFilter {
         cache.clear();
     }
 
-    private static Map<String, Automaton> cache = new HashMap<>();
+    private static Map<String, Automaton> cache = Collections.synchronizedMap(new HashMap<>());
 
     private static Automaton getAutomaton(String regex) {
         Automaton res = cache.get(regex);

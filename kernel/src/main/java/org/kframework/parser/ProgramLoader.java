@@ -19,6 +19,8 @@ import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.ResolveVariableAttribute;
+import org.kframework.kompile.KompileOptions;
+import org.kframework.kore.K;
 import org.kframework.kore.convertors.KILtoKORE;
 import org.kframework.kore.convertors.KOREtoKIL;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
@@ -30,13 +32,13 @@ import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.XmlLoader;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.inject.Concrete;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import scala.Tuple2;
@@ -47,6 +49,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Set;
 
+import static org.kframework.kore.KORE.*;
+import static org.kframework.definition.Constructors.*;
+import static org.kframework.Collections.*;
+
 public class ProgramLoader {
 
     private final BinaryLoader loader;
@@ -54,7 +60,7 @@ public class ProgramLoader {
     private final KExceptionManager kem;
     private final TermLoader termLoader;
     private final FileUtil files;
-    private final Definition definition;
+    private final KompileOptions options;
 
     @Inject
     ProgramLoader(
@@ -63,13 +69,13 @@ public class ProgramLoader {
             KExceptionManager kem,
             TermLoader termLoader,
             FileUtil files,
-            @Concrete Definition definition) {
+            KompileOptions options) {
         this.loader = loader;
         this.sw = sw;
         this.kem = kem;
         this.termLoader = termLoader;
         this.files = files;
-        this.definition = definition;
+        this.options = options;
     }
 
     /**
@@ -138,15 +144,18 @@ public class ProgramLoader {
             try (InputStream in = new Base64InputStream(new ReaderInputStream(content))) {
                 out = loader.loadOrDie(Term.class, in, source.toString());
             } catch (IOException e) {
-                throw KExceptionManager.internalError("Error reading from binary file", e);
+                throw KEMException.internalError("Error reading from binary file", e);
             }
         } else if (whatParser == ParserType.NEWPROGRAM) {
             Definition def = loader.loadOrDie(Definition.class, files.resolveKompiled("definition-concrete.bin"));
             org.kframework.definition.Definition koreDef = new KILtoKORE(context, true, false).apply(def);
             Module synMod = koreDef.getModule(def.getMainSyntaxModule()).get();
-            ParseInModule parser = new ParseInModule(new RuleGrammarGenerator(koreDef).getProgramsGrammar(synMod));
-            Tuple2<Either<Set<ParseFailedException>, org.kframework.parser.Term>, Set<ParseFailedException>> parsed
-                    = parser.parseString(FileUtil.read(content), startSymbol.getName(), source);
+            Module m = Module("PROGRAM-LISTS", Set(), Set(SyntaxSort(Sort("K"))), Att());
+            org.kframework.definition.Definition baseK = org.kframework.definition.Definition.apply(m, m, Set(m), Att());
+            Module newSynMod = new Module(synMod.name() + "-PROGRAM-LISTS", Set(synMod, m), Set(), null);
+            ParseInModule parser = new RuleGrammarGenerator(baseK, options.strict()).getCombinedGrammar(newSynMod);
+            Tuple2<Either<Set<ParseFailedException>, K>, Set<ParseFailedException>> parsed
+                    = parser.parseString(FileUtil.read(content), Sort(startSymbol.getName()), source);
             for (ParseFailedException warn : parsed._2()) {
                 kem.addKException(warn.getKException());
             }
@@ -156,7 +165,7 @@ public class ProgramLoader {
                 throw parsed._1().left().get().iterator().next();
             }
 
-            out = new KOREtoKIL().convertK(TreeNodesToKORE.apply(parsed._1().right().get()));
+            out = new KOREtoKIL().convertK(parsed._1().right().get());
         } else {
             out = loadPgmAst(FileUtil.read(content), source, startSymbol, context);
             out = new ResolveVariableAttribute(context).visitNode(out);

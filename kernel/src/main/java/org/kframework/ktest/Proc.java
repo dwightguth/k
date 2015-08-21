@@ -10,13 +10,21 @@ import org.kframework.utils.OS;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
-import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * A unified process class for kompile, kompile --pdf and krun processes.
@@ -134,9 +142,20 @@ public class Proc<T> implements Runnable {
         this.outputFile = outputFile;
         this.newOutputFile = newOutputFile;
         this.kem = kem;
-        this.env = env;
+        this.env = new HashMap<>(env);
         success = options.dry;
         this.warnings2errors = warnings2errors;
+        // add the /bin directory to the PATH if not there already
+        String binDir = ExecNames.getBinDirectory();
+        // windows is case insensitive w.r.t environment variables, so first find the exact match
+        String path = this.env.keySet().stream().filter(key -> key.toUpperCase().equals("PATH")).findFirst().orElseGet(() -> "PATH");
+        if (this.env.containsKey(path)) {
+            String allPaths = this.env.get(path);
+            if (!allPaths.contains(binDir))
+                this.env.put(path, allPaths + File.pathSeparator + binDir);
+        } else {
+            this.env.put(path, binDir);
+        }
     }
 
     public Proc(T obj, String[] args, File workingDir, KTestOptions options, KExceptionManager kem, Map<String, String> env, boolean warnings2errors) {
@@ -305,7 +324,7 @@ public class Proc<T> implements Runnable {
      */
     private void handlePgmResult(ProcOutput normalOutput, ProcOutput debugOutput) {
         String red = ColorUtil.RgbToAnsi(
-                Color.RED, options.getColorSetting(), options.getTerminalColor());
+                "red", options.getColorSetting(), options.getTerminalColor());
         String logStr = toLogString(args);
         if (normalOutput.returnCode == 0) {
 

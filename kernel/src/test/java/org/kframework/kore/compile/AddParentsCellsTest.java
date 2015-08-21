@@ -5,10 +5,14 @@ package org.kframework.kore.compile;
 
 import com.google.common.collect.Lists;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
+import org.kframework.kil.Attribute;
 import org.kframework.kore.*;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.Arrays;
 
@@ -16,6 +20,9 @@ import static org.kframework.kore.KORE.*;
 import static org.kframework.compile.ConfigurationInfo.Multiplicity.*;
 
 public class AddParentsCellsTest {
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+
     final ConfigurationInfo cfgInfo = new TestConfiguration() {{
         addCell(null, "TCell", "<T>");
         addCell("TCell", "TSCell", "<ts>");
@@ -76,7 +83,7 @@ public class AddParentsCellsTest {
         Assert.assertEquals(expected, pass.concretizeCell(term));
     }
 
-    @Test(expected = org.kframework.utils.errorsystem.KExceptionManager.KEMException.class)
+    @Test(expected = KEMException.class)
     public void testAmbiguityError() {
         K term = cell("<ts>", cell("<k>", intToToken(1)), cell("<k>", intToToken(2)), cell("<env>", intToToken(2)));
         pass.concretizeCell(term);
@@ -111,6 +118,14 @@ public class AddParentsCellsTest {
         K expected = cell("<T>", cell("<ts>",
                 cell("<t>", cell("<k>", intToToken(1))),
                 cell("<t>", KRewrite(cells(cell("<k>", intToToken(2)), cell("<msg>")), cell("<k>")))));
+        Assert.assertEquals(expected, pass.concretizeCell(term));
+    }
+
+    @Test
+    public void testRewriteWithCellVariable() {
+        K term = cell("<T>", KRewrite(KVariable("KCell", Att().add(Attribute.SORT_KEY, "KCell")), cell("<k>", intToToken(1))));
+        K expected = cell("<T>", cell("<ts>",
+                cell("<t>", KRewrite(KVariable("KCell", Att().add(Attribute.SORT_KEY, "KCell")), cell("<k>", intToToken(1))))));
         Assert.assertEquals(expected, pass.concretizeCell(term));
     }
 
@@ -190,6 +205,21 @@ public class AddParentsCellsTest {
                 KSequence(KApply(KLabel("_+_"), KVariable("I"), KVariable("J")),
                         KVariable("Rest"))))));
         Assert.assertEquals(expected, pass.concretize(term));
+    }
+
+    @Test
+    public void testNonCellItem() {
+        K term = cell("<T>", KApply(KLabel(".K")), cell("<k>",KVariable("X")));
+        K expected = cell("<T>",cells(KApply(KLabel(".K")), cell("<ts>", cell("<t>", cell("<k>", KVariable("X"))))));
+        Assert.assertEquals(expected, pass.concretize(term));
+    }
+
+    @Test
+    public void testNonCellItemRewrite() {
+        K term = cell("<T>", KRewrite(KApply(KLabel("label")),cells(KApply(KLabel(".K")), cell("<k>",KVariable("X")))));
+        exception.expect(KEMException.class);
+        exception.expectMessage("Can't mix items with different parent cells under a rewrite");
+        pass.concretize(term);
     }
 
     KApply cell(String name, K... ks) {

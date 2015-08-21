@@ -30,6 +30,7 @@ public class CorrectKSeqPriorityVisitor extends SetsTransformerWithErrors<ParseF
         exceptions.add("#ruleRequiresEnsures");
         exceptions.add("#KRewrite");
         exceptions.add("#KSequence");
+        exceptions.add("#KList");
     }
 
     @Override
@@ -64,7 +65,6 @@ public class CorrectKSeqPriorityVisitor extends SetsTransformerWithErrors<ParseF
         }
 
         public Either<java.util.Set<ParseFailedException>, Term> apply(TermCons tc) {
-            // TODO: add location information
             if (tc.production().klabel().isDefined() && tc.production().klabel().get().name().equals("#KSequence")) {
                 String msg = "~> is not allowed to be an immediate child of " + parent.production().klabel().get() +
                         "    Use parentheses: (x)~>(y) to set the proper scope of the operations.";

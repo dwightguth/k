@@ -2,13 +2,13 @@
 package org.kframework.kore.compile;
 
 import com.google.common.collect.Sets;
+import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.LabelInfo;
 import org.kframework.definition.Context;
-import org.kframework.definition.Module;
-import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
+import org.kframework.kil.Attribute;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
@@ -16,7 +16,7 @@ import org.kframework.kore.KRewrite;
 import org.kframework.kore.KSequence;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
-import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,10 +95,14 @@ public class CloseCells {
         rhsOf = null;
     }
 
-    KVariable newDotVariable() {
+    KVariable newDotVariable(Sort s) {
         KVariable newLabel;
         do {
-            newLabel = KVariable("DotVar" + (counter++));
+            if (s == null) {
+                newLabel = KVariable("DotVar" + (counter++));
+            } else {
+                newLabel = KVariable("DotVar" + (counter++), Att().add(Attribute.SORT_KEY, s.name()));
+            }
         } while (vars.contains(newLabel));
         vars.add(newLabel);
         return newLabel;
@@ -150,27 +154,40 @@ public class CloseCells {
         List<K> contents = IncompleteCellUtils.getChildren(cell);
 
         if (cfg.isParentCell(label)) {
-            Set<Sort> required = new HashSet<>();
+            Set<Sort> requiredLeft = new HashSet<>();
+            Set<Sort> requiredRight;
             for (Sort child : cfg.getChildren(label)) {
                 if (cfg.getMultiplicity(child) == ConfigurationInfo.Multiplicity.ONE) {
-                    required.add(child);
+                    requiredLeft.add(child);
                 }
             }
+            requiredRight = new HashSet<>(requiredLeft);
             for (K item : contents) {
-                if (item instanceof KApply) {
-                    required.remove(labelInfo.getCodomain(((KApply) item).klabel()));
-                } else if (item instanceof KVariable) {
-                    // TODO: should consider variable sorts
-                    required.clear();
+                if (item instanceof KRewrite) {
+                    KRewrite rw = (KRewrite) item;
+                    for (K leftItem : IncompleteCellUtils.flattenCells(rw.left())) {
+                        filterRequired(requiredLeft, leftItem);
+                    }
+                    for (K rightItem : IncompleteCellUtils.flattenCells(rw.right())) {
+                        filterRequired(requiredRight, rightItem);
+                    }
+                } else {
+                    filterRequired(requiredLeft, item);
+                    filterRequired(requiredRight, item);
                 }
             }
 
             if (!openLeft && !openRight) {
-                if (required.isEmpty()) {
+                if (requiredLeft.isEmpty() && requiredRight.isEmpty()) {
                     return KApply(label, KList(contents));
                 } else {
-                    throw KExceptionManager.criticalError("Closed parent cell missing " +
-                            "required children " + required.toString() + " " + cell.toString());
+                    if (requiredLeft.equals(requiredRight)) {
+                        throw KEMException.compilerError("Closed parent cell missing " +
+                                "required children " + requiredLeft.toString(), cell);
+                    } else {
+                        throw KEMException.compilerError("Closed parent cell missing " +
+                                "required children " + requiredLeft.toString() + " on left hand side and " + requiredRight.toString() + " on right hand side.", cell);
+                    }
                 }
             }
 
@@ -178,13 +195,18 @@ public class CloseCells {
                 // close with variable
                 List<K> newItems = new ArrayList<>(contents.size() + 1);
                 newItems.addAll(contents);
-                newItems.add(newDotVariable());
+                newItems.add(newDotVariable(null));
                 return KApply(label, KList(newItems));
             } else {
                 // close by adding default cells
-                List<K> newContents = new ArrayList<>(contents.size() + required.size());
+                // since we know we are on the right hand side of a rewrite, we assume that
+                // the cell cannot contain a rewrite and therefore requiredLeft will always equal
+                // requiredRight. Hence we just pick one.
+                List<K> newContents = new ArrayList<>(contents.size() + requiredLeft.size());
                 newContents.addAll(contents);
-                for (Sort reqChild : required) {
+                for (Sort reqChild : requiredLeft) {
+                    if (!cfg.cfg.isConstantInitializer(reqChild))
+                        throw KEMException.compilerError("Cannot close cell on right hand side because the initializer for " + reqChild.name() + " requires configuration variables.");
                     newContents.add(cfg.getDefaultCell(reqChild));
                 }
                 return (KApply(label, KList(newContents)));
@@ -193,7 +215,7 @@ public class CloseCells {
 
         // Is a leaf cell
         if (contents.size() != 1) {
-            throw KExceptionManager.criticalError("Leaf cells should contain exactly 1 body term,"
+            throw KEMException.criticalError("Leaf cells should contain exactly 1 body term,"
                     + " but there are " + contents.size() + " in " + cell.toString());
         }
 
@@ -201,13 +223,13 @@ public class CloseCells {
             return KApply(label, KList(contents.get(0)));
         }
         if (rhsOf != null) {
-            throw KExceptionManager.criticalError("Leaf cells on right hand side of a rewrite" +
+            throw KEMException.criticalError("Leaf cells on right hand side of a rewrite" +
                     " may not be open, but " + cell.toString() + " is right of " + rhsOf.toString());
         }
 
         K body = contents.get(0);
         Sort cellType = cfg.leafCellType(label);
-        if (cellType.equals(Sort("K"))) {
+        if (cellType.equals(Sorts.K())) {
             // Need special handling to make a KSequence.
             int bodyLength;
             if (body instanceof KSequence) {
@@ -217,7 +239,7 @@ public class CloseCells {
             }
             List<K> newItems = new ArrayList<>((openLeft ? 1 : 0) + bodyLength + (openRight ? 1 : 0));
             if (openLeft) {
-                newItems.add(newDotVariable());
+                newItems.add(newDotVariable(cellType));
             }
             if (body instanceof KSequence) {
                 newItems.addAll(((KSequence) body).items());
@@ -225,18 +247,18 @@ public class CloseCells {
                 newItems.add(body);
             }
             if (openRight) {
-                newItems.add(newDotVariable());
+                newItems.add(newDotVariable(cellType));
             }
             return KApply(label, KList(KSequence(newItems)));
         } else {
             KLabel closeOperator = sortInfo.getCloseOperator(cellType);
             if (closeOperator == null) {
-                throw KExceptionManager.criticalError("No operator registered for closing cells of sort "
+                throw KEMException.criticalError("No operator registered for closing cells of sort "
                         + cellType.name() + " when closing cell " + cell.toString());
             }
             LabelInfo.AssocInfo info = labelInfo.getAssocInfo(closeOperator);
             if (!info.isAssoc() && openLeft && openRight) {
-                throw KExceptionManager.criticalError(
+                throw KEMException.criticalError(
                         "Ambiguity closing a cell. Operator " + closeOperator.toString()
                                 + " for sort " + cellType.name() + " is not associative, "
                                 + "but the cell has ellipses on both sides " + cell.toString());
@@ -247,15 +269,32 @@ public class CloseCells {
             }
             KVariable leftVar = null;
             if (openLeft) {
-                leftVar = newDotVariable();
+                leftVar = newDotVariable(cellType);
             }
             if (openRight) {
-                body = KApply(closeOperator, KList(body, newDotVariable()));
+                body = KApply(closeOperator, KList(body, newDotVariable(cellType)));
             }
             if (openLeft) {
                 body = KApply(closeOperator, KList(leftVar, body));
             }
             return KApply(label, KList(body));
+        }
+    }
+
+    private void filterRequired(Set<Sort> required, K item) {
+        if (item instanceof KApply) {
+            required.remove(labelInfo.getCodomain(((KApply) item).klabel()));
+        } else if (item instanceof KVariable) {
+            if (item.att().contains(Attribute.SORT_KEY)) {
+                Sort sort = Sort(item.att().<String>get(Attribute.SORT_KEY).get());
+                if (cfg.cfg.isCell(sort)) {
+                    required.remove(sort);
+                } else {
+                    required.clear();
+                }
+            } else {
+                required.clear();
+            }
         }
     }
 }

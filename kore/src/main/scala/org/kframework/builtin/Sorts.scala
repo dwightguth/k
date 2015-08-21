@@ -14,12 +14,16 @@ object Sorts {
 
   val Int = Sort("Int")
   val File = Sort("File")
+  val Float = Sort("Float")
 
   val K = Sort("K")
-  val KVariable = Sort("KVariable")
+  val KBott = Sort("KBott")
+  val KVariable = Sort("#KVariable")
+  val KItem = Sort("KItem")
   val KLabel = Sort("KLabel")
   val KList = Sort("KList")
   val KToken = Sort("KToken")
+  val KConfigVar = Sort("KConfigVar")
 
   val Id = ADT.Sort("Id")
   val KSeq = ADT.Sort("KSequence")

@@ -4,6 +4,7 @@ package org.kframework.compile;
 import org.kframework.kore.K;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;
+import scala.collection.immutable.Set;
 
 import java.util.List;
 
@@ -36,20 +37,45 @@ public interface ConfigurationInfo {
     /** True for cells which contain other cells */
     boolean isParentCell(Sort k);
 
+    /** Set of cell bag sorts (e.g. ThreadCellBag) associated with a multiplicity * cell (e.g. ThreadCell).
+     *  Should not in most cases return more than one sort, but a user can write productions that would cause
+     *  this method to return multiple sorts, e.g. if a particular * cell appears in multiple bags in different
+     *  parts of a configuration.
+     */
+    Set<Sort> getCellBagSortsOfCell(Sort k);
+
     /** The declared sort of the contents of a leaf cell */
     Sort leafCellType(Sort k);
 
     /** The label for a cell */
     KLabel getCellLabel(Sort k);
 
+    /** The label for a fragment of a cell, only defined for parent cells. */
+    KLabel getCellFragmentLabel(Sort k);
+
+    /**
+     * The constant label to use as an argument of a cell fragment,
+     * when the cell fragment did not capture cells of the argument type.
+     * Only defined for child cells of multiplicity other than *.
+     */
+    KLabel getCellAbsentLabel(Sort cellSort);
+
     /** Returns a term which is the default cell of sort k,
      * probably an initializer macro */
     K getDefaultCell(Sort k);
+
+    boolean isConstantInitializer(Sort k);
 
     /** Return the root cell of the configuration . */
     Sort getRootCell();
     /** Return the declared computation cell, by default the k cell */
     Sort getComputationCell();
+
+    /** Returns the unit of a * or ? cell. */
+    K getUnit(Sort k);
+
+    /** Returns the concatenation operation of a multiplicity * cell. */
+    KLabel getConcat(Sort k);
 
     /** Declared mulitplicitly of a cell */
     enum Multiplicity {

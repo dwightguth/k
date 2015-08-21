@@ -30,6 +30,7 @@ import org.kframework.parser.utils.ResourceExtractor;
 import org.kframework.parser.utils.Sdf2Table;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
@@ -124,7 +125,7 @@ public class DefinitionLoader {
 
         if (!def.getDefinitionContext().containsModule(mainModule)) {
             String msg = "Could not find main module '" + mainModule + "'. Use --main-module option to specify another.";
-            throw KExceptionManager.compilerError(msg);
+            throw KEMException.compilerError(msg);
         }
         sw.printIntermediate("Outer Parsing");
 
@@ -147,7 +148,6 @@ public class DefinitionLoader {
         sw.printIntermediate("Checks");
 
         File cache = files.resolveKompiled("defx-cache.bin");
-        Thread t2 = null;
         // ------------------------------------- generate files
         DefinitionLocalKParser.init(files.resolveKompiled("."));
         ResourceExtractor.ExtractDefSDF(files.resolveTemp("def"));
@@ -190,17 +190,19 @@ public class DefinitionLoader {
             try {
                 // delete the file with the cached/partially parsed rules
                 if (cache.exists() && !cache.delete()) {
-                    throw KExceptionManager.criticalError("Could not delete file " + cache);
+                    throw KEMException.criticalError("Could not delete file " + cache);
                 }
                 // Sdf2Table.run_sdf2table(new File(context.dotk.getAbsoluteFile() + "/def"), "Concrete");
                 Thread t1 = sdf2Table.run_sdf2table_parallel(files.resolveTemp("def"), "Concrete");
-                t2 = sdf2Table.run_sdf2table_parallel(files.resolveTemp("ground"), "Concrete");
+                Thread t2 = sdf2Table.run_sdf2table_parallel(files.resolveTemp("ground"), "Concrete");
                 t1.join();
+                t2.join();
                 files.copyTempFileToKompiledDirectory("def/Integration.sdf");
                 files.copyTempFileToKompiledFile("def/Concrete.tbl", "Rule.tbl");
+                files.copyTempFileToKompiledFile("ground/Concrete.tbl", "Ground.tbl");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw KExceptionManager.criticalError(
+                throw KEMException.criticalError(
                         "Thread was interrupted trying to run SDF2Table");
             }
 
@@ -248,17 +250,6 @@ public class DefinitionLoader {
         def = (Definition) new NormalizeASTTransformer(context, kem).visitNode(def);
 
         sw.printIntermediate("Parsing Rules [" + (clf.getKept().size() - cachedSentences) + "/" + clf.getKept().size() + "]");
-
-        try {
-            if (t2 != null) {
-                t2.join();
-                files.copyTempFileToKompiledFile("ground/Concrete.tbl", "Ground.tbl");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw KExceptionManager.criticalError(
-                    "Thread was interrupted trying to run SDF2Table");
-        }
 
         return def;
     }

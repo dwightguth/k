@@ -3,11 +3,13 @@ package org.kframework.kore.compile;
 
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
+import org.kframework.builtin.Sorts;
 import org.kframework.compile.LabelInfo;
 import org.kframework.kore.*;
 
 import org.junit.Test;
 import org.junit.Assert;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.Arrays;
 
@@ -21,7 +23,7 @@ public class CloseCellsTest {
     }};
     final TestConfiguration cfgInfo = new TestConfiguration() {{
         addCell(null, "ThreadCell", "<thread>", Multiplicity.STAR);
-        addCell("ThreadCell", "KCell", "<k>", Sort("K"));
+        addCell("ThreadCell", "KCell", "<k>", Sorts.K());
         addCell("ThreadCell", "EnvCell", "<env>", Sort("Map"));
         addCell(null, "ListCell", "<list>", Multiplicity.STAR, Sort("List"));
         addDefault("EnvCell", cell("<env>", KApply(KLabel(".Map"))));
@@ -32,8 +34,8 @@ public class CloseCellsTest {
         addLabel("EnvCell", "<env>");
         addLabel("ThreadCell", "<thread>");
         addLabel("ListCell", "<list>");
-        addLabel("Map", "'_Map_", true, true);
-        addLabel("List", "'_List_", true);
+        addLabel("Map", "'_Map_", true, true, true);
+        addLabel("List", "'_List_", true, false, true);
     }};
 
     @Test
@@ -83,8 +85,8 @@ public class CloseCellsTest {
     @Test
     public void testClosedCellError1() {
         K term = cell("<thread>", cell("<k>"));
-        exception.expect(org.kframework.utils.errorsystem.KExceptionManager.KEMException.class);
-        exception.expectMessage("Closed parent cell missing required children [EnvCell] <thread>(#noDots(),<k>(#noDots(),#cells(),#noDots()),#noDots())");
+        exception.expect(KEMException.class);
+        exception.expectMessage("Closed parent cell missing required children [EnvCell]");
         new CloseCells(cfgInfo, sortInfo, labelInfo).close(term);
     }
 

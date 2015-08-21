@@ -1,6 +1,20 @@
 // Copyright (c) 2013-2015 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
+import com.google.inject.name.Names;
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
 import org.kframework.backend.java.compile.KOREtoBackendKIL;
 import org.kframework.backend.java.indexing.IndexingTable;
 import org.kframework.backend.java.indexing.RuleIndex;
@@ -8,6 +22,7 @@ import org.kframework.backend.java.symbolic.ConjunctiveFormula;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.backend.java.util.Subsorts;
+import org.kframework.builtin.Sorts;
 import org.kframework.compile.utils.ConfigurationStructureMap;
 import org.kframework.definition.Module;
 import org.kframework.kil.ASTNode;
@@ -16,11 +31,13 @@ import org.kframework.kil.Attributes;
 import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
-import org.kframework.kore.KRewrite;
+import org.kframework.kore.K;
+import org.kframework.kore.KApply;
+import org.kframework.kore.compile.RewriteToTop;
 import org.kframework.kore.convertors.KOREtoKIL;
-import org.kframework.krun.KRunOptions;
-import org.kframework.main.GlobalOptions;
+import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
+import scala.collection.JavaConversions;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,20 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.SetMultimap;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.name.Names;
-import com.google.inject.Inject;
-import scala.collection.JavaConversions;
+import static org.kframework.Collections.*;
+import static org.kframework.kore.KORE.Sort;
 
 
 /**
@@ -58,33 +65,30 @@ public class Definition extends JavaSymbolicObject {
     private static class DefinitionData implements Serializable {
         public final Subsorts subsorts;
         public final Set<Sort> builtinSorts;
-        public final Map<org.kframework.kil.Sort, DataStructureSort> dataStructureSorts;
+        public final Map<org.kframework.kore.Sort, DataStructureSort> dataStructureSorts;
         public final SetMultimap<String, SortSignature> signatures;
         public final ImmutableMap<String, Attributes> kLabelAttributes;
         public final Map<org.kframework.kil.Sort, String> freshFunctionNames;
+        public final Map<Sort, Sort> smtSortFlattening;
         public final ConfigurationStructureMap configurationStructureMap;
-        public transient GlobalOptions globalOptions;
-        public transient KRunOptions kRunOptions;
 
         private DefinitionData(
                 Subsorts subsorts,
                 Set<Sort> builtinSorts,
-                Map<org.kframework.kil.Sort, DataStructureSort> dataStructureSorts,
+                Map<org.kframework.kore.Sort, DataStructureSort> dataStructureSorts,
                 SetMultimap<String, SortSignature> signatures,
                 ImmutableMap<String, Attributes> kLabelAttributes,
                 Map<org.kframework.kil.Sort, String> freshFunctionNames,
-                ConfigurationStructureMap configurationStructureMap,
-                GlobalOptions globalOptions,
-                KRunOptions kRunOptions) {
+                Map<Sort, Sort> smtSortFlattening,
+                ConfigurationStructureMap configurationStructureMap) {
             this.subsorts = subsorts;
             this.builtinSorts = builtinSorts;
             this.dataStructureSorts = dataStructureSorts;
             this.signatures = signatures;
             this.kLabelAttributes = kLabelAttributes;
             this.freshFunctionNames = freshFunctionNames;
+            this.smtSortFlattening = smtSortFlattening;
             this.configurationStructureMap = configurationStructureMap;
-            this.globalOptions = globalOptions;
-            this.kRunOptions = kRunOptions;
         }
     }
 
@@ -178,13 +182,12 @@ public class Definition extends JavaSymbolicObject {
         definitionData = new DefinitionData(
                 new Subsorts(context),
                 builder.build(),
-                context.getDataStructureSorts(),
+                context.getDataStructureSorts().entrySet().stream().collect(Collectors.toMap(e -> Sort(e.getKey().getName()), Map.Entry::getValue)),
                 signaturesBuilder.build(),
                 attributesBuilder.build(),
                 context.freshFunctionNames,
-                context.getConfigurationStructureMap(),
-                context.globalOptions,
-                context.krunOptions);
+                context.smtSortFlattening.entrySet().stream().collect(Collectors.toMap(e -> Sort.of(e.getKey()), e -> Sort.of(e.getValue()))),
+                context.getConfigurationStructureMap());
         this.context = context;
     }
 
@@ -218,41 +221,57 @@ public class Definition extends JavaSymbolicObject {
                         .add(Sort.of("#String"))
                         .add(Sort.of("#Id"))
                         .build(),
-                null,
+                getDataStructureSorts(module),
                 signaturesBuilder.build(),
                 attributesBuilder.build(),
                 null,
                 null,
-                new GlobalOptions(),
-                new KRunOptions());
+                null);
         context = null;
 
         this.indexingData = new IndexingTable.Data();
+    }
+
+    private Map<org.kframework.kore.Sort, DataStructureSort> getDataStructureSorts(Module module) {
+        ImmutableMap.Builder<org.kframework.kore.Sort, DataStructureSort> builder = ImmutableMap.builder();
+        for (org.kframework.definition.Production prod : iterable(module.productions())) {
+            Optional<?> assoc = prod.att().getOptional(Attribute.ASSOCIATIVE_KEY);
+            Optional<?> comm = prod.att().getOptional(Attribute.COMMUTATIVE_KEY);
+            Optional<?> idem = prod.att().getOptional(Attribute.IDEMPOTENT_KEY);
+
+            org.kframework.kil.Sort type;
+            if (prod.sort().equals(Sorts.KList()) || prod.sort().equals(Sorts.KBott()))
+                continue;
+            if (assoc.isPresent() && !comm.isPresent() && !idem.isPresent()) {
+                type = org.kframework.kil.Sort.LIST;
+            } else if (assoc.isPresent() && comm.isPresent() && idem.isPresent()) {
+                type = org.kframework.kil.Sort.SET;
+            } else if (assoc.isPresent() && comm.isPresent() && !idem.isPresent()) {
+                //TODO(dwightguth): distinguish between Bag and Map
+                if (!prod.att().contains(Attribute.HOOK_KEY))
+                    continue;
+                type = org.kframework.kil.Sort.MAP;
+            } else if (!assoc.isPresent() && !comm.isPresent() && !idem.isPresent()) {
+                continue;
+            } else {
+                throw KEMException.criticalError("Unexpected combination of assoc, comm, idem attributes found. Currently "
+                        + "only sets, maps, and lists are supported: " + prod, prod);
+            }
+            DataStructureSort sort = new DataStructureSort(prod.sort().name(), type,
+                    prod.klabel().get().name(),
+                    prod.att().<String>get("element").get(),
+                    prod.att().<String>get(Attribute.UNIT_KEY).get(),
+                    new HashMap<>());
+            builder.put(prod.sort(), sort);
+        }
+        return builder.build();
     }
 
     public void addKoreRules(Module module, TermContext termContext) {
         KOREtoBackendKIL transformer = new KOREtoBackendKIL(termContext);
         JavaConversions.setAsJavaSet(module.sentences()).stream().forEach(s -> {
             if (s instanceof org.kframework.definition.Rule) {
-                org.kframework.definition.Rule rule = (org.kframework.definition.Rule) s;
-                org.kframework.kil.Rule oldRule = new org.kframework.kil.Rule();
-                oldRule.setAttributes(new KOREtoKIL().convertAttributes(rule.att()));
-                addRule(new Rule(
-                        "",
-                        transformer.convert(((KRewrite) rule.body()).left()),
-                        transformer.convert(((KRewrite) rule.body()).right()),
-                        Collections.singletonList(transformer.convert(rule.requires())),
-                        Collections.singletonList(transformer.convert(rule.ensures())),
-                        Collections.emptySet(),
-                        Collections.emptySet(),
-                        ConjunctiveFormula.of(termContext),
-                        false,
-                        null,
-                        null,
-                        null,
-                        null,
-                        new org.kframework.kil.Rule(),
-                        termContext));
+                addRule(transformer.convert(Optional.of(module), (org.kframework.definition.Rule) s));
             }
         });
     }
@@ -331,22 +350,6 @@ public class Definition extends JavaSymbolicObject {
 
     public void setContext(Context context) {
         this.context = context;
-    }
-
-    public GlobalOptions globalOptions() {
-        return definitionData.globalOptions;
-    }
-
-    public void setGlobalOptions(GlobalOptions globalOptions) {
-        this.definitionData.globalOptions = globalOptions;
-    }
-
-    public KRunOptions kRunOptions() {
-        return definitionData.kRunOptions;
-    }
-
-    public void setKRunOptions(KRunOptions kRunOptions) {
-        this.definitionData.kRunOptions = kRunOptions;
     }
 
     public void setKem(KExceptionManager kem) {
@@ -440,11 +443,15 @@ public class Definition extends JavaSymbolicObject {
     }
 
     public DataStructureSort dataStructureSortOf(Sort sort) {
-        return definitionData.dataStructureSorts.get(sort.toFrontEnd());
+        return definitionData.dataStructureSorts.get(Sort(sort.name()));
     }
 
     public Map<org.kframework.kil.Sort, String> freshFunctionNames() {
         return definitionData.freshFunctionNames;
+    }
+
+    public Map<Sort, Sort> smtSortFlattening() {
+        return definitionData.smtSortFlattening;
     }
 
     public DefinitionData definitionData() {

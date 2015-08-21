@@ -1,9 +1,12 @@
 package org.kframework.tiny
 
 
-import org.kframework.definition
+import java.util
+import java.util.Optional
+
+import org.kframework.kore.KVariable
 import org.kframework.kore.Unapply.KLabel
-import org.kframework.kore
+import org.kframework.{RewriterResult, definition, kore}
 
 import scala.collection.parallel.ParIterable
 
@@ -30,8 +33,11 @@ object SimpleIndex extends (K => Option[String]) {
   }
 }
 
-class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
+class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) extends org.kframework.Rewriter {
   def this(module: definition.Module) = this(module, KIndex)
+
+
+  override def search(initialConfiguration: kore.K, depth: Optional[Integer], bound: Optional[Integer], pattern: definition.Rule): util.List[_ <: util.Map[_ <: KVariable, _ <: kore.K]] = throw new UnsupportedOperationException
 
   val cons = new Constructors(module)
 
@@ -48,7 +54,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
 
   val indexedRules: Map[String, ParIterable[Rule]] = {
     module.rules
-      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX") }
+      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX")}
       .map { case (k, ruleSet) =>
       (k, ruleSet
         .map(createRule)
@@ -57,15 +63,15 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
   }
 
   val executeRules = module.rules
-    .map { r => ExecuteRule(convert(r.body), convert(r.requires)) }
+    .map { r => ExecuteRule(convert(r.body), convert(r.requires))}
     .seq.view.par
 
   val indexedExecuteRules: Map[String, ParIterable[Rule]] = {
     module.rules
-      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX") }
+      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX")}
       .map { case (k, ruleSet) =>
       (k, ruleSet
-        .map { r => ExecuteRule(convert(r.body), convert(r.requires)) }
+        .map { r => ExecuteRule(convert(r.body), convert(r.requires))}
         .seq.view.par)
     }
   }
@@ -80,7 +86,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
     })
 
     val res = prioritized
-      .flatMap { r => totalTriedRules += 1; r(k) }
+      .flatMap { r => totalTriedRules += 1; r(k)}
 
     res.seq.toSet
   }
@@ -89,7 +95,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
   var indexFailures = 0
 
   def executeStep(k: K): Option[K] = {
-//    println("\n\n MATCHING ON: " + k)
+    //    println("\n\n MATCHING ON: " + k)
 
     val i = index(k).get
 
@@ -104,20 +110,29 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
       val res = r(k).headOption
       res match {
         case Some(res) =>
-//          println(r + "\n" + res + "\n");
+          //          println(r + "\n" + res + "\n");
           Some(res)
         case None => None
       }
     }
-      .find {_.isInstanceOf[Some[_]]}
+      .find {
+      _.isInstanceOf[Some[_]]
+    }
       .getOrElse(None)
-//    println("RESULT:\n    " + res.mkString("\n    "))
+    //    println("RESULT:\n    " + res.mkString("\n    "))
     res
   }
 
-  def execute(k: kore.K): kore.K = execute(cons.convert(k))
+  def execute(k: kore.K, depth: Optional[Integer]): RewriterResult = execute(cons.convert(k))
 
-  def execute(k: K): K = {
+  def `match`(k: kore.K, rule: definition.Rule): java.util.List[java.util.Map[kore.KVariable, kore.K]] = throw new UnsupportedOperationException
+
+  def executeAndMatch(k: kore.K, depth: Optional[Integer], rule: definition.Rule): Tuple2[kore.K, java.util.List[java.util.Map[kore.KVariable, kore.K]]] = {
+    val res = execute(k, depth).k
+    Tuple2(res, `match`(res, rule))
+  }
+
+  def execute(k: K): RewriterResult = {
     var steps = 0
     var time = System.nanoTime()
     var current: K = k
@@ -139,17 +154,19 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
       }
     } while (current != prev)
     println(steps)
-    current
+    new RewriterResult(Optional.of(steps), current)
   }
 
-  def rewrite(k: K)(implicit sofar: Set[K] = Set()): Set[K] = {
-    val newKs = rewriteStep(k) &~ sofar
+  def rewrite(k: kore.K)(implicit sofar: Set[kore.K] = Set()): Set[kore.K] = {
+    val sofarTiny = sofar map convert
+
+    val newKs = rewriteStep(convert(k)) &~ sofarTiny
     if (newKs.size == 0)
       sofar
     else {
-      val newSoFar = sofar | newKs
+      val newSoFar = sofarTiny | newKs
       newKs flatMap {
-        rewrite(_)(newSoFar)
+        rewrite(_)(newSoFar.asInstanceOf[Set[kore.K]])
       }
     }
   }
@@ -157,7 +174,11 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
   def search(k: K, pattern: K)(implicit sofar: Set[K] = Set()): Either[Set[K], K] = {
     val newKs = (rewriteStep(k) &~ sofar).toStream
 
-    newKs find {pattern.matcher(_).normalize == True} map {Right(_)} getOrElse {
+    newKs find {
+      pattern.matcher(_).normalize == True
+    } map {
+      Right(_)
+    } getOrElse {
       if (newKs.size == 0)
         Left(Set[K]())
       else {

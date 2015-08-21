@@ -2,9 +2,11 @@
 package org.kframework;
 
 import org.kframework.attributes.Source;
+import org.kframework.builtin.Sorts;
 import org.kframework.definition.Module;
 import org.kframework.kompile.CompiledDefinition;
 import org.kframework.kompile.Kompile;
+import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.K;
 import org.kframework.main.GlobalOptions;
 import org.kframework.tiny.Rewriter;
@@ -16,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
@@ -31,10 +34,10 @@ public class Konsole {
         KExceptionManager kem = new KExceptionManager(new GlobalOptions());
 
         CompiledDefinition compiledDef =
-                new Kompile(FileUtil.testFileUtil(), kem, false).run(new File(definitionFilename), mainModuleName, programModuleName, "K");
+                new Kompile(new KompileOptions(), FileUtil.testFileUtil(), kem, false).run(new File(definitionFilename), mainModuleName, programModuleName, Sorts.K());
 
-        Module module = compiledDef.getCompiledExecutionModule();
-        BiFunction<String, Source, K> programParser = compiledDef.getProgramParser();
+        Module module = compiledDef.executionModule();
+        BiFunction<String, Source, K> programParser = compiledDef.getProgramParser(kem);
         Rewriter rewriter = new org.kframework.tiny.Rewriter(module);
         String cmd;
 
@@ -43,7 +46,7 @@ public class Konsole {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             cmd = br.readLine();
             if (cmd.startsWith("rw")) {
-                K result = rewriter.execute(programParser.apply(cmd.substring(2), Source.apply("<command line>")));
+                K result = rewriter.execute(programParser.apply(cmd.substring(2), Source.apply("<command line>")), Optional.empty()).k();
                 System.out.println("=> " + result);
             } else if (cmd.equals("exit")) {
                 break;

@@ -1,17 +1,19 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.kore.compile;
 
-import com.google.common.collect.Sets;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.definition.Context;
-import org.kframework.definition.Module;
-import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
+import org.kframework.kil.Attribute;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KVariable;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.kframework.kore.KORE.*;
@@ -21,10 +23,12 @@ import static org.kframework.kore.KORE.*;
  */
 public class ResolveSemanticCasts {
 
-    private Set<KApply> casts = Sets.newHashSet();
+    private Set<KApply> casts = new HashSet<>();
+    private Map<KVariable, KVariable> varToTypedVar = new HashMap<>();
 
     void resetCasts() {
         casts.clear();
+        varToTypedVar.clear();
     }
 
     private Rule resolve(Rule rule) {
@@ -50,8 +54,24 @@ public class ResolveSemanticCasts {
     }
 
     K addSideCondition(K requires) {
-        return casts.stream().map(kapp -> (K)KApply(KLabel("is" + getSortNameOfCast(kapp)), kapp.klist()))
-                .reduce(requires, BooleanUtils::and);
+        Optional<KApply> sideCondition = casts.stream().map(k -> {
+            return new TransformKORE() {
+                @Override
+                public K apply(KVariable k) {
+                    if (varToTypedVar.containsKey(k)) {
+                        return varToTypedVar.get(k);
+                    }
+                    return k;
+                }
+            }.apply(k);
+        }).map(k -> KApply(KLabel("is" + getSortNameOfCast((KApply)k)), transform(k))).reduce(BooleanUtils::and);
+        if (!sideCondition.isPresent()) {
+            return requires;
+        } else if (requires.equals(BooleanUtils.TRUE) && sideCondition.isPresent()) {
+            return sideCondition.get();
+        } else {
+            return BooleanUtils.and(sideCondition.get(), requires);
+        }
     }
 
     private String getSortNameOfCast(KApply kapp) {
@@ -62,8 +82,14 @@ public class ResolveSemanticCasts {
         new VisitKORE() {
             @Override
             public Void apply(KApply v) {
-                if (v.klabel().name().startsWith("#SemanticCastTo"))
+                if (v.klabel().name().startsWith("#SemanticCastTo")) {
                     casts.add(v);
+                    K child = v.klist().items().get(0);
+                    if (child instanceof KVariable) {
+                        KVariable var = (KVariable) child;
+                        varToTypedVar.put(var, KVariable(var.name(), var.att().add(Attribute.SORT_KEY, getSortNameOfCast(v))));
+                    }
+                }
                 return super.apply(v);
             }
         }.apply(term);
@@ -74,12 +100,15 @@ public class ResolveSemanticCasts {
             @Override
             public K apply(KApply k) {
                 if (casts.contains(k)) {
-                    K child = k.klist().items().get(0);
-                    if (child instanceof KVariable) {
-                        KVariable var = (KVariable) child;
-                        return KVariable(var.name(), var.att().add("sort", getSortNameOfCast(k)));
-                    }
                     return super.apply(k.klist().items().get(0));
+                }
+                return super.apply(k);
+            }
+
+            @Override
+            public K apply(KVariable k) {
+                if (varToTypedVar.containsKey(k)) {
+                    return varToTypedVar.get(k);
                 }
                 return super.apply(k);
             }
@@ -95,10 +124,5 @@ public class ResolveSemanticCasts {
         } else {
             return s;
         }
-    }
-
-
-    public Module resolve(Module m) {
-        return ModuleTransformer.fromSentenceTransformer(this::resolve).apply(m);
     }
 }
