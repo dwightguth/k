@@ -1,7 +1,6 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.backend.java.compile;
 
-import org.kframework.backend.java.compile.KOREtoBackendKIL;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.symbolic.InitializeRewriter;
@@ -15,8 +14,8 @@ import org.kframework.definition.Sentence;
 import org.kframework.kil.Attribute;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.K;
-import org.kframework.kore.compile.KtoKORE;
-import org.kframework.kore.compile.RewriteToTop;
+import org.kframework.compile.KtoKORE;
+import org.kframework.compile.RewriteToTop;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.ioserver.filesystem.portable.PortableFileSystem;
 import org.kframework.main.GlobalOptions;

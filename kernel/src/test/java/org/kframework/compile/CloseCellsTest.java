@@ -1,5 +1,5 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
-package org.kframework.kore.compile;
+package org.kframework.compile;
 
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;

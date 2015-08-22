@@ -1,8 +1,6 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.compile;
 
-import org.kframework.compile.ConfigurationInfo;
-import org.kframework.compile.LabelInfo;
 import org.kframework.definition.Context;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;

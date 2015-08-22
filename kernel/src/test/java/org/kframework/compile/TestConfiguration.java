@@ -1,10 +1,9 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
-package org.kframework.kore.compile;
+package org.kframework.compile;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
-import org.kframework.compile.ConfigurationInfo;
 import org.kframework.kore.K;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;

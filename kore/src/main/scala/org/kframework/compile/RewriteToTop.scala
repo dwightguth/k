@@ -1,4 +1,4 @@
-package org.kframework.kore.compile
+package org.kframework.compile
 
 import org.kframework.kore.KORE.{KApply, KList, KSequence}
 import org.kframework.kore.{KSequence, K, KApply, KRewrite}
