@@ -136,6 +136,11 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
             return Tuple2.apply(res, match(res, rule));
         }
 
+        @Override
+        public List<K> proveRule(Rule ruleToProve, List<Rule> allRules) {
+            return null;
+        }
+
     }
 
 

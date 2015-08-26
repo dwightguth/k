@@ -38,4 +38,6 @@ trait Rewriter {
 
 
   def executeAndMatch(k: kore.K, depth: Optional[Integer], rule: Rule): Tuple2[kore.K, java.util.List[java.util.Map[kore.KVariable, kore.K]]]
+
+  def proveRule(ruleToProve: Rule, allRules: java.util.List[Rule]): java.util.List[kore.K]
 }
