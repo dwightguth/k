@@ -132,6 +132,8 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
     Tuple2(res, `match`(res, rule))
   }
 
+  def proveRule(ruleToProve: definition.Rule, allRules: java.util.List[definition.Rule]) = throw new UnsupportedOperationException
+
   def execute(k: K): RewriterResult = {
     var steps = 0
     var time = System.nanoTime()
