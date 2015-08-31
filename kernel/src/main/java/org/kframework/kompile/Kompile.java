@@ -17,14 +17,17 @@ import org.kframework.definition.Definition;
 import org.kframework.definition.DefinitionTransformer;
 import org.kframework.definition.Module;
 import org.kframework.definition.ModuleTransformer;
+import org.kframework.definition.Production;
 import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;
 import org.kframework.kore.compile.ConcretizeCells;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
 import org.kframework.kore.compile.GenerateSortPredicateSyntax;
+import org.kframework.kore.compile.IncompleteCellUtils;
 import org.kframework.kore.compile.ResolveAnonVar;
 import org.kframework.kore.compile.ResolveContexts;
 import org.kframework.kore.compile.ResolveFreshConstants;
@@ -160,6 +163,16 @@ public class Kompile {
         return new CompiledDefinition(kompileOptions, parsedDef, kompiledDefinition, programStartSymbol, configInfo.getDefaultCell(configInfo.topCell()).klabel());
     }
 
+    public Optional<Rule> getExitCodePattern(Module mainModule) {
+        java.util.Set<Production> prods = stream(mainModule.productions()).filter(p -> p.att().contains("exit-code") && p.att().contains("cell")).collect(Collectors.toSet());
+        if (prods.size() == 0)
+            return Optional.empty();
+        if (prods.size() > 1)
+            throw KEMException.compilerError("multiple cells labelled with exit-code attribute: " + prods);
+        KLabel cellLabel = prods.iterator().next().klabel().get();
+        return Optional.of(compileRule(mainModule, Rule(IncompleteCellUtils.make(cellLabel, false, KVariable("_"), false), BooleanUtils.TRUE, BooleanUtils.TRUE)));
+    }
+
     public Definition addSemanticsModule(Definition d) {
         java.util.Set<Sentence> prods = new HashSet<>();
         for (Sort srt : iterable(d.mainModule().definedSorts())) {
@@ -202,10 +215,10 @@ public class Kompile {
         ).apply(input);
     }
 
-    private Sentence concretizeSentence(Sentence s, Definition input) {
-        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(input.mainModule());
-        LabelInfo labelInfo = new LabelInfoFromModule(input.mainModule());
-        SortInfo sortInfo = SortInfo.fromModule(input.mainModule());
+    private Sentence concretizeSentence(Sentence s, Module input) {
+        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(input);
+        LabelInfo labelInfo = new LabelInfoFromModule(input);
+        SortInfo sortInfo = SortInfo.fromModule(input);
         return new ConcretizeCells(configInfo, labelInfo, sortInfo, kem).concretize(s);
     }
 
@@ -348,7 +361,7 @@ public class Kompile {
         if (def.getModule("MAP").isDefined()) {
             mapModule = def.getModule("MAP").get();
         } else {
-            throw KEMException.compilerError("Module Map must be visible at the configuration declaration, in module "+module.name());
+            throw KEMException.compilerError("Module Map must be visible at the configuration declaration, in module " + module.name());
         }
         return Module(module.name(), (Set<Module>) module.imports().$bar(Set(mapModule)), (Set<Sentence>) module.localSentences().$bar(configDeclProductions), module.att());
     }
@@ -398,16 +411,16 @@ public class Kompile {
         return upRule(res.iterator().next());
     }
 
-    public Rule compileRule(CompiledDefinition compiledDef, Rule parsedRule) {
+    public Rule compileRule(Module mainModule, Rule parsedRule) {
         return (Rule) func(new ResolveAnonVar()::resolve)
                 .andThen(func(new ResolveSemanticCasts()::resolve))
-                .andThen(func(s -> concretizeSentence(s, compiledDef.kompiledDefinition)))
+                .andThen(func(s -> concretizeSentence(s, mainModule)))
                 .apply(parsedRule);
     }
 
     public Rule parseAndCompileRule(CompiledDefinition compiledDef, String contents, Source source, Optional<Rule> parsedRule) {
         Rule parsed = parsedRule.orElse(parseRule(compiledDef, contents, source));
-        return compileRule(compiledDef, parsed);
+        return compileRule(compiledDef.executionModule(), parsed);
     }
 
     private Rule upRule(K contents) {

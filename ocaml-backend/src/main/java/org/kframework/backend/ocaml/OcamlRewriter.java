@@ -68,10 +68,20 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
         return new Rewriter() {
             @Override
             public RewriterResult execute(K k, Optional<Integer> depth) {
-                String ocaml = converter.execute(k, depth.orElse(-1), files.resolveTemp("run.out").getAbsolutePath());
-                files.saveToTemp("pgm.ml", ocaml);
-                String output = compileAndExecOcaml("pgm.ml");
-                return new RewriterResult(Optional.<Integer>empty(), parseOcamlOutput(output));
+                String kast = converter.execute(k);
+                files.saveToTemp("pgm.kast", kast);
+                try {
+                    Process p = files.getProcessBuilder().command(files.resolveKompiled("interpreter").getAbsolutePath(),
+                            files.resolveTemp("pgm.kast").getAbsolutePath(), files.resolveTemp("run.out").getAbsolutePath(),
+                            files.resolveTemp("run.exit").getAbsolutePath(), depth.orElse(-1).toString()).start();
+                    String output = waitOnResult(p);
+                    return new RewriterResult(Optional.<Integer>empty(), parseOcamlExitCode(), parseOcamlOutput(output));
+                } catch (IOException e) {
+                    throw KEMException.criticalError("Failed to execute interpreter: " + e.getMessage(), e);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw KEMException.criticalError("Ocaml process interrupted.", e);
+                }
             }
 
             @Override
@@ -83,12 +93,12 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
             }
 
             @Override
-            public Tuple2<K, List<? extends Map<? extends KVariable, ? extends K>>> executeAndMatch(K k, Optional<Integer> depth, Rule rule) {
+            public Tuple2<RewriterResult, List<? extends Map<? extends KVariable, ? extends K>>> executeAndMatch(K k, Optional<Integer> depth, Rule rule) {
                 String ocaml = converter.executeAndMatch(k, depth.orElse(-1), rule, files.resolveTemp("run.out").getAbsolutePath(), files.resolveTemp("run.subst").getAbsolutePath());
                 files.saveToTemp("pgm.ml", ocaml);
                 String output = compileAndExecOcaml("pgm.ml");
                 String subst = files.loadFromTemp("run.subst");
-                return Tuple2.apply(parseOcamlOutput(output), parseOcamlSearchOutput(subst));
+                return Tuple2.apply(new RewriterResult(Optional.empty(), parseOcamlExitCode(), parseOcamlOutput(output)), parseOcamlSearchOutput(subst));
             }
 
             @Override
@@ -101,6 +111,15 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    private Optional<Integer> parseOcamlExitCode() {
+        String exitCode = files.loadFromTemp("run.exit");
+        if (exitCode.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(Integer.parseInt(exitCode));
+        }
     }
 
     private List<Map<KVariable, K>> parseOcamlSearchOutput(String output) {
@@ -130,117 +149,126 @@ public class OcamlRewriter implements Function<Module, Rewriter> {
 
     private String compileAndExecOcaml(String name) {
         try {
-            ProcessBuilder pb = files.getProcessBuilder();
-            List<String> args = new ArrayList<>(Arrays.asList("-g", "-o", "a.out", "-package", "gmp", "-package", "zarith",
-                    "-package", "str", "-package", "unix", "-linkpkg", "-safe-string"));
-            args.addAll(0, converter.options.packages.stream().flatMap(p -> Stream.of("-package", p)).collect(Collectors.toList()));
-            args.addAll(options.experimental.nativeLibraries.stream().flatMap(lib -> Stream.of("-cclib", "-l" + lib)).collect(Collectors.toList()));
-            if (converter.options.ocamlopt) {
-                args.add(0, "ocamlfind");
-                args.add(1, "ocamlopt");
-                if (!converter.options.noLinkPrelude) {
-                    args.add(files.resolveKompiled("constants.cmx").getAbsolutePath());
-                    args.add(files.resolveKompiled("prelude.cmx").getAbsolutePath());
-                }
-                args.addAll(Arrays.asList(files.resolveKompiled("def.cmx").getAbsolutePath(), "-I", files.resolveKompiled(".").getAbsolutePath(),
-                        files.resolveKompiled("parser.cmx").getAbsolutePath(), files.resolveKompiled("lexer.cmx").getAbsolutePath(),
-                        name));
-                args.add("-inline");
-                args.add("20");
-                args.add("-nodynlink");
-                pb = pb.command(args);
-                pb.environment().put("OCAMLFIND_COMMANDS", "ocamlopt=ocamlopt.opt");
-            } else {
-                args.add(0, "ocamlfind");
-                args.add(1, "ocamlc");
-                if (!converter.options.noLinkPrelude) {
-                    args.add(files.resolveKompiled("constants.cmo").getAbsolutePath());
-                    args.add(files.resolveKompiled("prelude.cmo").getAbsolutePath());
-                }
-                args.addAll(Arrays.asList(files.resolveKompiled("def.cmo").getAbsolutePath(), "-I", files.resolveKompiled(".").getAbsolutePath(),
-                        files.resolveKompiled("parser.cmo").getAbsolutePath(), files.resolveKompiled("lexer.cmo").getAbsolutePath(),
-                        name));
-                pb = pb.command(args);
-                pb.environment().put("OCAMLFIND_COMMANDS", "ocamlc=ocamlc.opt");
-            }
-            Process p = pb.directory(files.resolveTemp("."))
-                    .redirectError(files.resolveTemp("compile.err"))
-                    .redirectOutput(files.resolveTemp("compile.out"))
-                    .start();
-            int exit = p.waitFor();
-            if (exit != 0) {
-                System.err.println(files.loadFromTemp("compile.err"));
-                throw KEMException.criticalError("Failed to compile program to ocaml. See output for error information.");
-            }
+            linkOcaml(name, "a.out", files, converter, options);
             Process p2 = files.getProcessBuilder()
                     .command(files.resolveTemp("a.out").getAbsolutePath())
                     .start();
 
-            Thread in = new Thread(() -> {
-                int count;
-                byte[] buffer = new byte[8192];
-                try {
-                    while (true) {
-                        if (System.in.available() > 0) {
-                            count = System.in.read(buffer);
-                            if (count < 0)
-                                break;
-                            p2.getOutputStream().write(buffer, 0, count);
-                        } else {
-                            Thread.sleep(100);
-                        }
-                    }
-                } catch (IOException | InterruptedException e) {}
-            });
-            Thread out = new Thread(() -> {
-                int count;
-                byte[] buffer = new byte[8192];
-                try {
-                    while (true) {
-                        count = p2.getInputStream().read(buffer);
-                        if (count < 0)
-                            break;
-                        System.out.write(buffer, 0, count);
-                        if (p2.getInputStream().available() == 0)
-                            Thread.sleep(100);
-                    }
-                } catch (IOException | InterruptedException e) {}
-            });
-            Thread err = new Thread(() -> {
-                int count;
-                byte[] buffer = new byte[8192];
-                try {
-                    while (true) {
-                        count = p2.getErrorStream().read(buffer);
-                        if (count < 0)
-                            break;
-                        System.err.write(buffer, 0, count);
-                        if (p2.getErrorStream().available() == 0)
-                            Thread.sleep(100);
-                    }
-                } catch (IOException | InterruptedException e) {}
-            });
-            in.start();
-            out.start();
-            err.start();
-
-            exit = p2.waitFor();
-            in.interrupt();
-            in.join();
-            out.join();
-            err.join();
-            System.out.flush();
-            System.err.flush();
-            if (exit != 0) {
-                throw KEMException.criticalError("Failed to execute program in ocaml. See output for error information.");
-            }
-            return files.loadFromTemp("run.out");
+            return waitOnResult(p2);
         } catch (IOException e) {
             throw KEMException.criticalError("Failed to start ocamlopt: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw KEMException.criticalError("Ocaml process interrupted.", e);
         }
+    }
+
+    public static void linkOcaml(String name, String output, FileUtil files, DefinitionToOcaml converter, KRunOptions options) throws IOException, InterruptedException {
+        ProcessBuilder pb = files.getProcessBuilder();
+        List<String> args = new ArrayList<>(Arrays.asList("-g", "-o", output, "-package", "gmp", "-package", "zarith",
+                "-package", "str", "-package", "unix", "-linkpkg", "-safe-string"));
+        args.addAll(0, converter.options.packages.stream().flatMap(p -> Stream.of("-package", p)).collect(Collectors.toList()));
+        args.addAll(options.experimental.nativeLibraries.stream().flatMap(lib -> Stream.of("-cclib", "-l" + lib)).collect(Collectors.toList()));
+        if (converter.options.ocamlopt) {
+            args.add(0, "ocamlfind");
+            args.add(1, "ocamlopt");
+            if (!converter.options.noLinkPrelude) {
+                args.add(files.resolveKompiled("constants.cmx").getAbsolutePath());
+                args.add(files.resolveKompiled("prelude.cmx").getAbsolutePath());
+            }
+            args.addAll(Arrays.asList(files.resolveKompiled("def.cmx").getAbsolutePath(), "-I", files.resolveKompiled(".").getAbsolutePath(),
+                    files.resolveKompiled("parser.cmx").getAbsolutePath(), files.resolveKompiled("lexer.cmx").getAbsolutePath(),
+                    name));
+            args.add("-inline");
+            args.add("20");
+            args.add("-nodynlink");
+            pb = pb.command(args);
+            pb.environment().put("OCAMLFIND_COMMANDS", "ocamlopt=ocamlopt.opt");
+        } else {
+            args.add(0, "ocamlfind");
+            args.add(1, "ocamlc");
+            if (!converter.options.noLinkPrelude) {
+                args.add(files.resolveKompiled("constants.cmo").getAbsolutePath());
+                args.add(files.resolveKompiled("prelude.cmo").getAbsolutePath());
+            }
+            args.addAll(Arrays.asList(files.resolveKompiled("def.cmo").getAbsolutePath(), "-I", files.resolveKompiled(".").getAbsolutePath(),
+                    files.resolveKompiled("parser.cmo").getAbsolutePath(), files.resolveKompiled("lexer.cmo").getAbsolutePath(),
+                    name));
+            pb = pb.command(args);
+            pb.environment().put("OCAMLFIND_COMMANDS", "ocamlc=ocamlc.opt");
+        }
+        Process p = pb.directory(files.resolveTemp("."))
+                .redirectError(files.resolveTemp("compile.err"))
+                .redirectOutput(files.resolveTemp("compile.out"))
+                .start();
+        int exit = p.waitFor();
+        if (exit != 0) {
+            System.err.println(files.loadFromTemp("compile.err"));
+            throw KEMException.criticalError("Failed to compile program to ocaml. See output for error information.");
+        }
+    }
+
+    private String waitOnResult(Process p2) throws InterruptedException {
+        int exit;
+        Thread in = new Thread(() -> {
+            int count;
+            byte[] buffer = new byte[8192];
+            try {
+                while (true) {
+                    if (System.in.available() > 0) {
+                        count = System.in.read(buffer);
+                        if (count < 0)
+                            break;
+                        p2.getOutputStream().write(buffer, 0, count);
+                    } else {
+                        Thread.sleep(100);
+                    }
+                }
+            } catch (IOException | InterruptedException e) {}
+        });
+        Thread out = new Thread(() -> {
+            int count;
+            byte[] buffer = new byte[8192];
+            try {
+                while (true) {
+                    count = p2.getInputStream().read(buffer);
+                    if (count < 0)
+                        break;
+                    System.out.write(buffer, 0, count);
+                    if (p2.getInputStream().available() == 0)
+                        Thread.sleep(100);
+                }
+            } catch (IOException | InterruptedException e) {}
+        });
+        Thread err = new Thread(() -> {
+            int count;
+            byte[] buffer = new byte[8192];
+            try {
+                while (true) {
+                    count = p2.getErrorStream().read(buffer);
+                    if (count < 0)
+                        break;
+                    System.err.write(buffer, 0, count);
+                    if (p2.getErrorStream().available() == 0)
+                        Thread.sleep(100);
+                }
+            } catch (IOException | InterruptedException e) {}
+        });
+        in.start();
+        out.start();
+        err.start();
+
+        exit = p2.waitFor();
+        in.interrupt();
+        in.join();
+        out.join();
+        err.join();
+        System.out.flush();
+        System.err.flush();
+        if (exit != 0) {
+            throw KEMException.criticalError("Failed to execute program in ocaml. See output for error information.");
+        }
+        return files.loadFromTemp("run.out");
     }
 
     @DefinitionScoped

@@ -3,6 +3,7 @@ package org.kframework.krun;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.Rewriter;
+import org.kframework.RewriterResult;
 import org.kframework.attributes.Source;
 import org.kframework.backend.unparser.OutputModes;
 import org.kframework.builtin.Sorts;
@@ -27,7 +28,6 @@ import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.koreparser.KoreParser;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,19 +71,12 @@ public class KRun implements Transformation<Void, Void> {
 
         Object result = executionMode.execute(program, rewriter, compiledDef);
 
-        if (result instanceof K) {
-            prettyPrint(compiledDef, options.output, s -> outputFile(s, options), (K) result);
+        if (result instanceof RewriterResult) {
+            RewriterResult rr = (RewriterResult) result;
+            prettyPrint(compiledDef, options.output, s -> outputFile(s, options), rr.k());
 
-            if (options.exitCodePattern != null) {
-                Rule exitCodePattern = compilePattern(files, kem, options.exitCodePattern, options, compiledDef, Source.apply("<command line: --exit-code>"));
-                List<? extends Map<? extends KVariable, ? extends K>> res = rewriter.match((K) result, exitCodePattern);
-                return getExitCode(kem, res);
-            }
-        } else if (result instanceof Tuple2) {
-            Tuple2<?, ?> tuple = (Tuple2<?, ?>) result;
-            if (tuple._1() instanceof K && tuple._2() instanceof Integer) {
-                prettyPrint(compiledDef, options.output, s -> outputFile(s, options), (K) tuple._1());
-                return (Integer) tuple._2();
+            if (rr.exitCode().isPresent()) {
+                return rr.exitCode().get();
             }
         }
 

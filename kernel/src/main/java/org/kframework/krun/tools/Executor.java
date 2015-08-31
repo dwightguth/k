@@ -9,8 +9,6 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Attributes;
 import org.kframework.kil.Cell;
-import org.kframework.kil.IntBuiltin;
-import org.kframework.kil.KApp;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sentence;
 import org.kframework.kil.Sort;
@@ -22,7 +20,6 @@ import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunResult;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.RewriteRelation;
-import org.kframework.krun.api.SearchResult;
 import org.kframework.krun.api.SearchResults;
 import org.kframework.krun.api.SearchType;
 import org.kframework.parser.TermLoader;
@@ -32,9 +29,6 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.inject.Main;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public interface Executor {
 
@@ -170,37 +164,12 @@ public interface Executor {
                 sw.printIntermediate("Normal execution total");
             }
             ASTNode pattern = pattern(options.pattern);
-            if (options.exitCodePattern != null) {
-                a.add(Integer.class, Executor.Tool.EXIT_CODE, getExitCode(result.toBackendTerm()));
-            }
             if (pattern != null && !options.search()) {
                 SearchPattern searchPattern = new SearchPattern(pattern);
                 Term res = result.getRawResult();
                 return executor.search(0, 0, SearchType.FINAL, searchPattern.patternRule, result.toBackendTerm(), searchPattern.steps, false);
             }
             return result;
-        }
-
-        private int getExitCode(Term res) throws KRunExecutionException {
-            ASTNode exitCodePattern = pattern(options.exitCodePattern);
-            SearchPattern searchPattern = new SearchPattern(exitCodePattern);
-            SearchResults results = executor.search(0, 0, SearchType.FINAL, searchPattern.patternRule, res, searchPattern.steps, false);
-            if (results.getSolutions().size() != 1) {
-                kem.registerCriticalWarning("Found " + results.getSolutions().size() + " solutions to exit code pattern. Returning 112.");
-                return 112;
-            }
-            SearchResult solution = results.getSolutions().get(0);
-            Set<Integer> vars = new HashSet<>();
-            for (Term t : solution.getRawSubstitution().values()) {
-                if (t instanceof KApp && ((KApp)t).getLabel() instanceof IntBuiltin) {
-                    vars.add(((IntBuiltin)((KApp)t).getLabel()).bigIntegerValue().intValue());
-                }
-            }
-            if (vars.size() != 1) {
-                kem.registerCriticalWarning("Found " + vars.size() + " integer variables in exit code pattern. Returning 111.");
-                return 111;
-            }
-            return vars.iterator().next();
         }
 
         public ASTNode pattern(String pattern) throws ParseFailedException {

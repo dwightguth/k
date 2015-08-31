@@ -48,7 +48,7 @@ public class ProofExecutionMode implements ExecutionMode<List<K>> {
         Module mod = kompile.parseModule(compiledDefinition, files.resolveWorkingDirectory(proofFile), true);
         List<Rule> rules = stream(mod.rules())
                 .map(r -> /* TODO(andreistefanescu): perform preprocessing) */ r)
-                .map(r -> kompile.compileRule(compiledDefinition, r))
+                .map(r -> kompile.compileRule(compiledDefinition.executionModule(), r))
                 .collect(Collectors.toList());
         return rules.stream().filter(r -> !r.att().contains(Attribute.TRUSTED_KEY)).flatMap(r -> rewriter.proveRule(r, rules).stream()).collect(Collectors.toList());
     }

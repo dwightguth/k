@@ -127,9 +127,9 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
 
   def `match`(k: kore.K, rule: definition.Rule): java.util.List[_ <: java.util.Map[_ <: kore.KVariable, _ <: kore.K]] = throw new UnsupportedOperationException
 
-  def executeAndMatch(k: kore.K, depth: Optional[Integer], rule: definition.Rule): Tuple2[kore.K, java.util.List[_ <: java.util.Map[_ <: kore.KVariable, _ <: kore.K]]]= {
-    val res = execute(k, depth).k
-    Tuple2(res, `match`(res, rule))
+  def executeAndMatch(k: kore.K, depth: Optional[Integer], rule: definition.Rule): Tuple2[RewriterResult, java.util.List[_ <: java.util.Map[_ <: kore.KVariable, _ <: kore.K]]]= {
+    val res = execute(k, depth)
+    Tuple2(res, `match`(res.k, rule))
   }
 
   def proveRule(ruleToProve: definition.Rule, allRules: java.util.List[definition.Rule]) = throw new UnsupportedOperationException
@@ -156,7 +156,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
       }
     } while (current != prev)
     println(steps)
-    new RewriterResult(Optional.of(steps), current)
+    new RewriterResult(Optional.of(steps), Optional.empty(), current)
   }
 
   def rewrite(k: kore.K)(implicit sofar: Set[kore.K] = Set()): Set[kore.K] = {

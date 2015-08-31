@@ -11,15 +11,17 @@ import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.GlobalContext;
 import org.kframework.backend.java.kil.KLabelConstant;
-import org.kframework.definition.Rule;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.JavaKRunState;
 import org.kframework.definition.Module;
+import org.kframework.definition.Rule;
+import org.kframework.kompile.Kompile;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.K;
 import org.kframework.kore.KVariable;
+import org.kframework.krun.KRun;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchType;
@@ -91,7 +93,7 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
         Definition evaluatedDef = initializeDefinition.invoke(module, kem, initializingContext);
         rewritingContext.setDefinition(evaluatedDef);
 
-        return new SymbolicRewriterGlue(module, evaluatedDef, kompileOptions, javaOptions, rewritingContext, kem);
+        return new SymbolicRewriterGlue(module, evaluatedDef, kompileOptions, javaOptions, rewritingContext, kem, new Kompile(kompileOptions, files, kem).getExitCodePattern(module));
     }
 
     public static class SymbolicRewriterGlue implements Rewriter {
@@ -101,8 +103,10 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
         public final Module module;
         public final GlobalContext rewritingContext;
         private final KExceptionManager kem;
+        private final Optional<Rule> exitCodePattern;
 
-        public SymbolicRewriterGlue(Module module, Definition definition, KompileOptions kompileOptions, JavaExecutionOptions javaOptions, GlobalContext rewritingContext, KExceptionManager kem) {
+        public SymbolicRewriterGlue(Module module, Definition definition, KompileOptions kompileOptions, JavaExecutionOptions javaOptions, GlobalContext rewritingContext, KExceptionManager kem, Optional<Rule> exitCodePattern) {
+            this.exitCodePattern = exitCodePattern;
             this.rewriter = new SymbolicRewriter(definition,  kompileOptions, javaOptions, new KRunState.Counter());
             this.definition = definition;
             this.module = module;
@@ -115,7 +119,13 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
             KOREtoBackendKIL converter = new KOREtoBackendKIL(module, definition, TermContext.of(rewritingContext));
             Term backendKil = KILtoBackendJavaKILTransformer.expandAndEvaluate(rewritingContext, kem, converter.convert(k));
             JavaKRunState result = (JavaKRunState) rewriter.rewrite(new ConstrainedTerm(backendKil, TermContext.of(rewritingContext, backendKil, BigInteger.ZERO)), rewritingContext.getDefinition().context(), depth.orElse(-1), false);
-            return new RewriterResult(result.getStepsTaken(), result.getJavaKilTerm());
+            Optional<Integer> exitCode;
+            if (exitCodePattern.isPresent()) {
+                exitCode = Optional.of(KRun.getExitCode(kem, match(result.getJavaKilTerm(), exitCodePattern.get())));
+            } else {
+                exitCode = Optional.empty();
+            }
+            return new RewriterResult(result.getStepsTaken(), exitCode, result.getJavaKilTerm());
         }
 
         @Override
@@ -136,9 +146,9 @@ public class InitializeRewriter implements Function<Module, Rewriter> {
         }
 
 
-        public Tuple2<K, List<? extends Map<? extends KVariable, ? extends K>>> executeAndMatch(K k, Optional<Integer> depth, Rule rule) {
-            K res = execute(k, depth).k();
-            return Tuple2.apply(res, match(res, rule));
+        public Tuple2<RewriterResult, List<? extends Map<? extends KVariable, ? extends K>>> executeAndMatch(K k, Optional<Integer> depth, Rule rule) {
+            RewriterResult res = execute(k, depth);
+            return Tuple2.apply(res, match(res.k(), rule));
         }
 
         @Override

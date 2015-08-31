@@ -52,6 +52,7 @@ public class OcamlBackend implements Consumer<CompiledDefinition> {
             FileUtils.copyFile(files.resolveKBase("include/ocaml/prelude.ml"), files.resolveKompiled("prelude.ml"));
             FileUtils.copyFile(files.resolveKBase("include/ocaml/lexer.mll"), files.resolveKompiled("lexer.mll"));
             FileUtils.copyFile(files.resolveKBase("include/ocaml/parser.mly"), files.resolveKompiled("parser.mly"));
+            FileUtils.copyFile(files.resolveKBase("include/ocaml/interpreter.ml"), files.resolveKompiled("interpreter.ml"));
             ProcessBuilder pb = files.getProcessBuilder();
             int exit = pb.command("ocamllex", "lexer.mll").directory(files.resolveKompiled(".")).inheritIO().start().waitFor();
             if (exit != 0) {
@@ -85,6 +86,7 @@ public class OcamlBackend implements Consumer<CompiledDefinition> {
                 if (exit != 0) {
                     throw KEMException.criticalError("ocamlopt returned nonzero exit code: " + exit + "\nExamine output to see errors.");
                 }
+                OcamlRewriter.linkOcaml(files.resolveKompiled("interpreter.ml"), "interpreter", files, def, );
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

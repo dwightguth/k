@@ -1,5 +1,12 @@
 <!-- Copyright (c) 2014-2015 K Team. All Rights Reserved. -->
 
+# K Framework 4.0 #
+
+## KRun ##
+
+- Removed `--exit-code` flag and replaced functionality with an `exit-code` cell attribute
+  on the cell containing the exit code.
+
 # K Framework 3.6 #
 
 ## General ##

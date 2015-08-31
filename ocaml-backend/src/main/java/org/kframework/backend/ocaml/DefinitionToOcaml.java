@@ -254,13 +254,8 @@ public class DefinitionToOcaml implements Serializable {
         return result.toString();
     }
 
-    public String execute(K k, int depth, String file) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Constants.K\nopen Def\n");
-        sb.append("let _ = let config = [Bottom] in let out = open_out ").append(enquoteString(file)).append(" in output_string out (print_k(try(run(Lexer.parse_k\n");
-        sb.append(enquoteString(ToKast.apply(new LiftToKSequence().lift(expandMacros.expand(k)))));
-        sb.append("\n) (").append(depth).append(")) with Stuck c' -> c'))");
-        return sb.toString();
+    public String execute(K k) {
+        return ToKast.apply(new LiftToKSequence().lift(expandMacros.expand(k)));
     }
 
     public String match(K k, Rule r, String file) {
@@ -795,7 +790,7 @@ public class DefinitionToOcaml implements Serializable {
                 .collect(Collectors.toList());
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(this::hasLookups));
-        int ruleNum = convert(groupedByLookup.get(true), sb, "lookups_step", RuleType.REGULAR, 0);
+        int ruleNum = convert(groupedByLookup.getOrDefault(true, Collections.emptyList()), sb, "lookups_step", RuleType.REGULAR, 0);
         sb.append("| _ -> raise (Stuck c)\n");
         sb.append("let step (c: k) : k = let config = c in match c with \n");
         if (groupedByLookup.containsKey(false)) {
