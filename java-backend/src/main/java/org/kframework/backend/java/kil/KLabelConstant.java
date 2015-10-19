@@ -29,7 +29,7 @@ public class KLabelConstant extends KLabel implements MaximalSharing, org.kframe
 
     /* KLabelConstant cache */
     private static final ThreadLocal<Map<Pair<Set<SortSignature>, Attributes>, Map<String, KLabelConstant>>> cache =
-            new ThreadLocal<Map<Pair<Set<SortSignature>, Attributes>, Map<String, KLabelConstant>>>() {
+            new InheritableThreadLocal<Map<Pair<Set<SortSignature>, Attributes>, Map<String, KLabelConstant>>>() {
                 @Override
                 protected Map<Pair<Set<SortSignature>, Attributes>, Map<String, KLabelConstant>> initialValue() {
                     return new HashMap<>();
