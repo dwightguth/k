@@ -113,7 +113,7 @@ public final class Sort implements MaximalSharing, Serializable, org.kframework.
 
     @Override
     public String toString() {
-        return name;
+        return name + "{" + ordinal + "}";
     }
 
     /**

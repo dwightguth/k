@@ -187,6 +187,10 @@ public class SymbolicRewriter {
                 else
                     theNew = buildRHS((KItem) subject.term(), substitution, cleanedUpRewrites, subject.termContext());
 
+                if (!theNew.isGround()) {
+                    System.err.println(theNew.variableSet());
+                    System.err.println(substitution.keySet());
+                }
                 results.add(new ConstrainedTerm(theNew, subject.termContext()));
                 if (computeOne) {
                     break;
