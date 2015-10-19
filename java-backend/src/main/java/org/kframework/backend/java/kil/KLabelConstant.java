@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -34,13 +35,6 @@ public class KLabelConstant extends KLabel implements MaximalSharing, org.kframe
                     return new HashMap<>();
                 }
             };
-
-
-    public static int cacheSize = 0;
-
-    synchronized private static int incrementCacheSize() {
-        return cacheSize++;
-    }
 
     /* un-escaped label */
     private final String label;
@@ -118,10 +112,14 @@ public class KLabelConstant extends KLabel implements MaximalSharing, org.kframe
         return cache.get().computeIfAbsent(Pair.of(definition.signaturesOf(label), definition.kLabelAttributesOf(label)), p -> Collections.synchronizedMap(new PatriciaTrie<>()))
                 .computeIfAbsent(label, l -> new KLabelConstant(
                         l,
-                        incrementCacheSize(),
+                        cacheSize(),
                         definition.signaturesOf(l),
                         definition.allSorts(),
                         definition.kLabelAttributesOf(l)));
+    }
+
+    public static int cacheSize() {
+        return cache.get().entrySet().stream().map(p -> p.getValue().size()).reduce(0, (a, b) -> a + b);
     }
 
     /**
@@ -254,7 +252,8 @@ public class KLabelConstant extends KLabel implements MaximalSharing, org.kframe
     public Multimap<Integer, Integer> getBinderMap() {
         if (isBinder()) {
             return productionAttributes.getAttr(Attribute.Key.get(
-                    new TypeToken<Multimap<Integer, Integer>>() {},
+                    new TypeToken<Multimap<Integer, Integer>>() {
+                    },
                     Names.named("binder")));
         } else {
             return null;
@@ -270,7 +269,8 @@ public class KLabelConstant extends KLabel implements MaximalSharing, org.kframe
     public Multimap<Integer, Integer> getMetaBinderMap() {
         if (isMetaBinder()) {
             return productionAttributes.getAttr(Attribute.Key.get(
-                    new TypeToken<Multimap<Integer, Integer>>() {},
+                    new TypeToken<Multimap<Integer, Integer>>() {
+                    },
                     Names.named("metabinder")));
         } else {
             return null;
