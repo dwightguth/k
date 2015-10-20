@@ -347,6 +347,7 @@ public class Kompile {
         ParseInModule parser = gen.getCombinedGrammar(cache.getModule());
 
         Set<Sentence> configDeclProductions = stream(module.localSentences())
+                .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("config"))
@@ -388,6 +389,7 @@ public class Kompile {
         ParseInModule parser = gen.getCombinedGrammar(cache.getModule());
 
         Set<Sentence> ruleSet = stream(module.localSentences())
+                .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("rule"))
@@ -396,6 +398,7 @@ public class Kompile {
                 .collect(Collections.toSet());
 
         Set<Sentence> contextSet = stream(module.localSentences())
+                .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("context"))
