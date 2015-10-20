@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableSet;
 public final class Sort implements MaximalSharing, Serializable, org.kframework.kore.Sort {
 
     public static final ThreadLocal<Map<String, Sort>> cache =
-            new InheritableThreadLocal<Map<String, Sort>>() {
+            new ThreadLocal<Map<String, Sort>>() {
                 @Override
                 protected Map<String, Sort> initialValue() {
                     return new PatriciaTrie<>();
